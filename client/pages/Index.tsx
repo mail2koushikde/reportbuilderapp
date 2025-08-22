@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import Navigation, { NavigationPage } from '../components/Navigation';
-import AllocationPage from '../components/AllocationPage';
-import Inbox from '../components/Inbox';
-import SourceDataManagement from '../components/SourceDataManagement';
-import ViewPublishedData from '../components/ViewPublishedData';
 import BuildReport from '../components/BuildReport';
 import ViewSavedReports, { SavedReport } from '../components/ViewSavedReports';
 
 const Index: React.FC = () => {
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState<NavigationPage>('allocation');
+  const [currentPage, setCurrentPage] = useState<NavigationPage>('build-report');
   const [loadedReportState, setLoadedReportState] = useState<SavedReport['dashboardState'] | undefined>(undefined);
 
   const handleLoadReport = (reportState: SavedReport['dashboardState']) => {
@@ -28,20 +24,12 @@ const Index: React.FC = () => {
 
   const renderCurrentPage = () => {
     switch (currentPage) {
-      case 'allocation':
-        return <AllocationPage />;
-      case 'inbox':
-        return <Inbox />;
-      case 'source-data':
-        return <SourceDataManagement />;
-      case 'published-data':
-        return <ViewPublishedData />;
       case 'build-report':
         return <BuildReport loadedReportState={loadedReportState} />;
       case 'saved-reports':
         return <ViewSavedReports onLoadReport={handleLoadReport} />;
       default:
-        return <AllocationPage />;
+        return <BuildReport loadedReportState={loadedReportState} />;
     }
   };
 
