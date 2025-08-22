@@ -1851,9 +1851,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [cards.length, cardsHistory.length]);
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts for undo/redo and escape to preview chart
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Escape key to preview chart during configuration
+      if (event.key === 'Escape' && configuringCard) {
+        event.preventDefault();
+        showChart(configuringCard);
+        return;
+      }
+
+      // Undo/Redo shortcuts
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
         event.preventDefault();
         undo();
@@ -1866,7 +1874,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [canUndo, canRedo]);
+  }, [canUndo, canRedo, configuringCard]);
 
   // Mix bar chart container dimensions tracking
   const updateDimensions = useCallback((cardId: string) => {
