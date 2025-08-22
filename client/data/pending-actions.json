@@ -1,0 +1,20 @@
+[
+  {
+    "process": "MARCOM_0510_EXC...",
+    "version": "1.2",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 09, 2025\n06:59:21 PM",
+    "status": "PENDING APPROVAL",
+    "actionBy": "Koushik De",
+    "actionDate": null
+  },
+  {
+    "process": "SRC_DATA_VALIDATION...",
+    "version": "2.1",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 12, 2025\n02:30:45 PM",
+    "status": "PENDING APPROVAL",
+    "actionBy": "Koushik De",
+    "actionDate": null
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "process": "SRC_ADV_GEO_MAP...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 28, 2025\n07:16:36 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 28, 2025\n08:15:27 PM"
+  },
+  {
+    "process": "SRC_ADV_COST_TYP...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 28, 2025\n07:42:52 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 28, 2025\n08:15:32 PM"
+  },
+  {
+    "process": "SRC_ADV_PILLAR_M...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 28, 2025\n07:19:39 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 28, 2025\n08:15:36 PM"
+  },
+  {
+    "process": "MARCOM_INSOURCI...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:42:06 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:50:06 PM"
+  },
+  {
+    "process": "MARCOM_TEAM_MA...",
+    "version": "3.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:39:59 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:50:49 PM"
+  },
+  {
+    "process": "MARCOM_XLOB_MA...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:11:06 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:50:44 PM"
+  },
+  {
+    "process": "MARCOM_TARGET...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:43:57 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:57:01 PM"
+  },
+  {
+    "process": "MARCOM_EVENT_M...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:44:31 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:57:29 PM"
+  },
+  {
+    "process": "MARCOM_GL_MAPPI...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:03:43 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:37:25 PM"
+  },
+  {
+    "process": "MARCOM_COST_CE...",
+    "version": "1.0",
+    "submittedBy": "Mayank Jain",
+    "submittedDate": "Jul 08, 2025\n10:03:51 PM",
+    "status": "APPROVED",
+    "actionBy": "Koushik De",
+    "actionDate": "Jul 08, 2025\n10:36:15 PM"
+  }
+]
