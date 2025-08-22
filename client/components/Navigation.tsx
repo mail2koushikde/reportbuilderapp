@@ -2,15 +2,11 @@ import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  Database,
-  Eye,
-  BarChart,
   FileText,
   Bookmark,
-  Inbox,
 } from "lucide-react";
 
-export type NavigationPage = 'allocation' | 'source-data' | 'published-data' | 'build-report' | 'saved-reports' | 'inbox';
+export type NavigationPage = 'build-report' | 'saved-reports';
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -26,30 +22,6 @@ const Navigation: React.FC<NavigationProps> = ({
   onPageChange,
 }) => {
   const navigationItems = [
-    {
-      id: 'allocation' as NavigationPage,
-      label: 'Allocation',
-      icon: BarChart,
-      description: 'Budget allocation and analysis'
-    },
-    {
-      id: 'inbox' as NavigationPage,
-      label: 'Inbox',
-      icon: Inbox,
-      description: 'Manage orders and approvals'
-    },
-    {
-      id: 'source-data' as NavigationPage,
-      label: 'Source Data Management',
-      icon: Database,
-      description: 'Manage and import data sources'
-    },
-    {
-      id: 'published-data' as NavigationPage,
-      label: 'View Published Data',
-      icon: Eye,
-      description: 'View and analyze published datasets'
-    },
     {
       id: 'build-report' as NavigationPage,
       label: 'Build Report',
