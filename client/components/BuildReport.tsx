@@ -1247,7 +1247,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       setTimeout(() => saveToHistory(newCards), 0);
       return newCards;
     });
-  }, [cards.length, findAvailablePosition, importedData]);
+  }, [cards.length, findAvailablePosition, importedData, getDefaultValues]);
 
   const updateCard = useCallback((cardId: string, updates: Partial<DashboardCard>) => {
     setCards(prev => {
