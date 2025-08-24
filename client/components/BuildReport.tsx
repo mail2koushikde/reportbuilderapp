@@ -1214,6 +1214,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     const defaultWidth = 8;
     const defaultHeight = 6;
     const position = findAvailablePosition(defaultWidth, defaultHeight);
+    const { dimension, measure } = getDefaultValues();
 
     const newCard: DashboardCard = {
       id: `card-${Date.now()}`,
@@ -1226,8 +1227,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         height: defaultHeight,
       },
       isConfiguring: false,
-      dimension: '',
-      measure: '',
+      dimension: dimension,
+      measure: measure,
       measure2: '',
       seriesColumn: '',
       yAxisScale: 'linear',
