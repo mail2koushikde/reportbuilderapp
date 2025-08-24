@@ -4417,6 +4417,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             })()}
           </div>
         );
+      case 'none':
+        return (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-white/60 text-center">
+              <div className="mb-3">📊</div>
+              <div className="text-sm mb-2">No Chart Selected</div>
+              <div className="text-xs opacity-70">Click the settings icon to configure this chart</div>
+            </div>
+          </div>
+        );
       default:
         return <div className="text-white/60 text-center">Select a chart type</div>;
     }
