@@ -74,7 +74,7 @@ interface Arrow {
 
 interface DashboardCard {
   id: string;
-  chartType: 'pie' | 'bar' | 'mixbar' | 'table' | 'scorecard' | 'line';
+  chartType: 'none' | 'pie' | 'bar' | 'mixbar' | 'table' | 'scorecard' | 'line';
   title: string;
   gridPosition: {
     x: number;
