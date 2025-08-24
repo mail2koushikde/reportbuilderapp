@@ -1132,6 +1132,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         
         setColumns(headers);
         setImportedData(data);
+
+        // Show success popup
+        setUploadedFileName(file.name);
+        setShowUploadSuccess(true);
       };
       reader.readAsText(file);
     }
