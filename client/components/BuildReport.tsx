@@ -1076,6 +1076,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [saveReportDescription, setSaveReportDescription] = useState('');
   const [storageInfo, setStorageInfo] = useState({ viewsCount: 0, storageSize: 0, percentUsed: 0, isNearLimit: false });
 
+  // File upload success popup state
+  const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState('');
+
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [leftSectionVisible, setLeftSectionVisible] = useState(true);
