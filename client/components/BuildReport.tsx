@@ -1218,7 +1218,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
     const newCard: DashboardCard = {
       id: `card-${Date.now()}`,
-      chartType: 'pie',
+      chartType: 'none',
       title: `Chart ${cards.length + 1}`,
       gridPosition: {
         x: position.x,
