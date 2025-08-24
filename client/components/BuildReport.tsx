@@ -1185,6 +1185,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     return { x: 0, y: 0 };
   }, [checkOverlap]);
 
+  // Helper function to get default dimension and measure for new charts
+  const getDefaultValues = useCallback(() => {
+    if (columns.length === 0 || importedData.length === 0) {
+      return { dimension: '', measure: '' };
+    }
+
+    // Find first string column for dimension (prefer non-numeric columns)
+    const stringColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'string' && isNaN(parseFloat(String(sampleValue)));
+    });
+    const defaultDimension = stringColumns.length > 0 ? stringColumns[0] : columns[0];
+
+    // Find first numeric column for measure
+    const numericColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+    });
+    const defaultMeasure = numericColumns.length > 0 ? numericColumns[0] : '';
+
+    return { dimension: defaultDimension, measure: defaultMeasure };
+  }, [columns, importedData]);
+
   const addCard = useCallback(() => {
     if (cards.length >= 6) return;
 
