@@ -5752,6 +5752,38 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           </div>
         </div>
       )}
+
+      {/* File Upload Success Popup */}
+      {showUploadSuccess && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md w-full mx-auto">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+
+              {/* Success Message */}
+              <h3 className="text-lg font-semibold text-white mb-2">
+                File Uploaded Successfully!
+              </h3>
+              <p className="text-white/70 text-sm mb-6">
+                "{uploadedFileName}" has been imported and is ready to use.
+              </p>
+
+              {/* OK Button */}
+              <button
+                onClick={() => setShowUploadSuccess(false)}
+                className="w-full px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
