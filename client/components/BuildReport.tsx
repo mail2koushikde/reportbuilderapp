@@ -4745,13 +4745,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleFileImport}
-              className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
-              title="Upload Data"
-            >
-              <Upload className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleFileImport}
+                className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
+                title="Upload Data"
+              >
+                <Upload className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setShowSnowflakeModal(true)}
+                className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition-colors border border-blue-400/30"
+                title="Import from Snowflake"
+              >
+                <Database className="w-3 h-3" />
+              </button>
+            </div>
 
             {/* Undo/Redo Buttons */}
             <div className="flex items-center gap-1">
