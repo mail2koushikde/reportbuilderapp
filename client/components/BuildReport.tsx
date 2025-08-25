@@ -20,6 +20,7 @@ import {
   ChevronUp,
   ChevronRight,
   ChevronLeft,
+  Maximize2,
 } from 'lucide-react';
 import {
   PieChart,
@@ -4691,6 +4692,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   title="Arrow"
                 >
                   <ArrowUpRight className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={autoResizeCharts}
+                  disabled={cards.length === 0}
+                  className="p-1.5 rounded-lg transition-colors duration-200 bg-white/10 text-white/70 border border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Auto-resize charts to fill screen"
+                >
+                  <Maximize2 className="w-3 h-3" />
                 </button>
               </div>
             </div>
