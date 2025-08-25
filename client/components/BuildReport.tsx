@@ -1163,9 +1163,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
 
       // Choose endpoint based on test mode
+      const apiBaseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:5000'
+        : `${window.location.protocol}//${window.location.hostname}:5000`;
+
       const endpoint = testMode
-        ? 'http://localhost:5000/api/snowflake/test-import'
-        : 'http://localhost:5000/api/snowflake/import';
+        ? `${apiBaseUrl}/api/snowflake/test-import`
+        : `${apiBaseUrl}/api/snowflake/import`;
 
       // Call the Flask API
       const response = await fetch(endpoint, {
