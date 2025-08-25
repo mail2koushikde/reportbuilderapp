@@ -1439,9 +1439,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     } else if (numCards <= 4) {
       cols = 2;
       rows = 2;
-    } else if (numCards <= 6) {
-      cols = 3;
-      rows = 2;
+    } else {
+      // For more than 4 cards, keep 2 columns and add additional rows
+      cols = 2;
+      rows = Math.ceil(numCards / 2);
     }
 
     // Define gap between cards (in grid units) - consistent with addCard gap
