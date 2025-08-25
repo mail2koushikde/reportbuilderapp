@@ -86,7 +86,7 @@ const Index: React.FC = () => {
         </>
 
         {/* Main Content Area */}
-        <main className={`glass-card rounded-3xl flex-1 flex flex-col min-w-0 ${
+        <main className={`glass-card rounded-xl sm:rounded-2xl lg:rounded-3xl flex-1 flex flex-col min-w-0 ${
           currentPage === 'build-report' ? 'overflow-visible' : 'overflow-hidden'
         } ${
           navigationCollapsed ? 'relative' : ''
