@@ -1083,6 +1083,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
+  // Snowflake modal state
+  const [showSnowflakeModal, setShowSnowflakeModal] = useState(false);
+  const [snowflakeQuery, setSnowflakeQuery] = useState('');
+  const [queryType, setQueryType] = useState<'table' | 'sql'>('table');
+
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [leftSectionVisible, setLeftSectionVisible] = useState(true);
