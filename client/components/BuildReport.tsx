@@ -1414,6 +1414,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [configuringCard, historyIndex]);
 
+  const duplicateCard = useCallback((cardId: string) => {
+    const cardToDuplicate = cards.find(card => card.id === cardId);
+    if (!cardToDuplicate) return;
+
+    // Find available position for the duplicate
+    const position = findAvailablePosition(cardToDuplicate.gridPosition.width, cardToDuplicate.gridPosition.height);
+
+    // Create a new card with copied configuration
+    const newCard: DashboardCard = {
+      ...cardToDuplicate, // Copy all properties
+      id: `card-${Date.now()}`, // New unique ID
+      title: `${cardToDuplicate.title} (Copy)`, // Add "(Copy)" to title
+      gridPosition: {
+        ...cardToDuplicate.gridPosition,
+        x: position.x,
+        y: position.y,
+      },
+      textBoxes: [], // Reset text boxes (they're card-specific)
+      arrows: [], // Reset arrows (they're card-specific)
+    };
+
+    setCards(prev => {
+      const newCards = [...prev, newCard];
+      setTimeout(() => saveToHistory(newCards), 0);
+      return newCards;
+    });
+  }, [cards, findAvailablePosition]);
+
   // Save view functionality
   const saveCurrentView = useCallback(async () => {
     if (!saveReportName.trim()) return;
