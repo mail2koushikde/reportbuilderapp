@@ -1166,7 +1166,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       // For Builder.io fly.dev environment, use the backend server
       const isBuilderEnv = window.location.hostname.includes('.fly.dev');
       const apiBaseUrl = isBuilderEnv
-        ? '/api'  // Use relative path to the same server
+        ? ''  // Use relative path to the same server
         : 'http://localhost:5000';
 
       const endpoint = testMode
@@ -6060,7 +6060,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
-                  • {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
+                  �� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
                   {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
