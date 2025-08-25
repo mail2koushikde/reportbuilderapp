@@ -1165,16 +1165,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   }, [cards]);
 
   const findAvailablePosition = useCallback((width: number, height: number) => {
-    // Reserve edge space (1/4 grid from edges)
+    // Reserve edge space (1/4 grid from edges) - match auto-resize spacing exactly
     const edgeGap = 0.25;
-    const startX = Math.ceil(edgeGap);
-    const startY = Math.ceil(edgeGap);
-    const endX = GRID_COLS - width - Math.ceil(edgeGap);
-    const endY = GRID_ROWS - height - Math.ceil(edgeGap);
+    const cardGap = 0.25;
 
-    // Try different positions to avoid overlaps
-    for (let y = startY; y <= endY; y++) {
-      for (let x = startX; x <= endX; x++) {
+    // Start from edge spacing and increment by card size + gap
+    let currentY = edgeGap;
+    while (currentY + height <= GRID_ROWS - edgeGap) {
+      let currentX = edgeGap;
+      while (currentX + width <= GRID_COLS - edgeGap) {
         const testCard: DashboardCard = {
           id: 'test',
           chartType: 'pie',
