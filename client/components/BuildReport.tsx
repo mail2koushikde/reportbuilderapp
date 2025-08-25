@@ -1299,8 +1299,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         return { dimension, measure, dimension2: '', seriesColumn };
 
       case 'table':
-        // Table doesn't need specific defaults
-        return { dimension: '', measure: '', dimension2: '', seriesColumn: '' };
+        // Table can show all data, but set first dimension for grouping if needed
+        return { dimension, measure: '', dimension2: '', seriesColumn: '' };
 
       default:
         // Pie, bar charts need dimension and measure
