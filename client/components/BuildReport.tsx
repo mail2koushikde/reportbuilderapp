@@ -5132,44 +5132,44 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <>
                   {/* Corner Handles */}
                   <div
-                    className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-br-md z-50"
+                    className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-nw')}
                     title="Resize from top-left corner"
                   />
                   <div
-                    className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-bl-md z-50"
+                    className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-ne')}
                     title="Resize from top-right corner"
                   />
                   <div
-                    className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-tr-md z-50"
+                    className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-sw')}
                     title="Resize from bottom-left corner"
                   />
                   <div
-                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-tl-md z-50"
+                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-se')}
                     title="Resize from bottom-right corner"
                   />
 
                   {/* Edge Handles */}
                   <div
-                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-n-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-b-md z-50"
+                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-n-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-n')}
                     title="Resize from top edge"
                   />
                   <div
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-s-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-t-md z-50"
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-s-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-s')}
                     title="Resize from bottom edge"
                   />
                   <div
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-w-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-r-md z-50"
+                    className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-w-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-w')}
                     title="Resize from left edge"
                   />
                   <div
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-e-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-l-md z-50"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-e-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-e')}
                     title="Resize from right edge"
                   />
