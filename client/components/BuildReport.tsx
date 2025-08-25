@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Maximize2,
+  Copy,
 } from 'lucide-react';
 import {
   PieChart,
