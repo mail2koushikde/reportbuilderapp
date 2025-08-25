@@ -1144,7 +1144,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
   // Check for overlaps
   const checkOverlap = useCallback((newCard: DashboardCard, excludeId?: string) => {
-    const gapSize = 0.5; // Half grid gap between cards
+    const gapSize = 0.25; // Quarter grid gap between cards
 
     return cards.some(card => {
       if (card.id === excludeId) return false;
@@ -1165,9 +1165,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   }, [cards]);
 
   const findAvailablePosition = useCallback((width: number, height: number) => {
+    // Reserve edge space (1/4 grid from edges)
+    const edgeGap = 0.25;
+    const startX = Math.ceil(edgeGap);
+    const startY = Math.ceil(edgeGap);
+    const endX = GRID_COLS - width - Math.ceil(edgeGap);
+    const endY = GRID_ROWS - height - Math.ceil(edgeGap);
+
     // Try different positions to avoid overlaps
-    for (let y = 0; y <= GRID_ROWS - height; y++) {
-      for (let x = 0; x <= GRID_COLS - width; x++) {
+    for (let y = startY; y <= endY; y++) {
+      for (let x = startX; x <= endX; x++) {
         const testCard: DashboardCard = {
           id: 'test',
           chartType: 'pie',
@@ -1286,11 +1293,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
 
     // Define gap between cards (in grid units) - consistent with addCard gap
-    const cardGap = 0.5;
+    const cardGap = 0.25;
 
-    // Calculate available space after accounting for gaps
-    const totalGapCols = (cols - 1) * cardGap;
-    const totalGapRows = (rows - 1) * cardGap;
+    // Calculate available space after accounting for gaps and edge spacing
+    const edgeGap = 0.25;
+    const totalGapCols = (cols - 1) * cardGap + (2 * edgeGap); // Include left and right edge spacing
+    const totalGapRows = (rows - 1) * cardGap + (2 * edgeGap); // Include top and bottom edge spacing
     const availableCols = GRID_COLS - totalGapCols;
     const availableRows = GRID_ROWS - totalGapRows;
 
@@ -1307,9 +1315,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
 
-      // Calculate position with gaps between cards
-      const x = col * (minCardWidth + cardGap);
-      const y = row * (minCardHeight + cardGap);
+      // Calculate position with gaps between cards and edge spacing
+      const x = edgeGap + (col * (minCardWidth + cardGap));
+      const y = edgeGap + (row * (minCardHeight + cardGap));
 
       return {
         ...card,
