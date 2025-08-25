@@ -4866,9 +4866,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   return (
     <div className="flex flex-col h-full w-full min-w-0 max-w-full overflow-hidden">
       {/* Header */}
-      <header className="px-4 py-2 border-b border-white/10 flex-shrink-0">
+      <header className="px-2 sm:px-4 lg:px-6 py-2 border-b border-white/10 flex-shrink-0">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3 ml-8">
+          <div className="flex items-center gap-2 sm:gap-3 ml-2 sm:ml-4 lg:ml-8">
             <svg
               className="w-6 h-6 text-white"
               viewBox="0 0 24 24"
