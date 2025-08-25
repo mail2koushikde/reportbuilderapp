@@ -1208,6 +1208,66 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     return { dimension: defaultDimension, measure: defaultMeasure };
   }, [columns, importedData]);
 
+  // Helper function to get default values for specific chart types
+  const getChartTypeDefaults = useCallback((chartType: DashboardCard['chartType']) => {
+    if (columns.length === 0 || importedData.length === 0) {
+      return { dimension: '', measure: '', dimension2: '', seriesColumn: '' };
+    }
+
+    // Find string columns for dimensions (prefer non-numeric columns)
+    const stringColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'string' && isNaN(parseFloat(String(sampleValue)));
+    });
+
+    // Find numeric columns for measures
+    const numericColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+    });
+
+    // Set defaults based on chart type
+    const dimension = stringColumns.length > 0 ? stringColumns[0] : columns[0];
+    const measure = numericColumns.length > 0 ? numericColumns[0] : '';
+
+    switch (chartType) {
+      case 'scorecard':
+        // Scorecard only needs measure
+        return { dimension: '', measure, dimension2: '', seriesColumn: '' };
+
+      case 'mixbar':
+        // Stacked column needs dimension, measure, and dimension2
+        const dimension2 = stringColumns.length > 1 ? stringColumns[1] :
+                          (columns.length > 1 && columns[1] !== dimension ? columns[1] : '');
+        return { dimension, measure, dimension2, seriesColumn: '' };
+
+      case 'line':
+        // Line chart can use seriesColumn for multiple lines
+        const seriesColumn = stringColumns.length > 1 ? stringColumns[1] : '';
+        return { dimension, measure, dimension2: '', seriesColumn };
+
+      case 'table':
+        // Table doesn't need specific defaults
+        return { dimension: '', measure: '', dimension2: '', seriesColumn: '' };
+
+      default:
+        // Pie, bar charts need dimension and measure
+        return { dimension, measure, dimension2: '', seriesColumn: '' };
+    }
+  }, [columns, importedData]);
+
+  // Helper function to set chart type with auto-selected values
+  const setChartTypeWithDefaults = useCallback((cardId: string, chartType: DashboardCard['chartType']) => {
+    const defaults = getChartTypeDefaults(chartType);
+    updateCard(cardId, {
+      chartType,
+      dimension: defaults.dimension,
+      measure: defaults.measure,
+      dimension2: defaults.dimension2,
+      seriesColumn: defaults.seriesColumn
+    });
+  }, [getChartTypeDefaults, updateCard]);
+
   const addCard = useCallback(() => {
     if (cards.length >= 6) return;
 
