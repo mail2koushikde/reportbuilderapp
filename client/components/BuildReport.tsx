@@ -1321,7 +1321,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     let currentY = edgeGap;
     while (currentY + height <= GRID_ROWS - edgeGap) {
       let currentX = edgeGap;
-      while (currentX + width <= GRID_COLS - edgeGap) {
+      while (currentX + width <= gridCols - edgeGap) {
         const testCard: DashboardCard = {
           id: 'test',
           chartType: 'pie',
@@ -1451,7 +1451,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     const edgeGap = 0.25;
     const totalGapCols = (cols - 1) * cardGap + (2 * edgeGap); // Include left and right edge spacing
     const totalGapRows = (rows - 1) * cardGap + (2 * edgeGap); // Include top and bottom edge spacing
-    const availableCols = GRID_COLS - totalGapCols;
+    const availableCols = gridCols - totalGapCols;
     const availableRows = GRID_ROWS - totalGapRows;
 
     // Calculate optimal card size to fill the available grid space
@@ -5222,7 +5222,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)
                 `,
                 backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-                width: GRID_COLS * GRID_SIZE,
+                width: gridCols * GRID_SIZE,
                 height: GRID_ROWS * GRID_SIZE
               }}
             />
@@ -6100,7 +6100,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
-                  ���� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
+                  �� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
                   {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
