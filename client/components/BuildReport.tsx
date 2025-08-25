@@ -5206,7 +5206,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         <div
           className="relative"
           style={{
-            width: Math.max(GRID_COLS * GRID_SIZE, 1200), // Ensure minimum width
+            width: containerWidth,
             height: containerHeight, // Dynamic height based on card positions
             minWidth: '100%',
             minHeight: '100vh' // Use viewport height as minimum
@@ -6100,7 +6100,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
-                  �� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
+                  ���� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
                   {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
