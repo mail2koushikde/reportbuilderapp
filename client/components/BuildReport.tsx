@@ -6199,6 +6199,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   setShowSnowflakeModal(false);
                   setSnowflakeQuery('');
                   setQueryType('table');
+                  setTestMode(true);
                 }}
                 className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors"
               >
