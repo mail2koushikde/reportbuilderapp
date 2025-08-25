@@ -280,12 +280,13 @@ if __name__ == '__main__':
     # Check for required environment variables
     required_vars = ['SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD', 'SNOWFLAKE_ACCOUNT']
     missing_vars = [var for var in required_vars if not os.getenv(var)]
-    
+
     if missing_vars:
-        logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
-        logger.info("Please set the following environment variables:")
-        logger.info("SNOWFLAKE_USER, SNOWFLAKE_PASSWORD, SNOWFLAKE_ACCOUNT")
-        logger.info("Optional: SNOWFLAKE_WAREHOUSE, SNOWFLAKE_DATABASE, SNOWFLAKE_SCHEMA, SNOWFLAKE_ROLE")
+        logger.warning(f"Missing Snowflake credentials: {', '.join(missing_vars)}")
+        logger.info("🧪 Starting in TEST MODE - Use /api/snowflake/test-import for sample data")
+        logger.info("💡 For production: set SNOWFLAKE_USER, SNOWFLAKE_PASSWORD, SNOWFLAKE_ACCOUNT")
     else:
-        logger.info("Starting Snowflake API server...")
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        logger.info("✅ Snowflake credentials found")
+
+    logger.info("Starting Snowflake API server...")
+    app.run(debug=True, host='0.0.0.0', port=5000)
