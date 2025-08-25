@@ -38,9 +38,9 @@ const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <div className={`transition-all duration-300 ease-in-out ${
-      isCollapsed ? 'w-0 opacity-0' : 'w-64'
-    } flex-shrink-0 overflow-hidden`}>
-      <nav className="glass-card rounded-3xl h-full flex flex-col p-4">
+      isCollapsed ? 'w-0 opacity-0' : 'w-64 sm:w-72 lg:w-80'
+    } flex-shrink-0 overflow-hidden h-full`}>
+      <nav className="glass-card rounded-3xl h-full flex flex-col p-3 sm:p-4 lg:p-6">
         {/* Navigation Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
