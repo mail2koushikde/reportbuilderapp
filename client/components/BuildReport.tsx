@@ -5126,8 +5126,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     </button>
                     <button
                       onClick={() => duplicateCard(card.id)}
-                      className="p-1 hover:bg-blue-500/20 rounded transition-colors"
-                      title="Duplicate card"
+                      disabled={cards.length >= 6}
+                      className="p-1 hover:bg-blue-500/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={cards.length >= 6 ? "Maximum cards reached (6/6)" : "Duplicate card"}
                     >
                       <Copy className="w-4 h-4 text-blue-400" />
                     </button>
