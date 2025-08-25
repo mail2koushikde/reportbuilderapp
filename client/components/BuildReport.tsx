@@ -6081,6 +6081,28 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             </div>
 
             <div className="space-y-4">
+              {/* Test Mode Toggle */}
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-yellow-300">Test Mode</p>
+                    <p className="text-xs text-white/70">Use sample data instead of real Snowflake connection</p>
+                  </div>
+                  <button
+                    onClick={() => setTestMode(!testMode)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                      testMode ? 'bg-yellow-600' : 'bg-white/20'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                        testMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
               {/* Query Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
