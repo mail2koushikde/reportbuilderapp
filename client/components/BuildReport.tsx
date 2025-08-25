@@ -1087,6 +1087,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [showSnowflakeModal, setShowSnowflakeModal] = useState(false);
   const [snowflakeQuery, setSnowflakeQuery] = useState('');
   const [queryType, setQueryType] = useState<'table' | 'sql'>('table');
+  const [testMode, setTestMode] = useState(true);
 
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
