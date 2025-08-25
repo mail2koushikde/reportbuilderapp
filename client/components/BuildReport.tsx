@@ -1163,10 +1163,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
 
       // Choose endpoint based on test mode
-      // For Builder.io environment, use the same host but port 5000
-      const isBuilderEnv = window.location.hostname.includes('.fly.dev') || window.location.hostname.includes('builder.io');
+      // For Builder.io fly.dev environment, use the backend server
+      const isBuilderEnv = window.location.hostname.includes('.fly.dev');
       const apiBaseUrl = isBuilderEnv
-        ? `${window.location.protocol}//${window.location.hostname.replace(/:\d+/, '')}:5000`
+        ? '/api'  // Use relative path to the same server
         : 'http://localhost:5000';
 
       const endpoint = testMode
