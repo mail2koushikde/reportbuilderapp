@@ -1163,9 +1163,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
 
       // Choose endpoint based on test mode
-      const apiBaseUrl = window.location.hostname === 'localhost'
-        ? 'http://localhost:5000'
-        : `${window.location.protocol}//${window.location.hostname}:5000`;
+      // For Builder.io environment, use the same host but port 5000
+      const isBuilderEnv = window.location.hostname.includes('.fly.dev') || window.location.hostname.includes('builder.io');
+      const apiBaseUrl = isBuilderEnv
+        ? `${window.location.protocol}//${window.location.hostname.replace(/:\d+/, '')}:5000`
+        : 'http://localhost:5000';
 
       const endpoint = testMode
         ? `${apiBaseUrl}/api/snowflake/test-import`
