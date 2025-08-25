@@ -6174,10 +6174,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 </p>
               </div>
 
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                <p className="text-xs text-blue-300 mb-1">Note:</p>
+              <div className={`border rounded-lg p-3 ${
+                testMode
+                  ? 'bg-green-500/10 border-green-500/20'
+                  : 'bg-blue-500/10 border-blue-500/20'
+              }`}>
+                <p className={`text-xs mb-1 ${
+                  testMode ? 'text-green-300' : 'text-blue-300'
+                }`}>
+                  {testMode ? 'Test Mode Active:' : 'Production Mode:'}
+                </p>
                 <p className="text-xs text-white/70">
-                  This feature requires Snowflake connection configuration. Please ensure your credentials are properly set up.
+                  {testMode
+                    ? 'Using sample data for testing. No Snowflake connection required.'
+                    : 'This feature requires Snowflake connection configuration. Please ensure your credentials are properly set up.'
+                  }
                 </p>
               </div>
             </div>
