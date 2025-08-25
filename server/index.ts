@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import storageRoutes from "./routes/storage";
+import snowflakeRoutes from "./routes/snowflake";
 
 export function createServer() {
   const app = express();
@@ -20,6 +21,9 @@ export function createServer() {
 
   // Storage routes
   app.use("/api/storage", storageRoutes);
+
+  // Snowflake routes
+  app.use("/api/snowflake", snowflakeRoutes);
 
   return app;
 }
