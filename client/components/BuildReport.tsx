@@ -1447,29 +1447,37 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     // Define gap between cards (in grid units) - consistent with addCard gap
     const cardGap = 0.25;
 
-    // Calculate available space after accounting for gaps and edge spacing
-    const edgeGap = 0.25;
-    const totalGapCols = (cols - 1) * cardGap + (2 * edgeGap); // Include left and right edge spacing
-    const totalGapRows = (rows - 1) * cardGap + (2 * edgeGap); // Include top and bottom edge spacing
-    const availableCols = gridCols - totalGapCols;
-    const availableRows = gridRows - totalGapRows;
+    // Calculate available space for content
+    const minEdgeGap = 0.25;
+    const totalInterCardGapCols = (cols - 1) * cardGap;
+    const totalInterCardGapRows = (rows - 1) * cardGap;
 
-    // Calculate optimal card size to fill the available grid space
-    const cardWidth = Math.floor(availableCols / cols);
-    const cardHeight = Math.floor(availableRows / rows);
+    // Calculate optimal card size first
+    const availableForCards = gridCols - totalInterCardGapCols - (2 * minEdgeGap);
+    const availableForCardsRows = gridRows - totalInterCardGapRows - (2 * minEdgeGap);
+    const cardWidth = Math.floor(availableForCards / cols);
+    const cardHeight = Math.floor(availableForCardsRows / rows);
 
     // Ensure minimum size constraints
     const minCardWidth = Math.max(3, cardWidth);
     const minCardHeight = Math.max(3, cardHeight);
+
+    // Calculate total content width and height (including gaps between cards)
+    const totalContentWidth = (cols * minCardWidth) + totalInterCardGapCols;
+    const totalContentHeight = (rows * minCardHeight) + totalInterCardGapRows;
+
+    // Center the content by calculating balanced edge gaps
+    const horizontalEdgeGap = Math.max(minEdgeGap, (gridCols - totalContentWidth) / 2);
+    const verticalEdgeGap = Math.max(minEdgeGap, (gridRows - totalContentHeight) / 2);
 
     // Update all cards with new positions and sizes
     const updatedCards = cards.map((card, index) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
 
-      // Calculate position with gaps between cards and edge spacing
-      const x = edgeGap + (col * (minCardWidth + cardGap));
-      const y = edgeGap + (row * (minCardHeight + cardGap));
+      // Calculate position with centered layout
+      const x = horizontalEdgeGap + (col * (minCardWidth + cardGap));
+      const y = verticalEdgeGap + (row * (minCardHeight + cardGap));
 
       return {
         ...card,
