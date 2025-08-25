@@ -1195,6 +1195,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           setShowSnowflakeModal(false);
           setSnowflakeQuery('');
           setQueryType('table');
+          setTestMode(true);
 
           console.log(`Successfully imported ${data.length} rows from Snowflake`);
         } else {
