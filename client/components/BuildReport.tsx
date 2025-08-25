@@ -6028,6 +6028,107 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         </div>
       )}
 
+      {/* Snowflake Import Modal */}
+      {showSnowflakeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <Database className="w-5 h-5 text-blue-400" />
+              <h2 className="text-lg font-semibold text-white">Import from Snowflake</h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Query Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Import Type
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setQueryType('table')}
+                    className={`p-2 rounded-lg border transition-colors ${
+                      queryType === 'table'
+                        ? 'border-blue-400 bg-blue-500/20 text-blue-300'
+                        : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    Table Name
+                  </button>
+                  <button
+                    onClick={() => setQueryType('sql')}
+                    className={`p-2 rounded-lg border transition-colors ${
+                      queryType === 'sql'
+                        ? 'border-blue-400 bg-blue-500/20 text-blue-300'
+                        : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    SQL Query
+                  </button>
+                </div>
+              </div>
+
+              {/* Query Input */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  {queryType === 'table' ? 'Table Name' : 'SQL Query'}
+                </label>
+                {queryType === 'table' ? (
+                  <input
+                    type="text"
+                    value={snowflakeQuery}
+                    onChange={(e) => setSnowflakeQuery(e.target.value)}
+                    placeholder="e.g., DATABASE.SCHEMA.TABLE_NAME"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    autoFocus
+                  />
+                ) : (
+                  <textarea
+                    value={snowflakeQuery}
+                    onChange={(e) => setSnowflakeQuery(e.target.value)}
+                    placeholder="SELECT * FROM DATABASE.SCHEMA.TABLE_NAME WHERE condition LIMIT 1000"
+                    rows={4}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                  />
+                )}
+                <p className="text-xs text-white/50 mt-1">
+                  {queryType === 'table'
+                    ? 'Enter the fully qualified table name (Database.Schema.Table)'
+                    : 'Enter your SQL query. Results will be limited to 1000 rows for performance.'
+                  }
+                </p>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                <p className="text-xs text-blue-300 mb-1">Note:</p>
+                <p className="text-xs text-white/70">
+                  This feature requires Snowflake connection configuration. Please ensure your credentials are properly set up.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSnowflakeModal(false);
+                  setSnowflakeQuery('');
+                  setQueryType('table');
+                }}
+                className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSnowflakeImport}
+                disabled={!snowflakeQuery.trim()}
+                className="flex-1 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 disabled:bg-blue-500/10 text-blue-300 disabled:text-blue-300/50 font-medium text-sm rounded-lg transition-colors disabled:cursor-not-allowed"
+              >
+                Import Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* File Upload Success Popup */}
       {showUploadSuccess && (
         <div className="fixed top-0 right-0 left-0 z-50 p-4">
