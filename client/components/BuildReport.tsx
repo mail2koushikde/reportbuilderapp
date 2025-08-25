@@ -6142,7 +6142,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     type="text"
                     value={snowflakeQuery}
                     onChange={(e) => setSnowflakeQuery(e.target.value)}
-                    placeholder="e.g., DATABASE.SCHEMA.TABLE_NAME"
+                    placeholder={testMode
+                      ? "Try: sales_data, customer_data, or any_table_name"
+                      : "e.g., DATABASE.SCHEMA.TABLE_NAME"
+                    }
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                     autoFocus
                   />
@@ -6150,16 +6153,24 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   <textarea
                     value={snowflakeQuery}
                     onChange={(e) => setSnowflakeQuery(e.target.value)}
-                    placeholder="SELECT * FROM DATABASE.SCHEMA.TABLE_NAME WHERE condition LIMIT 1000"
+                    placeholder={testMode
+                      ? "Try: SELECT * FROM products WHERE category = 'Electronics'"
+                      : "SELECT * FROM DATABASE.SCHEMA.TABLE_NAME WHERE condition LIMIT 1000"
+                    }
                     rows={4}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
                   />
                 )}
                 <p className="text-xs text-white/50 mt-1">
-                  {queryType === 'table'
-                    ? 'Enter the fully qualified table name (Database.Schema.Table)'
-                    : 'Enter your SQL query. Results will be limited to 1000 rows for performance.'
-                  }
+                  {testMode ? (
+                    queryType === 'table'
+                      ? 'Test mode: Enter any table name to get sample data (try "sales_data" or "customer_data")'
+                      : 'Test mode: Enter any SQL query to get sample aggregated data'
+                  ) : (
+                    queryType === 'table'
+                      ? 'Enter the fully qualified table name (Database.Schema.Table)'
+                      : 'Enter your SQL query. Results will be limited to 1000 rows for performance.'
+                  )}
                 </p>
               </div>
 
