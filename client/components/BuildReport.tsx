@@ -1415,6 +1415,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   }, [configuringCard, historyIndex]);
 
   const duplicateCard = useCallback((cardId: string) => {
+    if (cards.length >= 6) return; // Respect card limit
+
     const cardToDuplicate = cards.find(card => card.id === cardId);
     if (!cardToDuplicate) return;
 
