@@ -1233,10 +1233,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       if (error instanceof TypeError) {
         if (error.message.includes('fetch')) {
           alert('Unable to connect to Snowflake API server.\nPlease ensure the server is running and accessible.');
-        } else if (error.message.includes('body stream already read')) {
-          alert('Response parsing error. This may be a temporary network issue.\nPlease try again.');
         } else {
-          alert(`Network or parsing error: ${error.message}\nPlease try again or check the console for details.`);
+          alert(`Network error: ${error.message}\nPlease try again or check the console for details.`);
+        }
+      } else if (error instanceof Error) {
+        if (error.message.includes('HTTP error')) {
+          alert(`Server error: ${error.message}\nPlease check your query and try again.`);
+        } else if (error.message.includes('Invalid response format')) {
+          alert('Server returned invalid data format.\nPlease try again or contact support.');
+        } else {
+          alert(`Error: ${error.message}\nSee console for details.`);
         }
       } else {
         alert('Error importing from Snowflake. Please check your query and try again.\nSee console for details.');
