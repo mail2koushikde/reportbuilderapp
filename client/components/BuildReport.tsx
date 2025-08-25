@@ -6261,7 +6261,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
               {/* Success Message */}
               <h3 className="text-lg font-semibold text-white mb-2">
-                File Uploaded Successfully!
+                {uploadedFileName.startsWith('Snowflake:') ? 'Data Imported Successfully!' : 'File Uploaded Successfully!'}
               </h3>
               <p className="text-white/70 text-sm mb-6">
                 "{uploadedFileName}" has been imported and is ready to use.
