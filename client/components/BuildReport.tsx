@@ -1261,6 +1261,59 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     });
   }, [historyIndex]);
 
+  // Auto-resize all charts to fill screen optimally
+  const autoResizeCharts = useCallback(() => {
+    if (cards.length === 0) return;
+
+    // Calculate optimal grid layout based on number of cards
+    const numCards = cards.length;
+    let cols = Math.ceil(Math.sqrt(numCards));
+    let rows = Math.ceil(numCards / cols);
+
+    // Adjust layout for better screen utilization
+    if (numCards <= 2) {
+      cols = numCards;
+      rows = 1;
+    } else if (numCards <= 4) {
+      cols = 2;
+      rows = 2;
+    } else if (numCards <= 6) {
+      cols = 3;
+      rows = 2;
+    }
+
+    // Calculate optimal card size to fill the grid
+    const cardWidth = Math.floor(GRID_COLS / cols);
+    const cardHeight = Math.floor(GRID_ROWS / rows);
+
+    // Ensure minimum size constraints
+    const minCardWidth = Math.max(3, cardWidth);
+    const minCardHeight = Math.max(3, cardHeight);
+
+    // Update all cards with new positions and sizes
+    const updatedCards = cards.map((card, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+
+      // Calculate position with some spacing if possible
+      const x = col * minCardWidth;
+      const y = row * minCardHeight;
+
+      return {
+        ...card,
+        gridPosition: {
+          x,
+          y,
+          width: minCardWidth,
+          height: minCardHeight,
+        },
+      };
+    });
+
+    setCards(updatedCards);
+    setTimeout(() => saveToHistory(updatedCards), 0);
+  }, [cards]);
+
   // Helper function to get default values for specific chart types
   const getChartTypeDefaults = useCallback((chartType: DashboardCard['chartType']) => {
     if (columns.length === 0 || importedData.length === 0) {
