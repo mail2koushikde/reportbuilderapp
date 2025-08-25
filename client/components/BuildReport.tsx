@@ -1173,7 +1173,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         ? `${apiBaseUrl}/api/snowflake/test-import`
         : `${apiBaseUrl}/api/snowflake/import`;
 
-      // Call the Flask API
+      // Call the API
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -1182,9 +1182,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         body: JSON.stringify(requestData)
       });
 
-      // Clone the response to avoid "body stream already read" error
-      const clonedResponse = response.clone();
-      const result = await clonedResponse.json();
+      // Check if response is ok before parsing
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Parse JSON response with proper error handling
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        throw new Error('Invalid response format from server');
+      }
 
       if (result.success) {
         // Process the data similar to CSV import
