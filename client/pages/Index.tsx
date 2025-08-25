@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import Navigation, { NavigationPage } from '../components/Navigation';
 import BuildReport from '../components/BuildReport';
