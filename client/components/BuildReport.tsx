@@ -1162,8 +1162,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         limit: 1000
       };
 
+      // Choose endpoint based on test mode
+      const endpoint = testMode
+        ? 'http://localhost:5000/api/snowflake/test-import'
+        : 'http://localhost:5000/api/snowflake/import';
+
       // Call the Flask API
-      const response = await fetch('http://localhost:5000/api/snowflake/import', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
