@@ -1319,7 +1319,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
     // Start from edge spacing and increment by card size + gap
     let currentY = edgeGap;
-    while (currentY + height <= GRID_ROWS - edgeGap) {
+    while (currentY + height <= gridRows - edgeGap) {
       let currentX = edgeGap;
       while (currentX + width <= gridCols - edgeGap) {
         const testCard: DashboardCard = {
@@ -1452,7 +1452,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     const totalGapCols = (cols - 1) * cardGap + (2 * edgeGap); // Include left and right edge spacing
     const totalGapRows = (rows - 1) * cardGap + (2 * edgeGap); // Include top and bottom edge spacing
     const availableCols = gridCols - totalGapCols;
-    const availableRows = GRID_ROWS - totalGapRows;
+    const availableRows = gridRows - totalGapRows;
 
     // Calculate optimal card size to fill the available grid space
     const cardWidth = Math.floor(availableCols / cols);
@@ -5223,7 +5223,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 `,
                 backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
                 width: gridCols * GRID_SIZE,
-                height: GRID_ROWS * GRID_SIZE
+                height: gridRows * GRID_SIZE
               }}
             />
           )}
