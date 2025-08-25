@@ -5209,7 +5209,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                         return (
                           <button
                             key={type.id}
-                            onClick={() => updateCard(card.id, { chartType: type.id as DashboardCard['chartType'] })}
+                            onClick={() => setChartTypeWithDefaults(card.id, type.id as DashboardCard['chartType'])}
                             className={`p-1 rounded border transition-colors ${
                               card.chartType === type.id
                                 ? 'border-blue-400 bg-blue-500/20 text-blue-300'
