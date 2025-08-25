@@ -1097,6 +1097,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set());
   const [dimensionSelections, setDimensionSelections] = useState<Record<string, string[]>>({}); // Preserve selections per dimension
 
+  // Responsive grid dimensions
+  const [gridCols, setGridCols] = useState(DEFAULT_GRID_COLS);
+  const [gridRows, setGridRows] = useState(DEFAULT_GRID_ROWS);
+  const [containerWidth, setContainerWidth] = useState(1200);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
