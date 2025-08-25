@@ -1117,6 +1117,36 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [loadedReportState]);
 
+  // Responsive grid dimensions based on screen size
+  useEffect(() => {
+    const calculateDimensions = () => {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+
+      // Calculate available width (accounting for navigation and padding)
+      const navigationWidth = screenWidth >= 1024 ? 320 : 0; // lg:w-80 = 320px
+      const padding = screenWidth >= 1024 ? 64 : screenWidth >= 640 ? 32 : 16; // lg:p-4, sm:p-2, p-1
+      const availableWidth = screenWidth - navigationWidth - padding;
+
+      // Calculate grid dimensions
+      const cols = Math.max(Math.floor(availableWidth / GRID_SIZE), 20); // Minimum 20 columns
+      const rows = Math.max(Math.floor((screenHeight - 200) / GRID_SIZE), 20); // Minimum 20 rows, account for header
+
+      setGridCols(cols);
+      setGridRows(rows);
+      setContainerWidth(Math.max(cols * GRID_SIZE, 800)); // Minimum 800px width
+    };
+
+    calculateDimensions();
+
+    const handleResize = () => {
+      calculateDimensions();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // File upload functionality
   const handleFileImport = useCallback(() => {
     fileInputRef.current?.click();
