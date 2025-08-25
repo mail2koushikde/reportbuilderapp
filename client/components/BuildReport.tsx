@@ -1182,7 +1182,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         body: JSON.stringify(requestData)
       });
 
-      const result = await response.json();
+      // Clone the response to avoid "body stream already read" error
+      const clonedResponse = response.clone();
+      const result = await clonedResponse.json();
 
       if (result.success) {
         // Process the data similar to CSV import
