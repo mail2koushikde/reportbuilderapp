@@ -5045,7 +5045,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 top: card.gridPosition.y * GRID_SIZE,
                 width: card.gridPosition.width * GRID_SIZE,
                 height: card.gridPosition.height * GRID_SIZE,
-                transform: draggedCard === card.id ? 'rotate(1deg)' : 'none',
+                transform: 'none',
                 userSelect: 'none',
               }}
             >
