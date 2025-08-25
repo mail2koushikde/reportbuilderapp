@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   Maximize2,
   Copy,
+  Database,
 } from 'lucide-react';
 import {
   PieChart,
