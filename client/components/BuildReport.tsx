@@ -4879,7 +4879,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             <h1 className="text-lg sm:text-xl lg:text-2xl font-normal tracking-wider">
               Generate Report
               {fileName && (
-                <span className="text-sm text-blue-300 font-light ml-2">
+                <span className="text-xs sm:text-sm text-blue-300 font-light ml-1 sm:ml-2 truncate max-w-32 sm:max-w-48 lg:max-w-64">
                   | {fileName}
                 </span>
               )}
