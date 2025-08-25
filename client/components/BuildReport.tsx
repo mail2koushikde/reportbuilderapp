@@ -1144,19 +1144,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
   // Check for overlaps
   const checkOverlap = useCallback((newCard: DashboardCard, excludeId?: string) => {
+    const gapSize = 0.5; // Half grid gap between cards
+
     return cards.some(card => {
       if (card.id === excludeId) return false;
-      
+
       const cardRight = card.gridPosition.x + card.gridPosition.width;
       const cardBottom = card.gridPosition.y + card.gridPosition.height;
       const newRight = newCard.gridPosition.x + newCard.gridPosition.width;
       const newBottom = newCard.gridPosition.y + newCard.gridPosition.height;
-      
+
+      // Check if cards are too close (within gap distance)
       return !(
-        newCard.gridPosition.x >= cardRight ||
-        newRight <= card.gridPosition.x ||
-        newCard.gridPosition.y >= cardBottom ||
-        newBottom <= card.gridPosition.y
+        newCard.gridPosition.x >= cardRight + gapSize ||
+        newRight + gapSize <= card.gridPosition.x ||
+        newCard.gridPosition.y >= cardBottom + gapSize ||
+        newBottom + gapSize <= card.gridPosition.y
       );
     });
   }, [cards]);
