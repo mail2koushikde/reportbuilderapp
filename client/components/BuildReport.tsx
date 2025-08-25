@@ -1154,26 +1154,62 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     if (!snowflakeQuery.trim()) return;
 
     try {
-      // For now, this is a placeholder - you'll need to integrate with your Snowflake API
-      // The query could be either a table name or a SQL query depending on queryType
-      const query = queryType === 'table'
-        ? `SELECT * FROM ${snowflakeQuery} LIMIT 1000`
-        : snowflakeQuery;
+      // Prepare the request payload
+      const requestData = {
+        queryType: queryType,
+        query: snowflakeQuery.trim(),
+        limit: 1000
+      };
 
-      // This would be your actual Snowflake API call
-      console.log('Snowflake Query:', query);
+      // Call the Flask API
+      const response = await fetch('http://localhost:5000/api/snowflake/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
 
-      // Placeholder: Show success message for now
-      alert(`Snowflake import initiated!\nQuery Type: ${queryType}\nQuery: ${query}\n\nNote: This is a placeholder. Connect your Snowflake API here.`);
+      const result = await response.json();
 
-      // Close modal and reset form
-      setShowSnowflakeModal(false);
-      setSnowflakeQuery('');
-      setQueryType('table');
+      if (result.success) {
+        // Process the data similar to CSV import
+        const data = result.data;
+        const columns = result.columns;
+
+        if (data && data.length > 0) {
+          setColumns(columns);
+          setImportedData(data);
+
+          // Show success popup
+          setUploadedFileName(`Snowflake: ${queryType === 'table' ? snowflakeQuery : 'Custom Query'}`);
+          setShowUploadSuccess(true);
+
+          // Close modal and reset form
+          setShowSnowflakeModal(false);
+          setSnowflakeQuery('');
+          setQueryType('table');
+
+          console.log(`Successfully imported ${data.length} rows from Snowflake`);
+        } else {
+          alert('No data returned from Snowflake query.');
+        }
+      } else {
+        // Handle API errors
+        const errorMessage = result.error || 'Unknown error occurred';
+        alert(`Snowflake import failed:\n${errorMessage}`);
+        console.error('Snowflake import error:', result);
+      }
 
     } catch (error) {
       console.error('Snowflake import error:', error);
-      alert('Error importing from Snowflake. Please check your query and try again.');
+
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        alert('Unable to connect to Snowflake API server.\nPlease ensure the Flask API is running on localhost:5000');
+      } else {
+        alert('Error importing from Snowflake. Please check your query and try again.');
+      }
     }
   }, [snowflakeQuery, queryType]);
 
