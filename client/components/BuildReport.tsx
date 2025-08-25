@@ -1178,17 +1178,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           id: 'test',
           chartType: 'pie',
           title: '',
-          gridPosition: { x, y, width, height },
+          gridPosition: { x: currentX, y: currentY, width, height },
           isConfiguring: false,
           dimension: '',
           measure: '',
           yAxisScale: 'linear',
         };
-        
+
         if (!checkOverlap(testCard)) {
-          return { x, y };
+          return { x: currentX, y: currentY };
         }
+
+        // Move to next position with proper spacing
+        currentX += width + cardGap;
       }
+      // Move to next row with proper spacing
+      currentY += height + cardGap;
     }
     
     // Fallback to default position if no space found
