@@ -5118,12 +5118,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     <button
                       onClick={() => setConfiguringCard(card.id)}
                       className="p-1 hover:bg-white/20 rounded transition-colors"
+                      title="Configure chart"
                     >
                       <Settings className="w-4 h-4 text-white/70" />
                     </button>
                     <button
+                      onClick={() => duplicateCard(card.id)}
+                      className="p-1 hover:bg-blue-500/20 rounded transition-colors"
+                      title="Duplicate card"
+                    >
+                      <Copy className="w-4 h-4 text-blue-400" />
+                    </button>
+                    <button
                       onClick={() => deleteCard(card.id)}
                       className="p-1 hover:bg-red-500/20 rounded transition-colors"
+                      title="Delete card"
                     >
                       <X className="w-4 h-4 text-red-400" />
                     </button>
