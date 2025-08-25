@@ -20,7 +20,25 @@ const Index: React.FC = () => {
       setLoadedReportState(undefined);
     }
     setCurrentPage(page);
+    // Auto-close navigation on mobile after selection
+    if (window.innerWidth < 1024) {
+      setNavigationCollapsed(true);
+    }
   };
+
+  // Handle window resize for responsive navigation
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setNavigationCollapsed(true);
+      } else {
+        setNavigationCollapsed(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderCurrentPage = () => {
     switch (currentPage) {
