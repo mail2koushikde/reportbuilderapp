@@ -1285,8 +1285,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       rows = 2;
     }
 
-    // Define gap between cards (in grid units)
-    const cardGap = 1;
+    // Define gap between cards (in grid units) - consistent with addCard gap
+    const cardGap = 0.5;
 
     // Calculate available space after accounting for gaps
     const totalGapCols = (cols - 1) * cardGap;
