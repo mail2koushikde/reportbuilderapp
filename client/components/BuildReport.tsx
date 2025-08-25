@@ -1205,8 +1205,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           setColumns(columns);
           setImportedData(data);
 
-          // Show success popup
-          setUploadedFileName(`Snowflake: ${queryType === 'table' ? snowflakeQuery : 'Custom Sql'}`);
+          // Set both display filename and success popup filename
+          const displayName = `Snowflake: ${queryType === 'table' ? snowflakeQuery : 'Custom Sql'}`;
+          setFileName(displayName);
+          setUploadedFileName(displayName);
           setShowUploadSuccess(true);
 
           // Close modal and reset form
