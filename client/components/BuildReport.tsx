@@ -159,8 +159,8 @@ const SAMPLE_DATA = [
 ];
 
 const GRID_SIZE = 25; // Grid cell size in pixels
-const GRID_COLS = 40; // Increased for more horizontal space
-const GRID_ROWS = 30; // Increased for more vertical space
+const DEFAULT_GRID_COLS = 40; // Default grid columns
+const DEFAULT_GRID_ROWS = 30; // Default grid rows
 
 // Custom label renderer for pie chart
 const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, labelFontSize = 10) => {
