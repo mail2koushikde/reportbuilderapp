@@ -1149,6 +1149,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, []);
 
+  // Snowflake data import functionality
+  const handleSnowflakeImport = useCallback(async () => {
+    if (!snowflakeQuery.trim()) return;
+
+    try {
+      // For now, this is a placeholder - you'll need to integrate with your Snowflake API
+      // The query could be either a table name or a SQL query depending on queryType
+      const query = queryType === 'table'
+        ? `SELECT * FROM ${snowflakeQuery} LIMIT 1000`
+        : snowflakeQuery;
+
+      // This would be your actual Snowflake API call
+      console.log('Snowflake Query:', query);
+
+      // Placeholder: Show success message for now
+      alert(`Snowflake import initiated!\nQuery Type: ${queryType}\nQuery: ${query}\n\nNote: This is a placeholder. Connect your Snowflake API here.`);
+
+      // Close modal and reset form
+      setShowSnowflakeModal(false);
+      setSnowflakeQuery('');
+      setQueryType('table');
+
+    } catch (error) {
+      console.error('Snowflake import error:', error);
+      alert('Error importing from Snowflake. Please check your query and try again.');
+    }
+  }, [snowflakeQuery, queryType]);
+
   // Check for overlaps
   const checkOverlap = useCallback((newCard: DashboardCard, excludeId?: string) => {
     const gapSize = 0.25; // Quarter grid gap between cards
