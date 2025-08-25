@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently \"npm run dev\" \"npm run api\"",
-    "api": "cd api && python start.py",
+    "api": "cd api && python3 start.py",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
