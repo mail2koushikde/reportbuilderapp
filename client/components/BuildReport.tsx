@@ -1219,11 +1219,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     } catch (error) {
       console.error('Snowflake import error:', error);
 
-      // Check if it's a network error
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        alert('Unable to connect to Snowflake API server.\nPlease ensure the Flask API is running on localhost:5000');
+      // Check for specific error types
+      if (error instanceof TypeError) {
+        if (error.message.includes('fetch')) {
+          alert('Unable to connect to Snowflake API server.\nPlease ensure the server is running and accessible.');
+        } else if (error.message.includes('body stream already read')) {
+          alert('Response parsing error. This may be a temporary network issue.\nPlease try again.');
+        } else {
+          alert(`Network or parsing error: ${error.message}\nPlease try again or check the console for details.`);
+        }
       } else {
-        alert('Error importing from Snowflake. Please check your query and try again.');
+        alert('Error importing from Snowflake. Please check your query and try again.\nSee console for details.');
       }
     }
   }, [snowflakeQuery, queryType]);
