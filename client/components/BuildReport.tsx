@@ -1282,9 +1282,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       rows = 2;
     }
 
-    // Calculate optimal card size to fill the grid
-    const cardWidth = Math.floor(GRID_COLS / cols);
-    const cardHeight = Math.floor(GRID_ROWS / rows);
+    // Define gap between cards (in grid units)
+    const cardGap = 1;
+
+    // Calculate available space after accounting for gaps
+    const totalGapCols = (cols - 1) * cardGap;
+    const totalGapRows = (rows - 1) * cardGap;
+    const availableCols = GRID_COLS - totalGapCols;
+    const availableRows = GRID_ROWS - totalGapRows;
+
+    // Calculate optimal card size to fill the available grid space
+    const cardWidth = Math.floor(availableCols / cols);
+    const cardHeight = Math.floor(availableRows / rows);
 
     // Ensure minimum size constraints
     const minCardWidth = Math.max(3, cardWidth);
@@ -1295,9 +1304,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       const col = index % cols;
       const row = Math.floor(index / cols);
 
-      // Calculate position with some spacing if possible
-      const x = col * minCardWidth;
-      const y = row * minCardHeight;
+      // Calculate position with gaps between cards
+      const x = col * (minCardWidth + cardGap);
+      const y = row * (minCardHeight + cardGap);
 
       return {
         ...card,
