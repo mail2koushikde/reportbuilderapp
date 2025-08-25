@@ -59,16 +59,31 @@ const Index: React.FC = () => {
         currentPage === 'build-report' ? 'min-h-[98vh]' : 'h-[98vh]'
       }`}>
         {/* Navigation Panel */}
-        <div className={`${navigationCollapsed ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300' : 'relative'} ${!navigationCollapsed && 'lg:relative'}`}>
-          {!navigationCollapsed && (
-            <Navigation
-              isCollapsed={navigationCollapsed}
-              currentPage={currentPage}
-              onToggleCollapse={() => setNavigationCollapsed(!navigationCollapsed)}
-              onPageChange={handlePageChange}
+        <>
+          {/* Mobile backdrop */}
+          {!navigationCollapsed && window.innerWidth < 1024 && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              onClick={() => setNavigationCollapsed(true)}
             />
           )}
-        </div>
+
+          {/* Navigation */}
+          <div className={`${
+            navigationCollapsed
+              ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300 lg:relative lg:transform-none'
+              : 'fixed inset-y-0 left-0 z-50 transition-transform duration-300 lg:relative lg:z-auto'
+          }`}>
+            {!navigationCollapsed && (
+              <Navigation
+                isCollapsed={navigationCollapsed}
+                currentPage={currentPage}
+                onToggleCollapse={() => setNavigationCollapsed(!navigationCollapsed)}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
+        </>
 
         {/* Main Content Area */}
         <main className={`glass-card rounded-3xl flex-1 flex flex-col min-w-0 ${
