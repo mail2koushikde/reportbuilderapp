@@ -1163,15 +1163,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
 
       // Choose endpoint based on test mode
-      // For Builder.io fly.dev environment, use the backend server
-      const isBuilderEnv = window.location.hostname.includes('.fly.dev');
-      const apiBaseUrl = isBuilderEnv
-        ? ''  // Use relative path to the same server
-        : 'http://localhost:5000';
+      let endpoint;
 
-      const endpoint = testMode
-        ? `${apiBaseUrl}/api/snowflake/test-import`
-        : `${apiBaseUrl}/api/snowflake/import`;
+      if (testMode) {
+        // Test mode: Use embedded Express.js server
+        const isBuilderEnv = window.location.hostname.includes('.fly.dev');
+        const apiBaseUrl = isBuilderEnv ? '' : 'http://localhost:3000';
+        endpoint = `${apiBaseUrl}/api/snowflake/test-import`;
+      } else {
+        // Production mode: Use Python API server
+        const pythonApiBaseUrl = 'http://localhost:5000';
+        endpoint = `${pythonApiBaseUrl}/api/snowflake/import`;
+      }
 
       // Call the API
       const response = await fetch(endpoint, {
