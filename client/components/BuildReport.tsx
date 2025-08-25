@@ -1302,6 +1302,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         // Table can show all data, but set first dimension for grouping if needed
         return { dimension, measure: '', dimension2: '', seriesColumn: '' };
 
+      case 'none':
+        // Empty chart type - clear all selections
+        return { dimension: '', measure: '', dimension2: '', seriesColumn: '' };
+
       default:
         // Pie, bar charts need dimension and measure
         return { dimension, measure, dimension2: '', seriesColumn: '' };
