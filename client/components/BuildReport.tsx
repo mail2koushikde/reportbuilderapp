@@ -1361,7 +1361,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse response as JSON:', jsonError);
+        throw new Error(`Server response was not valid JSON. Status: ${response.status}`);
+      }
 
       if (response.ok && result.success) {
         // Success: load data into state for immediate visualization
