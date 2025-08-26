@@ -1351,7 +1351,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         alert('Error importing from Snowflake. Please check your query and try again.\nSee console for details.');
       }
     }
-  }, [snowflakeQuery, queryType, cacheEnabled]);
+  }, [snowflakeQuery, queryType]);
 
   // Cache management functions
   const toggleCache = useCallback(async () => {
