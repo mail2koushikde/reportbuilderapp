@@ -41,6 +41,7 @@ import {
   Line,
 } from "recharts";
 import { storageService } from '../services/storageService';
+import { cacheService, CachedData } from '../services/cacheService';
 
 interface TextBox {
   id: string;
