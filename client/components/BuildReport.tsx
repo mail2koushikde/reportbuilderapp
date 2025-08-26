@@ -1190,12 +1190,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     fileInputRef.current?.click();
   }, []);
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
       setFileName(file.name);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const text = e.target?.result as string;
         const lines = text.split('\n');
         const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
@@ -1211,9 +1211,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             });
             return row;
           });
-        
+
         setColumns(headers);
         setImportedData(data);
+
+        // Cache data if caching is enabled
+        if (cacheEnabled) {
+          try {
+            await cacheService.cacheData(data, headers, 'file', file.name);
+            setHasCachedData(true);
+            const info = await cacheService.getStorageInfo();
+            setCacheInfo(info);
+          } catch (error) {
+            console.error('Error caching file data:', error);
+          }
+        }
 
         // Show success popup
         setUploadedFileName(file.name);
@@ -1221,7 +1233,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
       reader.readAsText(file);
     }
-  }, []);
+  }, [cacheEnabled]);
 
   // Snowflake data import functionality
   const handleSnowflakeImport = useCallback(async () => {
