@@ -5054,7 +5054,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <span className="text-xs sm:text-sm text-blue-300 font-light ml-1 sm:ml-2 truncate max-w-48 sm:max-w-64 lg:max-w-80">
                   | {fileName} {importedData.length > 0 && columns.length > 0 && (
                     <span className="text-white/50">
-                      ({importedData.length} rows, {columns.length} cols)
+                      • {importedData.length} rows • {columns.length} cols
                     </span>
                   )}
                 </span>
