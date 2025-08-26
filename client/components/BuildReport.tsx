@@ -1234,15 +1234,75 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             return row;
           });
 
-        setColumns(headers);
-        setImportedData(data);
+        if (data.length === 0) {
+          console.error('No data found in CSV file');
+          setColumns(headers);
+          setImportedData([]);
+          setUploadedFileName(`${file.name} (No data)`);
+          setShowUploadSuccess(true);
+          return;
+        }
 
-        // Disable cache when new dataset is loaded - user must explicitly choose to cache
-        setCacheEnabled(false);
+        // Generate table name with prefix for user uploads
+        const timestamp = Date.now();
+        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
+        const tableName = `user_uploads_${timestamp}_${sanitizedFileName}`;
 
-        // Show success popup
-        setUploadedFileName(file.name);
-        setShowUploadSuccess(true);
+        try {
+          // Save data to database
+          const response = await fetch(`/api/database/tables/${tableName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              data: data,
+              overwrite: false
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            // Success: load data into state for immediate visualization and show success
+            setColumns(headers);
+            setImportedData(data);
+
+            // Disable cache when new dataset is loaded - user must explicitly choose to cache
+            setCacheEnabled(false);
+
+            // Show success popup with database table name
+            setUploadedFileName(`${file.name} → ${tableName}`);
+            setShowUploadSuccess(true);
+
+            console.log(`File uploaded successfully to database table: ${tableName}`, {
+              rowCount: result.rowCount,
+              columns: result.columns
+            });
+          } else {
+            console.error('Failed to save to database:', result.error);
+
+            // Fallback: still load data into state for immediate use
+            setColumns(headers);
+            setImportedData(data);
+            setCacheEnabled(false);
+
+            // Show warning that database save failed but data is available locally
+            setUploadedFileName(`${file.name} (DB save failed - using locally)`);
+            setShowUploadSuccess(true);
+          }
+        } catch (error) {
+          console.error('Error saving to database:', error);
+
+          // Fallback: still load data into state for immediate use
+          setColumns(headers);
+          setImportedData(data);
+          setCacheEnabled(false);
+
+          // Show warning that database save failed but data is available locally
+          setUploadedFileName(`${file.name} (DB save failed - using locally)`);
+          setShowUploadSuccess(true);
+        }
       };
       reader.readAsText(file);
     }
