@@ -1252,69 +1252,51 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           return;
         }
 
-        // Generate table name with prefix for user uploads
-        const timestamp = Date.now();
-        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
-        const tableName = `user_uploads_${timestamp}_${sanitizedFileName}`;
-
+        // Check for file conflicts before uploading
         try {
-          // Save data to database with metadata
-          const response = await fetch(`/api/database/tables/${tableName}`, {
+          const conflictResponse = await fetch('/api/database/uploads/check-conflict', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              data: data,
-              overwrite: false,
-              metadata: {
-                user_name: 'mail2koushikde@gmail.com', // TODO: Get from actual user context
-                original_filename: file.name,
-                file_size_bytes: file.size
-              }
+              user_name: 'mail2koushikde@gmail.com', // TODO: Get from actual user context
+              original_filename: file.name
             }),
           });
 
-          const result = await response.json();
+          const conflictResult = await conflictResponse.json();
 
-          if (response.ok && result.success) {
-            // Success: load data into state for immediate visualization and show success
-            setColumns(headers);
-            setImportedData(data);
-
-            // Disable cache when new dataset is loaded - user must explicitly choose to cache
-            setCacheEnabled(false);
-
-            // Show success popup with database table name
-            setUploadedFileName(`${file.name} → ${tableName}`);
-            setShowUploadSuccess(true);
-
-            console.log(`File uploaded successfully to database table: ${tableName}`, {
-              rowCount: result.rowCount,
-              columns: result.columns
-            });
+          if (conflictResponse.ok && conflictResult.success) {
+            if (conflictResult.conflict) {
+              // File already exists, show version dialog
+              setPendingUpload({
+                file,
+                headers,
+                data,
+                conflict: conflictResult
+              });
+              setShowVersionDialog(true);
+            } else {
+              // No conflict, proceed with upload
+              await uploadFileToDatabase(file, headers, data, 1);
+            }
           } else {
-            console.error('Failed to save to database:', result.error);
-
-            // Fallback: still load data into state for immediate use
+            console.error('Failed to check conflict:', conflictResult.error);
+            // Fallback to local loading
             setColumns(headers);
             setImportedData(data);
             setCacheEnabled(false);
-
-            // Show warning that database save failed but data is available locally
-            setUploadedFileName(`${file.name} (DB save failed - using locally)`);
+            setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
             setShowUploadSuccess(true);
           }
         } catch (error) {
-          console.error('Error saving to database:', error);
-
-          // Fallback: still load data into state for immediate use
+          console.error('Error checking conflict:', error);
+          // Fallback to local loading
           setColumns(headers);
           setImportedData(data);
           setCacheEnabled(false);
-
-          // Show warning that database save failed but data is available locally
-          setUploadedFileName(`${file.name} (DB save failed - using locally)`);
+          setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
           setShowUploadSuccess(true);
         }
       };
