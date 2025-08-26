@@ -1249,7 +1249,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         const tableName = `user_uploads_${timestamp}_${sanitizedFileName}`;
 
         try {
-          // Save data to database
+          // Save data to database with metadata
           const response = await fetch(`/api/database/tables/${tableName}`, {
             method: 'POST',
             headers: {
@@ -1257,7 +1257,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             },
             body: JSON.stringify({
               data: data,
-              overwrite: false
+              overwrite: false,
+              metadata: {
+                user_name: 'mail2koushikde@gmail.com', // TODO: Get from actual user context
+                original_filename: file.name,
+                file_size_bytes: file.size
+              }
             }),
           });
 
