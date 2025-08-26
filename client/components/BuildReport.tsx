@@ -1297,6 +1297,26 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           const displayName = `Snowflake: ${queryType === 'table' ? snowflakeQuery : 'Custom Sql'}`;
           setFileName(displayName);
           setUploadedFileName(displayName);
+
+          // Cache data if caching is enabled
+          if (cacheEnabled) {
+            try {
+              await cacheService.cacheData(
+                data,
+                columns,
+                'snowflake',
+                displayName,
+                snowflakeQuery.trim(),
+                queryType
+              );
+              setHasCachedData(true);
+              const info = await cacheService.getStorageInfo();
+              setCacheInfo(info);
+            } catch (error) {
+              console.error('Error caching Snowflake data:', error);
+            }
+          }
+
           setShowUploadSuccess(true);
 
           // Close modal and reset form
