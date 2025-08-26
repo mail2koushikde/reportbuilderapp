@@ -1,0 +1,230 @@
+import { Request, Response, Router } from "express";
+import { databaseService } from "../database/database-service";
+
+const router = Router();
+
+// Health check endpoint
+router.get("/health", async (_req: Request, res: Response) => {
+  try {
+    const isHealthy = await databaseService.testConnection();
+    const dbType = databaseService.getDatabaseType();
+    const config = databaseService.getConfig();
+    
+    res.json({ 
+      status: isHealthy ? "healthy" : "unhealthy", 
+      service: "database-api",
+      databaseType: dbType,
+      config: config
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: "error", 
+      service: "database-api", 
+      error: String(error) 
+    });
+  }
+});
+
+// Get all tables
+router.get("/tables", async (_req: Request, res: Response) => {
+  try {
+    const tables = await databaseService.getTables();
+    res.json({
+      success: true,
+      tables: tables.map(name => ({ 
+        TABLE_NAME: name, 
+        TABLE_SCHEMA: "PUBLIC", 
+        TABLE_TYPE: "TABLE" 
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching tables:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to fetch tables: ${error}` 
+    });
+  }
+});
+
+// Get table schema
+router.get("/tables/:tableName/schema", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const columns = await databaseService.getTableSchema(tableName);
+    res.json({
+      success: true,
+      columns: columns
+    });
+  } catch (error) {
+    console.error('Error fetching table schema:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to fetch table schema: ${error}` 
+    });
+  }
+});
+
+// Get table data
+router.get("/tables/:tableName/data", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 1000;
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+    
+    const result = await databaseService.getTableData(tableName, limit, offset);
+    
+    res.json({
+      success: true,
+      data: result.data,
+      columns: result.columns,
+      rowCount: result.rowCount,
+      query: `SELECT * FROM ${tableName}`,
+      limit,
+      offset
+    });
+  } catch (error) {
+    console.error('Error fetching table data:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to fetch table data: ${error}` 
+    });
+  }
+});
+
+// Execute custom SQL query
+router.post("/query", async (req: Request, res: Response) => {
+  try {
+    const { sql, params } = req.body;
+    
+    if (!sql || typeof sql !== 'string') {
+      return res.status(400).json({ 
+        success: false, 
+        error: "SQL query is required" 
+      });
+    }
+    
+    // Basic security check - only allow SELECT statements for now
+    const trimmedSql = sql.trim().toLowerCase();
+    if (!trimmedSql.startsWith('select')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Only SELECT queries are allowed" 
+      });
+    }
+    
+    const result = await databaseService.query(sql, params);
+    
+    res.json({
+      success: true,
+      data: result.data,
+      columns: result.columns,
+      rowCount: result.rowCount,
+      query: sql
+    });
+  } catch (error) {
+    console.error('Error executing query:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Query execution failed: ${error}` 
+    });
+  }
+});
+
+// Create table from uploaded data
+router.post("/tables/:tableName", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const { data, overwrite = false } = req.body;
+    
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Data array is required and cannot be empty" 
+      });
+    }
+    
+    // Validate table name (basic sanitization)
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Invalid table name. Use only letters, numbers, and underscores." 
+      });
+    }
+    
+    await databaseService.createTableFromData(tableName, data, overwrite);
+    
+    res.json({
+      success: true,
+      message: `Table '${tableName}' created successfully`,
+      tableName,
+      rowCount: data.length,
+      columns: Object.keys(data[0])
+    });
+  } catch (error) {
+    console.error('Error creating table:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to create table: ${error}` 
+    });
+  }
+});
+
+// Insert data into existing table
+router.post("/tables/:tableName/data", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const { data } = req.body;
+    
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Data array is required and cannot be empty" 
+      });
+    }
+    
+    // Check if table exists
+    const exists = await databaseService.tableExists(tableName);
+    if (!exists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `Table '${tableName}' does not exist` 
+      });
+    }
+    
+    await databaseService.insertData(tableName, data);
+    
+    res.json({
+      success: true,
+      message: `Data inserted into '${tableName}' successfully`,
+      rowCount: data.length
+    });
+  } catch (error) {
+    console.error('Error inserting data:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to insert data: ${error}` 
+    });
+  }
+});
+
+// Check if table exists
+router.get("/tables/:tableName/exists", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const exists = await databaseService.tableExists(tableName);
+    
+    res.json({
+      success: true,
+      exists,
+      tableName
+    });
+  } catch (error) {
+    console.error('Error checking table existence:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to check table existence: ${error}` 
+    });
+  }
+});
+
+export default router;
