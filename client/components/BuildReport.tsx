@@ -6479,8 +6479,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
       {/* Caching Progress Dialog */}
       {showCachingDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div className="fixed top-0 right-0 left-0 z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md mx-auto mt-16">
             <div className="text-center">
               {/* Caching Icon with Animation */}
               <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
