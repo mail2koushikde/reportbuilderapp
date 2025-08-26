@@ -1361,9 +1361,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   }, [snowflakeQuery, queryType, cacheEnabled]);
 
   // Cache management functions
-  const toggleCache = useCallback(() => {
-    setCacheEnabled(!cacheEnabled);
-  }, [cacheEnabled]);
+  const toggleCache = useCallback(async () => {
+    const newCacheEnabled = !cacheEnabled;
+    setCacheEnabled(newCacheEnabled);
+
+    // If enabling cache and there's current data, cache it
+    if (newCacheEnabled && importedData.length > 0 && columns.length > 0) {
+      try {
+        const source = fileName.startsWith('Snowflake:') ? 'snowflake' : 'file';
+        await cacheService.cacheData(
+          importedData,
+          columns,
+          source,
+          fileName,
+          fileName.startsWith('Snowflake:') ? fileName.replace('Snowflake: ', '') : undefined,
+          fileName.includes('Custom Sql') ? 'sql' : 'table'
+        );
+        setHasCachedData(true);
+        const info = await cacheService.getStorageInfo();
+        setCacheInfo(info);
+      } catch (error) {
+        console.error('Error caching current data:', error);
+      }
+    }
+  }, [cacheEnabled, importedData, columns, fileName]);
 
   const clearCache = useCallback(async () => {
     if (window.confirm('Are you sure you want to clear all cached data? This action cannot be undone.')) {
