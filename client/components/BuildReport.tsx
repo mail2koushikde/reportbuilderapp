@@ -1096,6 +1096,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [cacheEnabled, setCacheEnabled] = useState(false);
   const [hasCachedData, setHasCachedData] = useState(false);
   const [cacheInfo, setCacheInfo] = useState({ count: 0, size: 0 });
+  const [showCachingDialog, setShowCachingDialog] = useState(false);
+  const [cachingStatus, setCachingStatus] = useState('');
 
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
