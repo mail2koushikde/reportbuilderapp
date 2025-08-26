@@ -1307,24 +1307,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           setFileName(displayName);
           setUploadedFileName(displayName);
 
-          // Cache data if caching is enabled
-          if (cacheEnabled) {
-            try {
-              await cacheService.cacheData(
-                data,
-                columns,
-                'snowflake',
-                displayName,
-                snowflakeQuery.trim(),
-                queryType
-              );
-              setHasCachedData(true);
-              const info = await cacheService.getStorageInfo();
-              setCacheInfo(info);
-            } catch (error) {
-              console.error('Error caching Snowflake data:', error);
-            }
-          }
+          // Disable cache when new dataset is loaded - user must explicitly choose to cache
+          setCacheEnabled(false);
 
           setShowUploadSuccess(true);
 
