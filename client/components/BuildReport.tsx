@@ -1125,6 +1125,36 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [loadedReportState]);
 
+  // Initialize cache service and check for cached data
+  useEffect(() => {
+    const initCache = async () => {
+      try {
+        await cacheService.init();
+        const cached = await cacheService.hasCachedData();
+        setHasCachedData(cached);
+
+        const info = await cacheService.getStorageInfo();
+        setCacheInfo(info);
+
+        // Load cached data if available and no imported data
+        if (cached && importedData.length === 0) {
+          const cachedData = await cacheService.getCachedData();
+          if (cachedData) {
+            setImportedData(cachedData.data);
+            setColumns(cachedData.columns);
+            if (cachedData.fileName) {
+              setFileName(cachedData.fileName);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing cache:', error);
+      }
+    };
+
+    initCache();
+  }, []);
+
   // Responsive grid dimensions based on screen size
   useEffect(() => {
     const calculateDimensions = () => {
