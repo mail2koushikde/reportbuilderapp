@@ -1248,6 +1248,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           console.error('No data found in CSV file');
           setColumns(headers);
           setImportedData([]);
+
+          // Update filename without version for no data case
+          const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+          setFileName(fileNameWithoutExt);
+          setCurrentFileVersion(null); // No version for empty files
+
           setUploadedFileName(`${file.name} (No data)`);
           setShowUploadSuccess(true);
           return;
