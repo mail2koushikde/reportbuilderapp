@@ -1349,6 +1349,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         setImportedData(data);
         setCacheEnabled(false);
 
+        // Update filename and version in header
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+
         // Show success popup with versioned display name
         const displayName = result.metadata?.display_name || `${file.name} (v${version})`;
         setUploadedFileName(displayName);
