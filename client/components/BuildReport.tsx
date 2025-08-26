@@ -1270,11 +1270,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           if (conflictResponse.ok && conflictResult.success) {
             if (conflictResult.conflict) {
               // File already exists, show version dialog
+              // Ensure conflict data has required properties with fallbacks
+              const safeConflictResult = {
+                ...conflictResult,
+                existing_versions: conflictResult.existing_versions || [],
+                next_version: conflictResult.next_version || 1
+              };
+
               setPendingUpload({
                 file,
                 headers,
                 data,
-                conflict: conflictResult
+                conflict: safeConflictResult
               });
               setShowVersionDialog(true);
             } else {
