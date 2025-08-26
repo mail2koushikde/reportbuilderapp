@@ -130,6 +130,38 @@ router.post("/query", async (req: Request, res: Response) => {
   }
 });
 
+// Check for file conflicts before upload
+router.post("/uploads/check-conflict", async (req: Request, res: Response) => {
+  try {
+    const { user_name, original_filename } = req.body;
+
+    if (!user_name || !original_filename) {
+      return res.status(400).json({
+        success: false,
+        error: "user_name and original_filename are required"
+      });
+    }
+
+    const conflictInfo = await databaseService.checkFileExists(user_name, original_filename);
+
+    res.json({
+      success: true,
+      conflict: conflictInfo.exists,
+      user_name,
+      original_filename,
+      existing_versions: conflictInfo.versions,
+      next_version: conflictInfo.nextVersion,
+      suggested_action: conflictInfo.exists ? 'ask_user' : 'proceed'
+    });
+  } catch (error) {
+    console.error('Error checking file conflict:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to check file conflict: ${error}`
+    });
+  }
+});
+
 // Create table from uploaded data
 router.post("/tables/:tableName", async (req: Request, res: Response) => {
   try {
