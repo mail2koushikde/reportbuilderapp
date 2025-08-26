@@ -1295,6 +1295,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             setColumns(headers);
             setImportedData(data);
             setCacheEnabled(false);
+
+            // Update filename without version for local-only loading
+            const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+            setFileName(fileNameWithoutExt);
+            setCurrentFileVersion(null); // No version for local-only loading
+
             setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
             setShowUploadSuccess(true);
           }
