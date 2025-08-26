@@ -6539,6 +6539,46 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         </div>
       )}
 
+      {/* Clear Cache Progress Dialog */}
+      {showClearingDialog && (
+        <div className="fixed top-0 right-0 left-0 z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md mx-auto mt-16">
+            <div className="text-center">
+              {/* Clearing Icon with Animation */}
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash className="w-8 h-8 text-red-400 animate-pulse" />
+              </div>
+
+              {/* Status Message */}
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Clearing Cache
+              </h3>
+              <p className="text-white/70 text-sm mb-4">
+                {clearingStatus}
+              </p>
+
+              {/* Progress Indicator */}
+              <div className="w-full bg-white/10 rounded-full h-2 mb-4">
+                <div className="bg-red-400 h-2 rounded-full animate-pulse" style={{
+                  width: clearingStatus.includes('Initializing') ? '20%' :
+                         clearingStatus.includes('Removing') ? '40%' :
+                         clearingStatus.includes('Clearing IndexedDB') ? '60%' :
+                         clearingStatus.includes('Updating application') ? '80%' :
+                         clearingStatus.includes('Clearing current') ? '90%' :
+                         clearingStatus.includes('successfully') ? '100%' : '0%',
+                  transition: 'width 0.3s ease-in-out'
+                }}></div>
+              </div>
+
+              {/* Info Text */}
+              <p className="text-xs text-white/50">
+                Please wait while your cached data is being removed...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* File Upload Success Popup */}
       {showUploadSuccess && (
         <div className="fixed top-0 right-0 left-0 z-50 p-4">
