@@ -1242,6 +1242,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
       reader.readAsText(file);
     }
+
+    // Reset file input to allow uploading the same file again
+    if (event.target) {
+      event.target.value = '';
+    }
   }, []);
 
   // Snowflake data import functionality
