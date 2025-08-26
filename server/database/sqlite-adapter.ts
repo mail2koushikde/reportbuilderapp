@@ -1,8 +1,10 @@
-import { Database } from 'sqlite3';
+import sqlite3Pkg from 'sqlite3';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import { IDatabase, DatabaseConfig, QueryResult } from './interface';
+
+const { Database } = sqlite3Pkg;
 
 export class SQLiteAdapter implements IDatabase {
   private db: Database | null = null;
