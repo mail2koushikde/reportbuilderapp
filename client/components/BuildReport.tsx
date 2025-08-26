@@ -6608,6 +6608,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               </h3>
               <p className="text-white/70 text-sm mb-6">
                 "{uploadedFileName}" has been imported and is ready to use.
+                {importedData.length > 0 && columns.length > 0 && (
+                  <span className="block text-white/50 text-xs mt-1">
+                    {importedData.length} rows, {columns.length} columns
+                  </span>
+                )}
               </p>
 
               {/* OK Button */}
