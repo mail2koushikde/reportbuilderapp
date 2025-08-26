@@ -1233,17 +1233,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         setColumns(headers);
         setImportedData(data);
 
-        // Cache data if caching is enabled
-        if (cacheEnabled) {
-          try {
-            await cacheService.cacheData(data, headers, 'file', file.name);
-            setHasCachedData(true);
-            const info = await cacheService.getStorageInfo();
-            setCacheInfo(info);
-          } catch (error) {
-            console.error('Error caching file data:', error);
-          }
-        }
+        // Disable cache when new dataset is loaded - user must explicitly choose to cache
+        setCacheEnabled(false);
 
         // Show success popup
         setUploadedFileName(file.name);
