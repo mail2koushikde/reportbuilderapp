@@ -1095,6 +1095,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     data: DataRow[];
     conflict: any;
   } | null>(null);
+  const [overwriteLoading, setOverwriteLoading] = useState(false);
+  const [newVersionLoading, setNewVersionLoading] = useState(false);
 
   // Snowflake modal state
   const [showSnowflakeModal, setShowSnowflakeModal] = useState(false);
