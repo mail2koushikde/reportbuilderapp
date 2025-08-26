@@ -6470,6 +6470,45 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         </div>
       )}
 
+      {/* Caching Progress Dialog */}
+      {showCachingDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+            <div className="text-center">
+              {/* Caching Icon with Animation */}
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <HardDrive className="w-8 h-8 text-blue-400 animate-pulse" />
+              </div>
+
+              {/* Status Message */}
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Caching Data
+              </h3>
+              <p className="text-white/70 text-sm mb-4">
+                {cachingStatus}
+              </p>
+
+              {/* Progress Indicator */}
+              <div className="w-full bg-white/10 rounded-full h-2 mb-4">
+                <div className="bg-blue-400 h-2 rounded-full animate-pulse" style={{
+                  width: cachingStatus.includes('Initializing') ? '20%' :
+                         cachingStatus.includes('Preparing') ? '40%' :
+                         cachingStatus.includes('Storing') ? '60%' :
+                         cachingStatus.includes('Updating') ? '80%' :
+                         cachingStatus.includes('completed') ? '100%' : '0%',
+                  transition: 'width 0.3s ease-in-out'
+                }}></div>
+              </div>
+
+              {/* Info Text */}
+              <p className="text-xs text-white/50">
+                Please wait while your data is being cached...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* File Upload Success Popup */}
       {showUploadSuccess && (
         <div className="fixed top-0 right-0 left-0 z-50 p-4">
