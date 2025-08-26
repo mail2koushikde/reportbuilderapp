@@ -237,6 +237,20 @@ router.post("/tables/:tableName", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error creating table:', error);
+
+    // Handle specific constraint violations
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errorMessage = error.message as string;
+
+      if (errorMessage.includes('UNIQUE constraint failed: user_uploads_metadata')) {
+        return res.status(409).json({
+          success: false,
+          error: `A file with this name and version already exists. Please use overwrite option or create a new version.`,
+          constraint_violation: true
+        });
+      }
+    }
+
     res.status(500).json({
       success: false,
       error: `Failed to create table: ${error}`
