@@ -1724,6 +1724,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         cards: optimizedCards,
         hideControls: hideControls,
         importedData: optimizedImportedData,
+        cacheInfo: hasCachedData ? {
+          sessionId: cacheService.getSessionId(),
+          fileName,
+          hasCachedData
+        } : undefined,
       },
       chartCount: cards.length,
       chartTypes: chartTypes,
