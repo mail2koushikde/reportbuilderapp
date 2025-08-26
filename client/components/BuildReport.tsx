@@ -4986,6 +4986,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   | {fileName}
                 </span>
               )}
+              {hasCachedData && (
+                <span className="text-xs text-green-400 font-light ml-2 flex items-center gap-1" title={`Cached data available (${cacheInfo.count} items)`}>
+                  <HardDrive className="w-3 h-3" />
+                  Cached
+                </span>
+              )}
             </h1>
           </div>
           <div className="flex items-center gap-4">
