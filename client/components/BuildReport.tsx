@@ -1274,7 +1274,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             }),
           });
 
-          const conflictResult = await conflictResponse.json();
+          let conflictResult;
+          try {
+            conflictResult = await conflictResponse.json();
+          } catch (jsonError) {
+            console.error('Failed to parse conflict check response as JSON:', jsonError);
+            throw new Error(`Conflict check response was not valid JSON. Status: ${conflictResponse.status}`);
+          }
 
           if (conflictResponse.ok && conflictResult.success) {
             if (conflictResult.conflict) {
