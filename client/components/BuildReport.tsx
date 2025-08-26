@@ -1491,6 +1491,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const handleVersionCancel = useCallback(() => {
     setShowVersionDialog(false);
     setPendingUpload(null);
+    setOverwriteLoading(false);
+    setNewVersionLoading(false);
   }, []);
 
   // Snowflake data import functionality
