@@ -1368,6 +1368,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     // If enabling cache and there's current data, cache it
     if (newCacheEnabled && importedData.length > 0 && columns.length > 0) {
       try {
+        // Show caching dialog
+        setShowCachingDialog(true);
+        setCachingStatus('Initializing cache...');
+
+        // Simulate progress steps for better UX
+        setCachingStatus('Preparing data for caching...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        setCachingStatus('Storing data in IndexedDB...');
         const source = fileName.startsWith('Snowflake:') ? 'snowflake' : 'file';
         await cacheService.cacheData(
           importedData,
@@ -1377,11 +1386,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           fileName.startsWith('Snowflake:') ? fileName.replace('Snowflake: ', '') : undefined,
           fileName.includes('Custom Sql') ? 'sql' : 'table'
         );
+
+        setCachingStatus('Updating cache status...');
         setHasCachedData(true);
         const info = await cacheService.getStorageInfo();
         setCacheInfo(info);
+
+        setCachingStatus('Caching completed successfully!');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Auto-close dialog
+        setShowCachingDialog(false);
       } catch (error) {
         console.error('Error caching current data:', error);
+        setCachingStatus('Error occurred while caching data');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setShowCachingDialog(false);
       }
     }
   }, [cacheEnabled, importedData, columns, fileName]);
