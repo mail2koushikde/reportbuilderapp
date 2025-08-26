@@ -1350,7 +1350,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
         // Show success popup with versioned display name
         const displayName = result.metadata?.display_name || `${file.name} (v${version})`;
-        setUploadedFileName(`${displayName} → ${tableName}`);
+        setUploadedFileName(displayName);
         setShowUploadSuccess(true);
 
         console.log(`File uploaded successfully to database table: ${tableName}`, {
