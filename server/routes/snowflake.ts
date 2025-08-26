@@ -1,10 +1,22 @@
 import { Request, Response, Router } from "express";
+import { databaseService } from "../database/database-service";
 
 const router = Router();
 
 // Health check endpoint
-router.get("/health", (_req: Request, res: Response) => {
-  res.json({ status: "healthy", service: "snowflake-api" });
+router.get("/health", async (_req: Request, res: Response) => {
+  try {
+    const isHealthy = await databaseService.testConnection();
+    const dbType = databaseService.getDatabaseType();
+
+    res.json({
+      status: isHealthy ? "healthy" : "unhealthy",
+      service: "snowflake-api",
+      actualDatabase: dbType
+    });
+  } catch (error) {
+    res.json({ status: "error", service: "snowflake-api", error: String(error) });
+  }
 });
 
 // Test connection endpoint
