@@ -252,6 +252,21 @@ export class DatabaseService {
     );
   }
 
+  // Get metadata for a specific file version
+  async getFileMetadata(user_name: string, original_filename: string, version?: number): Promise<QueryResult> {
+    if (version) {
+      return this.query(
+        'SELECT * FROM user_uploads_metadata WHERE user_name = ? AND original_filename = ? AND version = ?',
+        [user_name, original_filename, version]
+      );
+    } else {
+      return this.query(
+        'SELECT * FROM user_uploads_metadata WHERE user_name = ? AND original_filename = ? ORDER BY version DESC',
+        [user_name, original_filename]
+      );
+    }
+  }
+
   // Update upload status
   async updateUploadStatus(table_name: string, status: 'success' | 'failed' | 'processing', notes?: string): Promise<void> {
     const updateSQL = notes
@@ -262,9 +277,28 @@ export class DatabaseService {
     await this.query(updateSQL, params);
   }
 
+  // Update upload status by user and filename
+  async updateUploadStatusByFile(user_name: string, original_filename: string, version: number, status: 'success' | 'failed' | 'processing', notes?: string): Promise<void> {
+    const updateSQL = notes
+      ? 'UPDATE user_uploads_metadata SET upload_status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE user_name = ? AND original_filename = ? AND version = ?'
+      : 'UPDATE user_uploads_metadata SET upload_status = ?, updated_at = CURRENT_TIMESTAMP WHERE user_name = ? AND original_filename = ? AND version = ?';
+
+    const params = notes ? [status, notes, user_name, original_filename, version] : [status, user_name, original_filename, version];
+    await this.query(updateSQL, params);
+  }
+
   // Delete metadata (when table is dropped)
   async deleteUploadMetadata(table_name: string): Promise<void> {
     await this.query('DELETE FROM user_uploads_metadata WHERE table_name = ?', [table_name]);
+  }
+
+  // Delete specific version metadata
+  async deleteFileMetadata(user_name: string, original_filename: string, version?: number): Promise<void> {
+    if (version) {
+      await this.query('DELETE FROM user_uploads_metadata WHERE user_name = ? AND original_filename = ? AND version = ?', [user_name, original_filename, version]);
+    } else {
+      await this.query('DELETE FROM user_uploads_metadata WHERE user_name = ? AND original_filename = ?', [user_name, original_filename]);
+    }
   }
 
   // Create data table with metadata tracking
