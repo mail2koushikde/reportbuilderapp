@@ -1411,20 +1411,41 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const clearCache = useCallback(async () => {
     if (window.confirm('Are you sure you want to clear all cached data? This action cannot be undone.')) {
       try {
+        // Show clearing dialog
+        setShowClearingDialog(true);
+        setClearingStatus('Initializing cache clearing...');
+
+        // Simulate progress steps for better UX
+        setClearingStatus('Removing cached data...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        setClearingStatus('Clearing IndexedDB storage...');
         await cacheService.clearCache();
+
+        setClearingStatus('Updating application state...');
         setHasCachedData(false);
         setCacheInfo({ count: 0, size: 0 });
         // Disable caching when cache is cleared
         setCacheEnabled(false);
+
         // If current data is from cache, clear it
         if (hasCachedData && importedData.length > 0) {
+          setClearingStatus('Clearing current data...');
           setImportedData([]);
           setColumns([]);
           setFileName('');
         }
+
+        setClearingStatus('Cache cleared successfully!');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Auto-close dialog
+        setShowClearingDialog(false);
       } catch (error) {
         console.error('Error clearing cache:', error);
-        alert('Failed to clear cache. Please try again.');
+        setClearingStatus('Error occurred while clearing cache');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setShowClearingDialog(false);
       }
     }
   }, [hasCachedData, importedData.length]);
