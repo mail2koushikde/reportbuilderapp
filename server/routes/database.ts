@@ -134,37 +134,53 @@ router.post("/query", async (req: Request, res: Response) => {
 router.post("/tables/:tableName", async (req: Request, res: Response) => {
   try {
     const { tableName } = req.params;
-    const { data, overwrite = false } = req.body;
-    
+    const { data, overwrite = false, metadata } = req.body;
+
     if (!data || !Array.isArray(data) || data.length === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Data array is required and cannot be empty" 
+      return res.status(400).json({
+        success: false,
+        error: "Data array is required and cannot be empty"
       });
     }
-    
+
     // Validate table name (basic sanitization)
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Invalid table name. Use only letters, numbers, and underscores." 
+      return res.status(400).json({
+        success: false,
+        error: "Invalid table name. Use only letters, numbers, and underscores."
       });
     }
-    
-    await databaseService.createTableFromData(tableName, data, overwrite);
-    
+
+    // Check if this is a user upload (has metadata) vs system table
+    if (metadata && metadata.user_name && metadata.original_filename) {
+      // Validate user upload metadata
+      if (!metadata.user_name.trim()) {
+        return res.status(400).json({
+          success: false,
+          error: "User name is required for user uploads"
+        });
+      }
+
+      // Use the enhanced method that tracks metadata
+      await databaseService.createUserDataTable(tableName, data, metadata, overwrite);
+    } else {
+      // Regular table creation (for system tables, etc.)
+      await databaseService.createTableFromData(tableName, data, overwrite);
+    }
+
     res.json({
       success: true,
       message: `Table '${tableName}' created successfully`,
       tableName,
       rowCount: data.length,
-      columns: Object.keys(data[0])
+      columns: Object.keys(data[0]),
+      ...(metadata && { metadata: { tracked: true, user_name: metadata.user_name } })
     });
   } catch (error) {
     console.error('Error creating table:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: `Failed to create table: ${error}` 
+    res.status(500).json({
+      success: false,
+      error: `Failed to create table: ${error}`
     });
   }
 });
