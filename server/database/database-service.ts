@@ -162,7 +162,100 @@ export class DatabaseService {
 
       await this.query(createMetadataTableSQL);
       console.log('Created user_uploads_metadata table with versioning');
+    } else {
+      // Table exists, check if it needs migration to versioning schema
+      await this.migrateMetadataTableToVersioning();
     }
+  }
+
+  private async migrateMetadataTableToVersioning(): Promise<void> {
+    try {
+      // Check if version column exists by trying to query it
+      await this.query('SELECT version FROM user_uploads_metadata LIMIT 1');
+      console.log('Metadata table already has versioning schema');
+    } catch (error) {
+      // Version column doesn't exist, need to migrate
+      console.log('Migrating metadata table to versioning schema...');
+
+      if (this.config.type === 'sqlite') {
+        // SQLite doesn't support ALTER TABLE for complex changes, so we need to recreate
+        await this.migrateSQLiteMetadataTable();
+      } else {
+        // For other databases, use ALTER TABLE
+        await this.migrateSnowflakeMetadataTable();
+      }
+
+      console.log('✅ Successfully migrated metadata table to versioning schema');
+    }
+  }
+
+  private async migrateSQLiteMetadataTable(): Promise<void> {
+    // Step 1: Rename existing table
+    await this.query('ALTER TABLE user_uploads_metadata RENAME TO user_uploads_metadata_old');
+
+    // Step 2: Create new table with versioning schema
+    const createNewTableSQL = `
+      CREATE TABLE user_uploads_metadata (
+        user_name VARCHAR(255) NOT NULL,
+        original_filename VARCHAR(500) NOT NULL,
+        version INTEGER NOT NULL DEFAULT 1,
+        table_name VARCHAR(255) NOT NULL UNIQUE,
+        upload_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        row_count INTEGER NOT NULL DEFAULT 0,
+        column_count INTEGER NOT NULL DEFAULT 0,
+        column_names TEXT,
+        file_size_bytes INTEGER,
+        upload_status VARCHAR(50) DEFAULT 'success',
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_name, original_filename, version)
+      )
+    `;
+
+    await this.query(createNewTableSQL);
+
+    // Step 3: Migrate existing data with version = 1
+    const migrateDataSQL = `
+      INSERT INTO user_uploads_metadata (
+        user_name, original_filename, version, table_name, upload_timestamp,
+        row_count, column_count, column_names, file_size_bytes, upload_status, notes, created_at, updated_at
+      )
+      SELECT
+        COALESCE(user_name, 'unknown') as user_name,
+        original_filename,
+        1 as version,
+        table_name,
+        upload_timestamp,
+        row_count,
+        column_count,
+        column_names,
+        file_size_bytes,
+        upload_status,
+        notes,
+        created_at,
+        updated_at
+      FROM user_uploads_metadata_old
+    `;
+
+    await this.query(migrateDataSQL);
+
+    // Step 4: Drop old table
+    await this.query('DROP TABLE user_uploads_metadata_old');
+  }
+
+  private async migrateSnowflakeMetadataTable(): Promise<void> {
+    // Add version column
+    await this.query('ALTER TABLE user_uploads_metadata ADD COLUMN version INTEGER DEFAULT 1');
+
+    // Update existing records to have version = 1
+    await this.query('UPDATE user_uploads_metadata SET version = 1 WHERE version IS NULL');
+
+    // Make version NOT NULL
+    await this.query('ALTER TABLE user_uploads_metadata ALTER COLUMN version SET NOT NULL');
+
+    // Note: For Snowflake, we can't easily change the primary key without recreating the table
+    // For now, we'll leave the existing primary key as is and handle uniqueness in application logic
   }
 
   // Check if a file already exists for a user
