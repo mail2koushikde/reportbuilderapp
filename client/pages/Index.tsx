@@ -47,6 +47,8 @@ const Index: React.FC = () => {
         return <BuildReport loadedReportState={loadedReportState} />;
       case 'saved-reports':
         return <ViewSavedReports onLoadReport={handleLoadReport} />;
+      case 'file-history':
+        return <FileHistory />;
       default:
         return <BuildReport loadedReportState={loadedReportState} />;
     }
