@@ -168,20 +168,49 @@ router.post("/import", async (req: Request, res: Response) => {
   }
 });
 
-// List tables endpoint (returns sample table list)
-router.get("/tables", (_req: Request, res: Response) => {
-  const sampleTables = [
-    { TABLE_NAME: "SALES_DATA", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
-    { TABLE_NAME: "CUSTOMER_DATA", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
-    { TABLE_NAME: "FINANCIAL_DATA", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
-    { TABLE_NAME: "PRODUCTS", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
-    { TABLE_NAME: "ORDERS", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" }
-  ];
-  
-  res.json({
-    success: true,
-    tables: sampleTables
-  });
+// List tables endpoint (uses database service)
+router.get("/tables", async (_req: Request, res: Response) => {
+  try {
+    const tables = await databaseService.getTables();
+    const dbType = databaseService.getDatabaseType();
+
+    // Convert to expected format
+    const formattedTables = tables.map(name => ({
+      TABLE_NAME: name,
+      TABLE_SCHEMA: "PUBLIC",
+      TABLE_TYPE: "TABLE"
+    }));
+
+    // If no tables exist, provide sample table list for demo purposes
+    if (formattedTables.length === 0) {
+      const sampleTables = [
+        { TABLE_NAME: "SALES_DATA", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
+        { TABLE_NAME: "CUSTOMER_DATA", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
+        { TABLE_NAME: "FINANCIAL_DATA", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
+        { TABLE_NAME: "PRODUCTS", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" },
+        { TABLE_NAME: "ORDERS", TABLE_SCHEMA: "PUBLIC", TABLE_TYPE: "TABLE" }
+      ];
+
+      res.json({
+        success: true,
+        tables: sampleTables,
+        databaseType: dbType,
+        note: "Sample tables provided - no actual tables exist in database"
+      });
+    } else {
+      res.json({
+        success: true,
+        tables: formattedTables,
+        databaseType: dbType
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching tables:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch tables: ${error}`
+    });
+  }
 });
 
 export default router;
