@@ -1377,10 +1377,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
   // Handle overwrite choice from version dialog
   const handleOverwrite = useCallback(async () => {
-    if (!pendingUpload) return;
+    if (!pendingUpload || !pendingUpload.conflict) return;
 
     const { file, headers, data, conflict } = pendingUpload;
-    const latestVersion = Math.max(...conflict.existing_versions.map((v: any) => v.version));
+    const existingVersions = conflict.existing_versions || [];
+
+    if (existingVersions.length === 0) {
+      console.error('No existing versions found for overwrite');
+      return;
+    }
+
+    const latestVersion = Math.max(...existingVersions.map((v: any) => v.version));
 
     await uploadFileToDatabase(file, headers, data, latestVersion, true);
 
@@ -1390,10 +1397,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
   // Handle new version choice from version dialog
   const handleNewVersion = useCallback(async () => {
-    if (!pendingUpload) return;
+    if (!pendingUpload || !pendingUpload.conflict) return;
 
     const { file, headers, data, conflict } = pendingUpload;
-    const nextVersion = conflict.next_version;
+    const nextVersion = conflict.next_version || 1;
 
     await uploadFileToDatabase(file, headers, data, nextVersion, false);
 
