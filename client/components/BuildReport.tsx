@@ -1473,10 +1473,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     const { file, headers, data, conflict } = pendingUpload;
     const nextVersion = conflict.next_version || 1;
 
-    await uploadFileToDatabase(file, headers, data, nextVersion, false);
+    setNewVersionLoading(true);
 
-    setShowVersionDialog(false);
-    setPendingUpload(null);
+    try {
+      await uploadFileToDatabase(file, headers, data, nextVersion, false);
+
+      setShowVersionDialog(false);
+      setPendingUpload(null);
+    } catch (error) {
+      console.error('Error during new version upload:', error);
+    } finally {
+      setNewVersionLoading(false);
+    }
   }, [pendingUpload, uploadFileToDatabase]);
 
   // Handle cancel from version dialog
