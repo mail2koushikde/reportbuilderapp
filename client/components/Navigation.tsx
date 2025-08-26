@@ -34,6 +34,12 @@ const Navigation: React.FC<NavigationProps> = ({
       label: 'View Saved Reports',
       icon: Bookmark,
       description: 'View and restore saved dashboard reports'
+    },
+    {
+      id: 'file-history' as NavigationPage,
+      label: 'File History',
+      icon: Database,
+      description: 'View uploaded files and versions'
     }
   ];
 
