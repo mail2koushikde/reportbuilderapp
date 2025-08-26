@@ -1451,12 +1451,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       return;
     }
 
-    const latestVersion = Math.max(...existingVersions.map((v: any) => v.version));
+    setOverwriteLoading(true);
 
-    await uploadFileToDatabase(file, headers, data, latestVersion, true);
+    try {
+      const latestVersion = Math.max(...existingVersions.map((v: any) => v.version));
+      await uploadFileToDatabase(file, headers, data, latestVersion, true);
 
-    setShowVersionDialog(false);
-    setPendingUpload(null);
+      setShowVersionDialog(false);
+      setPendingUpload(null);
+    } catch (error) {
+      console.error('Error during overwrite:', error);
+    } finally {
+      setOverwriteLoading(false);
+    }
   }, [pendingUpload, uploadFileToDatabase]);
 
   // Handle new version choice from version dialog
