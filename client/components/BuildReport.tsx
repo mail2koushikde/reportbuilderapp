@@ -1498,6 +1498,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           // Set both display filename and success popup filename
           const displayName = `Snowflake: ${queryType === 'table' ? snowflakeQuery : 'Custom Sql'}`;
           setFileName(displayName);
+          setCurrentFileVersion(null); // Clear version for Snowflake imports
           setUploadedFileName(displayName);
 
           // Disable cache when new dataset is loaded - user must explicitly choose to cache
