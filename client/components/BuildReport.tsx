@@ -5108,8 +5108,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               {hasCachedData && (
                 <button
                   onClick={clearCache}
-                  className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors border border-red-400/30"
-                  title={`Clear cache (${cacheInfo.count} items, ${(cacheInfo.size / 1024).toFixed(1)}KB)`}
+                  disabled={showClearingDialog}
+                  className={`p-1.5 rounded-lg transition-colors border ${
+                    showClearingDialog
+                      ? 'bg-orange-500/20 text-orange-300 border-orange-400/30 cursor-not-allowed'
+                      : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-400/30'
+                  }`}
+                  title={
+                    showClearingDialog
+                      ? 'Clearing cache in progress...'
+                      : `Clear cache (${cacheInfo.count} items, ${(cacheInfo.size / 1024).toFixed(1)}KB)`
+                  }
                 >
                   <Trash className="w-3 h-3" />
                 </button>
