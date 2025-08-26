@@ -1098,6 +1098,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [cacheInfo, setCacheInfo] = useState({ count: 0, size: 0 });
   const [showCachingDialog, setShowCachingDialog] = useState(false);
   const [cachingStatus, setCachingStatus] = useState('');
+  const [showClearingDialog, setShowClearingDialog] = useState(false);
+  const [clearingStatus, setClearingStatus] = useState('');
 
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
