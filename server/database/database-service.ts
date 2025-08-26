@@ -65,6 +65,10 @@ export class DatabaseService {
       }
 
       await this.database.init();
+
+      // Create metadata table for tracking user uploads
+      await this.initializeMetadataTable();
+
       console.log(`Database initialized successfully (${this.config.type})`);
     } catch (error) {
       console.error('Failed to initialize database:', error);
