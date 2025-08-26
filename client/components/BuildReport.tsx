@@ -1360,6 +1360,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [snowflakeQuery, queryType, cacheEnabled]);
 
+  // Cache management functions
+  const toggleCache = useCallback(() => {
+    setCacheEnabled(!cacheEnabled);
+  }, [cacheEnabled]);
+
+  const clearCache = useCallback(async () => {
+    if (window.confirm('Are you sure you want to clear all cached data? This action cannot be undone.')) {
+      try {
+        await cacheService.clearCache();
+        setHasCachedData(false);
+        setCacheInfo({ count: 0, size: 0 });
+        // If current data is from cache, clear it
+        if (hasCachedData && importedData.length > 0) {
+          setImportedData([]);
+          setColumns([]);
+          setFileName('');
+        }
+      } catch (error) {
+        console.error('Error clearing cache:', error);
+        alert('Failed to clear cache. Please try again.');
+      }
+    }
+  }, [hasCachedData, importedData.length]);
+
   // Check for overlaps
   const checkOverlap = useCallback((newCard: DashboardCard, excludeId?: string) => {
     const gapSize = 0.25; // Quarter grid gap between cards
