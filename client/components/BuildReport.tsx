@@ -1309,6 +1309,104 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, []);
 
+  // Upload file to database with specific version
+  const uploadFileToDatabase = useCallback(async (file: File, headers: string[], data: DataRow[], version: number, overwrite = false) => {
+    const timestamp = Date.now();
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
+    const tableName = `user_uploads_${timestamp}_${sanitizedFileName}_v${version}`;
+
+    try {
+      const response = await fetch(`/api/database/tables/${tableName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: data,
+          overwrite: overwrite,
+          metadata: {
+            user_name: 'mail2koushikde@gmail.com', // TODO: Get from actual user context
+            original_filename: file.name,
+            version: version,
+            file_size_bytes: file.size
+          }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Success: load data into state for immediate visualization
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        // Show success popup with versioned display name
+        const displayName = result.metadata?.display_name || `${file.name} (v${version})`;
+        setUploadedFileName(`${displayName} → ${tableName}`);
+        setShowUploadSuccess(true);
+
+        console.log(`File uploaded successfully to database table: ${tableName}`, {
+          rowCount: result.rowCount,
+          columns: result.columns,
+          version: version
+        });
+      } else {
+        console.error('Failed to save to database:', result.error);
+
+        // Fallback: still load data into state for immediate use
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        setUploadedFileName(`${file.name} (v${version}) (DB save failed - using locally)`);
+        setShowUploadSuccess(true);
+      }
+    } catch (error) {
+      console.error('Error saving to database:', error);
+
+      // Fallback: still load data into state for immediate use
+      setColumns(headers);
+      setImportedData(data);
+      setCacheEnabled(false);
+
+      setUploadedFileName(`${file.name} (v${version}) (DB save failed - using locally)`);
+      setShowUploadSuccess(true);
+    }
+  }, []);
+
+  // Handle overwrite choice from version dialog
+  const handleOverwrite = useCallback(async () => {
+    if (!pendingUpload) return;
+
+    const { file, headers, data, conflict } = pendingUpload;
+    const latestVersion = Math.max(...conflict.existing_versions.map((v: any) => v.version));
+
+    await uploadFileToDatabase(file, headers, data, latestVersion, true);
+
+    setShowVersionDialog(false);
+    setPendingUpload(null);
+  }, [pendingUpload, uploadFileToDatabase]);
+
+  // Handle new version choice from version dialog
+  const handleNewVersion = useCallback(async () => {
+    if (!pendingUpload) return;
+
+    const { file, headers, data, conflict } = pendingUpload;
+    const nextVersion = conflict.next_version;
+
+    await uploadFileToDatabase(file, headers, data, nextVersion, false);
+
+    setShowVersionDialog(false);
+    setPendingUpload(null);
+  }, [pendingUpload, uploadFileToDatabase]);
+
+  // Handle cancel from version dialog
+  const handleVersionCancel = useCallback(() => {
+    setShowVersionDialog(false);
+    setPendingUpload(null);
+  }, []);
+
   // Snowflake data import functionality
   const handleSnowflakeImport = useCallback(async () => {
     if (!snowflakeQuery.trim()) return;
