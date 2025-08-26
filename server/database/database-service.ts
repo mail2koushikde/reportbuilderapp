@@ -271,7 +271,9 @@ export class DatabaseService {
 
     const exists = result.rowCount > 0;
     const versions = result.data as Array<{ version: number; table_name: string; upload_timestamp: string }>;
-    const nextVersion = exists ? Math.max(...versions.map(v => v.version)) + 1 : 1;
+    const nextVersion = exists && versions.length > 0
+      ? Math.max(...versions.map(v => v.version)) + 1
+      : 1;
 
     return { exists, versions, nextVersion };
   }
