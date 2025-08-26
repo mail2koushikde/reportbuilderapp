@@ -4,9 +4,10 @@ import {
   ChevronRight,
   FileText,
   Bookmark,
+  Database,
 } from "lucide-react";
 
-export type NavigationPage = 'build-report' | 'saved-reports';
+export type NavigationPage = 'build-report' | 'saved-reports' | 'file-history';
 
 interface NavigationProps {
   isCollapsed: boolean;
