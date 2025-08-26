@@ -301,13 +301,14 @@ export class DatabaseService {
     }
   }
 
-  // Create data table with metadata tracking
+  // Create data table with metadata tracking and versioning
   async createUserDataTable(
     tableName: string,
     data: any[],
     metadata: {
       user_name: string;
       original_filename: string;
+      version: number;
       file_size_bytes?: number;
     },
     overwrite?: boolean
@@ -315,17 +316,30 @@ export class DatabaseService {
     // Create the actual data table
     await this.createTableFromData(tableName, data, overwrite);
 
-    // Insert metadata
+    // Insert metadata with version
     await this.insertUploadMetadata({
       user_name: metadata.user_name,
       table_name: tableName,
       original_filename: metadata.original_filename,
+      version: metadata.version,
       row_count: data.length,
       column_count: Object.keys(data[0]).length,
       column_names: Object.keys(data[0]),
       file_size_bytes: metadata.file_size_bytes || 0,
       upload_status: 'success'
     });
+  }
+
+  // Generate versioned table name
+  generateVersionedTableName(original_filename: string, version: number, timestamp: number): string {
+    const sanitizedFileName = original_filename.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
+    return `user_uploads_${timestamp}_${sanitizedFileName}_v${version}`;
+  }
+
+  // Generate display name with version
+  generateVersionedDisplayName(original_filename: string, version: number): string {
+    const nameWithoutExt = original_filename.replace(/\.csv$/i, '');
+    return version > 1 ? `${nameWithoutExt} (v${version})` : nameWithoutExt;
   }
 }
 
