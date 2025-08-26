@@ -1358,7 +1358,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         alert('Error importing from Snowflake. Please check your query and try again.\nSee console for details.');
       }
     }
-  }, [snowflakeQuery, queryType]);
+  }, [snowflakeQuery, queryType, cacheEnabled]);
 
   // Check for overlaps
   const checkOverlap = useCallback((newCard: DashboardCard, excludeId?: string) => {
