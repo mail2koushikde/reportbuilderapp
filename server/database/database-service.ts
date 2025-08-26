@@ -165,11 +165,30 @@ export class DatabaseService {
     }
   }
 
-  // Insert metadata for a new upload
+  // Check if a file already exists for a user
+  async checkFileExists(user_name: string, original_filename: string): Promise<{
+    exists: boolean;
+    versions: Array<{ version: number; table_name: string; upload_timestamp: string }>;
+    nextVersion: number;
+  }> {
+    const result = await this.query(
+      'SELECT version, table_name, upload_timestamp FROM user_uploads_metadata WHERE user_name = ? AND original_filename = ? ORDER BY version DESC',
+      [user_name, original_filename]
+    );
+
+    const exists = result.rowCount > 0;
+    const versions = result.data as Array<{ version: number; table_name: string; upload_timestamp: string }>;
+    const nextVersion = exists ? Math.max(...versions.map(v => v.version)) + 1 : 1;
+
+    return { exists, versions, nextVersion };
+  }
+
+  // Insert metadata for a new upload with versioning
   async insertUploadMetadata(metadata: {
     user_name: string;
     table_name: string;
     original_filename: string;
+    version: number;
     row_count: number;
     column_count: number;
     column_names: string[];
@@ -181,6 +200,7 @@ export class DatabaseService {
       user_name,
       table_name,
       original_filename,
+      version,
       row_count,
       column_count,
       column_names,
@@ -193,14 +213,15 @@ export class DatabaseService {
 
     const insertSQL = `
       INSERT INTO user_uploads_metadata
-      (user_name, table_name, original_filename, row_count, column_count, column_names, file_size_bytes, upload_status, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (user_name, original_filename, version, table_name, row_count, column_count, column_names, file_size_bytes, upload_status, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await this.query(insertSQL, [
       user_name,
-      table_name,
       original_filename,
+      version,
+      table_name,
       row_count,
       column_count,
       columnNamesJson,
