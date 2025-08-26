@@ -1092,6 +1092,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [queryType, setQueryType] = useState<'table' | 'sql'>('table');
   const [testMode, setTestMode] = useState(true);
 
+  // Cache-related states
+  const [cacheEnabled, setCacheEnabled] = useState(false);
+  const [hasCachedData, setHasCachedData] = useState(false);
+  const [cacheInfo, setCacheInfo] = useState({ count: 0, size: 0 });
+
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [leftSectionVisible, setLeftSectionVisible] = useState(true);
