@@ -1086,6 +1086,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
+  // Versioning dialog state
+  const [showVersionDialog, setShowVersionDialog] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState<{
+    file: File;
+    headers: string[];
+    data: DataRow[];
+    conflict: any;
+  } | null>(null);
+
   // Snowflake modal state
   const [showSnowflakeModal, setShowSnowflakeModal] = useState(false);
   const [snowflakeQuery, setSnowflakeQuery] = useState('');
