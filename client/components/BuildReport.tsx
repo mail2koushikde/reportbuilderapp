@@ -1242,7 +1242,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       };
       reader.readAsText(file);
     }
-  }, [cacheEnabled]);
+  }, []);
 
   // Snowflake data import functionality
   const handleSnowflakeImport = useCallback(async () => {
