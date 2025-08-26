@@ -1390,6 +1390,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         await cacheService.clearCache();
         setHasCachedData(false);
         setCacheInfo({ count: 0, size: 0 });
+        // Disable caching when cache is cleared
+        setCacheEnabled(false);
         // If current data is from cache, clear it
         if (hasCachedData && importedData.length > 0) {
           setImportedData([]);
