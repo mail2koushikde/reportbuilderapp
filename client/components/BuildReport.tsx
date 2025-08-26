@@ -1372,6 +1372,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         setImportedData(data);
         setCacheEnabled(false);
 
+        // Update filename and version in header even for fallback
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+
         setUploadedFileName(`${file.name} (v${version}) (DB save failed - using locally)`);
         setShowUploadSuccess(true);
       }
