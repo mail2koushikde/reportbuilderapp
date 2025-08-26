@@ -1155,6 +1155,24 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     initCache();
   }, []);
 
+  // Update cache status when data changes
+  useEffect(() => {
+    const updateCacheStatus = async () => {
+      try {
+        const cached = await cacheService.hasCachedData();
+        setHasCachedData(cached);
+        const info = await cacheService.getStorageInfo();
+        setCacheInfo(info);
+      } catch (error) {
+        console.error('Error updating cache status:', error);
+      }
+    };
+
+    if (importedData.length > 0) {
+      updateCacheStatus();
+    }
+  }, [importedData]);
+
   // Responsive grid dimensions based on screen size
   useEffect(() => {
     const calculateDimensions = () => {
