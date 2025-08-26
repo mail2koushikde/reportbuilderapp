@@ -1042,6 +1042,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [importedData, setImportedData] = useState<DataRow[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [fileName, setFileName] = useState<string>('');
+  const [currentFileVersion, setCurrentFileVersion] = useState<number | null>(null);
   const [configuringCard, setConfiguringCard] = useState<string | null>(null);
   const [hideControls, setHideControls] = useState(false);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
