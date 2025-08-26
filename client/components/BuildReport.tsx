@@ -1159,6 +1159,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             if (cachedData.fileName) {
               setFileName(cachedData.fileName);
             }
+            // Clear version for cached data since it doesn't track database versions
+            setCurrentFileVersion(null);
           }
         }
       } catch (error) {
