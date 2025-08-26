@@ -193,7 +193,26 @@ router.post("/tables/:tableName", async (req: Request, res: Response) => {
         });
       }
 
-      // Use the enhanced method that tracks metadata
+      // Validate version is provided for user uploads
+      if (!metadata.version || metadata.version < 1) {
+        return res.status(400).json({
+          success: false,
+          error: "Version number is required and must be >= 1 for user uploads"
+        });
+      }
+
+      // Check if this exact version already exists (to prevent duplicates)
+      const existingFile = await databaseService.getFileMetadata(metadata.user_name, metadata.original_filename, metadata.version);
+      if (existingFile.rowCount > 0 && !overwrite) {
+        return res.status(409).json({
+          success: false,
+          error: `Version ${metadata.version} of file '${metadata.original_filename}' already exists for user '${metadata.user_name}'`,
+          conflict: true,
+          existing_metadata: existingFile.data[0]
+        });
+      }
+
+      // Use the enhanced method that tracks metadata with versioning
       await databaseService.createUserDataTable(tableName, data, metadata, overwrite);
     } else {
       // Regular table creation (for system tables, etc.)
