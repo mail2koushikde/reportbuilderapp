@@ -411,6 +411,12 @@ export class DatabaseService {
     // Create the actual data table
     await this.createTableFromData(tableName, data, overwrite);
 
+    // Handle metadata: update if overwriting, insert if new
+    if (overwrite) {
+      // Delete existing metadata record first, then insert new one
+      await this.deleteFileMetadata(metadata.user_name, metadata.original_filename, metadata.version);
+    }
+
     // Insert metadata with version
     await this.insertUploadMetadata({
       user_name: metadata.user_name,
