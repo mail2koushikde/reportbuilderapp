@@ -225,7 +225,15 @@ router.post("/tables/:tableName", async (req: Request, res: Response) => {
       tableName,
       rowCount: data.length,
       columns: Object.keys(data[0]),
-      ...(metadata && { metadata: { tracked: true, user_name: metadata.user_name } })
+      ...(metadata && {
+        metadata: {
+          tracked: true,
+          user_name: metadata.user_name,
+          original_filename: metadata.original_filename,
+          version: metadata.version,
+          display_name: databaseService.generateVersionedDisplayName(metadata.original_filename, metadata.version)
+        }
+      })
     });
   } catch (error) {
     console.error('Error creating table:', error);
