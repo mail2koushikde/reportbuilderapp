@@ -243,4 +243,100 @@ router.get("/tables/:tableName/exists", async (req: Request, res: Response) => {
   }
 });
 
+// Get all upload metadata
+router.get("/uploads", async (_req: Request, res: Response) => {
+  try {
+    const result = await databaseService.getAllUploadMetadata();
+    res.json({
+      success: true,
+      uploads: result.data,
+      count: result.rowCount
+    });
+  } catch (error) {
+    console.error('Error fetching upload metadata:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch upload metadata: ${error}`
+    });
+  }
+});
+
+// Get uploads for a specific user
+router.get("/uploads/user/:userName", async (req: Request, res: Response) => {
+  try {
+    const { userName } = req.params;
+    const result = await databaseService.getUserUploadMetadata(userName);
+    res.json({
+      success: true,
+      uploads: result.data,
+      count: result.rowCount,
+      user_name: userName
+    });
+  } catch (error) {
+    console.error('Error fetching user upload metadata:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch user upload metadata: ${error}`
+    });
+  }
+});
+
+// Get metadata for a specific table
+router.get("/tables/:tableName/metadata", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const result = await databaseService.getTableMetadata(tableName);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `No metadata found for table '${tableName}'`
+      });
+    }
+
+    res.json({
+      success: true,
+      metadata: result.data[0],
+      tableName
+    });
+  } catch (error) {
+    console.error('Error fetching table metadata:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch table metadata: ${error}`
+    });
+  }
+});
+
+// Update upload status
+router.put("/uploads/:tableName/status", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+    const { status, notes } = req.body;
+
+    if (!['success', 'failed', 'processing'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: "Status must be 'success', 'failed', or 'processing'"
+      });
+    }
+
+    await databaseService.updateUploadStatus(tableName, status, notes);
+
+    res.json({
+      success: true,
+      message: `Upload status updated for table '${tableName}'`,
+      tableName,
+      status,
+      ...(notes && { notes })
+    });
+  } catch (error) {
+    console.error('Error updating upload status:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to update upload status: ${error}`
+    });
+  }
+});
+
 export default router;
