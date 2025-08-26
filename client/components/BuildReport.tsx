@@ -5063,7 +5063,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
                     : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30'
                 }`}
-                title={`${cacheEnabled ? 'Disable' : 'Enable'} data caching (IndexedDB)`}
+                title={`${cacheEnabled ? 'Disable' : 'Enable'} data caching (IndexedDB)${
+                  !cacheEnabled && importedData.length > 0 ? ' - Will cache current data' : ''
+                }`}
               >
                 <HardDrive className="w-3 h-3" />
               </button>
