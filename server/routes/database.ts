@@ -340,6 +340,44 @@ router.get("/uploads/user/:userName", async (req: Request, res: Response) => {
   }
 });
 
+// Get all versions of a specific file
+router.get("/uploads/file/:userName/:filename/versions", async (req: Request, res: Response) => {
+  try {
+    const { userName, filename } = req.params;
+    const decodedFilename = decodeURIComponent(filename);
+
+    const result = await databaseService.getFileMetadata(userName, decodedFilename);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: `No versions found for file '${decodedFilename}' by user '${userName}'`
+      });
+    }
+
+    // Add display names to each version
+    const versionsWithDisplayNames = result.data.map((version: any) => ({
+      ...version,
+      display_name: databaseService.generateVersionedDisplayName(version.original_filename, version.version)
+    }));
+
+    res.json({
+      success: true,
+      user_name: userName,
+      original_filename: decodedFilename,
+      versions: versionsWithDisplayNames,
+      total_versions: result.rowCount,
+      latest_version: Math.max(...result.data.map((v: any) => v.version))
+    });
+  } catch (error) {
+    console.error('Error fetching file versions:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to fetch file versions: ${error}`
+    });
+  }
+});
+
 // Get metadata for a specific table
 router.get("/tables/:tableName/metadata", async (req: Request, res: Response) => {
   try {
