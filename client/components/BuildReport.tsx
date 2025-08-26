@@ -1397,7 +1397,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           version: version
         });
       } else {
-        console.error('Failed to save to database:', result.error);
+        // Handle specific error types
+        if (response.status === 409 && result.constraint_violation) {
+          console.error('Constraint violation - file version already exists:', result.error);
+          // For constraint violations, show a more specific error
+          setUploadedFileName(`${file.name} (v${version}) - Version already exists`);
+        } else {
+          console.error('Failed to save to database:', result.error);
+        }
 
         // Fallback: still load data into state for immediate use
         setColumns(headers);
