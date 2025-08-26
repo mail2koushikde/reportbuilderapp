@@ -5004,6 +5004,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               >
                 <Database className="w-3 h-3" />
               </button>
+
+              {/* Cache Toggle Button */}
+              <button
+                onClick={toggleCache}
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  cacheEnabled
+                    ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
+                    : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30'
+                }`}
+                title={`${cacheEnabled ? 'Disable' : 'Enable'} data caching (IndexedDB)`}
+              >
+                <HardDrive className="w-3 h-3" />
+              </button>
+
+              {/* Clear Cache Button */}
+              {hasCachedData && (
+                <button
+                  onClick={clearCache}
+                  className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors border border-red-400/30"
+                  title={`Clear cache (${cacheInfo.count} items, ${(cacheInfo.size / 1024).toFixed(1)}KB)`}
+                >
+                  <Trash className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             {/* Undo/Redo Buttons */}
