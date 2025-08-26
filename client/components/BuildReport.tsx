@@ -6758,8 +6758,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
       {/* File Version Conflict Dialog */}
       {showVersionDialog && pendingUpload && pendingUpload.conflict && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div className="fixed top-0 right-0 left-0 z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md mx-auto mt-16">
             <div className="flex items-center gap-3 mb-4">
               <Upload className="w-5 h-5 text-yellow-400" />
               <h2 className="text-lg font-semibold text-white">File Already Exists</h2>
@@ -6819,7 +6819,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleVersionCancel}
-                className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors"
+                disabled={overwriteLoading || newVersionLoading}
+                className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 disabled:bg-white/5 text-white disabled:text-white/50 font-medium text-sm rounded-lg transition-colors disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -6834,14 +6835,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   <>
                     <button
                       onClick={handleOverwrite}
-                      className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium text-sm rounded-lg transition-colors border border-red-400/30"
+                      disabled={overwriteLoading || newVersionLoading}
+                      className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 disabled:bg-red-500/10 text-red-300 disabled:text-red-300/50 font-medium text-sm rounded-lg transition-colors border border-red-400/30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
+                      {overwriteLoading && (
+                        <div className="w-4 h-4 border-2 border-red-300/30 border-t-red-300 rounded-full animate-spin"></div>
+                      )}
                       Overwrite v{latestVersion}
                     </button>
                     <button
                       onClick={handleNewVersion}
-                      className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+                      disabled={overwriteLoading || newVersionLoading}
+                      className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 disabled:bg-green-500/10 text-green-300 disabled:text-green-300/50 font-medium text-sm rounded-lg transition-colors border border-green-400/30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
+                      {newVersionLoading && (
+                        <div className="w-4 h-4 border-2 border-green-300/30 border-t-green-300 rounded-full animate-spin"></div>
+                      )}
                       Save as v{nextVersion}
                     </button>
                   </>
