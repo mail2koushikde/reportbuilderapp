@@ -118,12 +118,54 @@ router.post("/test-import", (req: Request, res: Response) => {
   }
 });
 
-// Production import endpoint (placeholder)
-router.post("/import", (req: Request, res: Response) => {
-  res.status(501).json({
-    success: false,
-    error: "Production Snowflake import requires proper setup. Use test mode instead."
-  });
+// Production import endpoint (uses database service)
+router.post("/import", async (req: Request, res: Response) => {
+  try {
+    const { queryType, query, limit } = req.body;
+
+    if (!query || !query.trim()) {
+      return res.status(400).json({ error: "Query or table name is required" });
+    }
+
+    const dbType = databaseService.getDatabaseType();
+    let result;
+
+    if (queryType === 'table') {
+      // Query table directly
+      const maxLimit = Math.min(limit || 1000, 1000);
+      result = await databaseService.getTableData(query.trim(), maxLimit);
+    } else {
+      // Execute custom SQL query
+      const maxLimit = Math.min(limit || 1000, 1000);
+      const sql = query.trim();
+
+      // Add LIMIT if not present in query
+      const sqlWithLimit = sql.toLowerCase().includes('limit')
+        ? sql
+        : `${sql} LIMIT ${maxLimit}`;
+
+      result = await databaseService.query(sqlWithLimit);
+    }
+
+    console.log(`Production import returning ${result.data.length} rows from ${dbType} for query: ${query}`);
+
+    res.json({
+      success: true,
+      data: result.data,
+      columns: result.columns,
+      rowCount: result.data.length,
+      query: query,
+      databaseType: dbType,
+      isTestData: false
+    });
+
+  } catch (error) {
+    console.error('Production import failed:', error);
+    res.status(500).json({
+      success: false,
+      error: `Import failed: ${error}`
+    });
+  }
 });
 
 // List tables endpoint (returns sample table list)
