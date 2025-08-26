@@ -140,13 +140,13 @@ export class DatabaseService {
     const metadataTableExists = await this.tableExists('user_uploads_metadata');
 
     if (!metadataTableExists) {
-      // Create metadata table with comprehensive tracking columns
+      // Create metadata table with versioning and composite primary key
       const createMetadataTableSQL = `
         CREATE TABLE user_uploads_metadata (
-          id ${this.config.type === 'sqlite' ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT AUTOINCREMENT PRIMARY KEY'},
           user_name VARCHAR(255) NOT NULL,
-          table_name VARCHAR(255) NOT NULL UNIQUE,
           original_filename VARCHAR(500) NOT NULL,
+          version INTEGER NOT NULL DEFAULT 1,
+          table_name VARCHAR(255) NOT NULL UNIQUE,
           upload_timestamp ${this.config.type === 'sqlite' ? 'DATETIME DEFAULT CURRENT_TIMESTAMP' : 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP()'},
           row_count INTEGER NOT NULL DEFAULT 0,
           column_count INTEGER NOT NULL DEFAULT 0,
@@ -155,12 +155,13 @@ export class DatabaseService {
           upload_status VARCHAR(50) DEFAULT 'success',
           notes TEXT,
           created_at ${this.config.type === 'sqlite' ? 'DATETIME DEFAULT CURRENT_TIMESTAMP' : 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP()'},
-          updated_at ${this.config.type === 'sqlite' ? 'DATETIME DEFAULT CURRENT_TIMESTAMP' : 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP()'}
+          updated_at ${this.config.type === 'sqlite' ? 'DATETIME DEFAULT CURRENT_TIMESTAMP' : 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP()'},
+          PRIMARY KEY (user_name, original_filename, version)
         )
       `;
 
       await this.query(createMetadataTableSQL);
-      console.log('Created user_uploads_metadata table');
+      console.log('Created user_uploads_metadata table with versioning');
     }
   }
 
