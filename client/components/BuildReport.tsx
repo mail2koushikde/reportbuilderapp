@@ -23,6 +23,8 @@ import {
   Maximize2,
   Copy,
   Database,
+  HardDrive,
+  Trash,
 } from 'lucide-react';
 import {
   PieChart,
