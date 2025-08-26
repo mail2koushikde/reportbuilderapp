@@ -6673,7 +6673,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       )}
 
       {/* File Version Conflict Dialog */}
-      {showVersionDialog && pendingUpload && (
+      {showVersionDialog && pendingUpload && pendingUpload.conflict && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card rounded-xl p-6 w-full max-w-md">
             <div className="flex items-center gap-3 mb-4">
@@ -6685,7 +6685,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                 <p className="text-sm font-medium text-yellow-300 mb-1">Conflict Detected</p>
                 <p className="text-xs text-white/70">
-                  A file named "{pendingUpload.file.name}" already exists in your uploads.
+                  A file named "{pendingUpload.file?.name || 'Unknown'}" already exists in your uploads.
                 </p>
               </div>
 
@@ -6693,7 +6693,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                 <p className="text-sm font-medium text-blue-300 mb-2">Existing Versions:</p>
                 <div className="space-y-1 max-h-24 overflow-y-auto">
-                  {pendingUpload.conflict.existing_versions.map((version: any) => (
+                  {(pendingUpload.conflict.existing_versions || []).map((version: any) => (
                     <div key={version.version} className="text-xs text-white/70 flex justify-between">
                       <span>Version {version.version}</span>
                       <span>{new Date(version.upload_timestamp).toLocaleDateString()}</span>
@@ -6703,23 +6703,33 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               </div>
 
               {/* Action Options */}
-              <div className="space-y-3">
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                  <p className="text-sm font-medium text-red-300 mb-1">Option 1: Overwrite</p>
-                  <p className="text-xs text-white/70">
-                    Replace the latest version (v{Math.max(...pendingUpload.conflict.existing_versions.map((v: any) => v.version))}) with your new data.
-                    <span className="block mt-1 text-red-400">⚠️ This will permanently delete the existing data.</span>
-                  </p>
-                </div>
+              {(() => {
+                const existingVersions = pendingUpload.conflict.existing_versions || [];
+                const latestVersion = existingVersions.length > 0
+                  ? Math.max(...existingVersions.map((v: any) => v.version))
+                  : 1;
+                const nextVersion = pendingUpload.conflict.next_version || (latestVersion + 1);
 
-                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                  <p className="text-sm font-medium text-green-300 mb-1">Option 2: New Version</p>
-                  <p className="text-xs text-white/70">
-                    Save as version {pendingUpload.conflict.next_version}, keeping all existing versions.
-                    <span className="block mt-1 text-green-400">✅ Recommended - preserves history.</span>
-                  </p>
-                </div>
-              </div>
+                return (
+                  <div className="space-y-3">
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                      <p className="text-sm font-medium text-red-300 mb-1">Option 1: Overwrite</p>
+                      <p className="text-xs text-white/70">
+                        Replace the latest version (v{latestVersion}) with your new data.
+                        <span className="block mt-1 text-red-400">⚠️ This will permanently delete the existing data.</span>
+                      </p>
+                    </div>
+
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                      <p className="text-sm font-medium text-green-300 mb-1">Option 2: New Version</p>
+                      <p className="text-xs text-white/70">
+                        Save as version {nextVersion}, keeping all existing versions.
+                        <span className="block mt-1 text-green-400">✅ Recommended - preserves history.</span>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="flex gap-3 mt-6">
@@ -6729,18 +6739,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               >
                 Cancel
               </button>
-              <button
-                onClick={handleOverwrite}
-                className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium text-sm rounded-lg transition-colors border border-red-400/30"
-              >
-                Overwrite v{Math.max(...pendingUpload.conflict.existing_versions.map((v: any) => v.version))}
-              </button>
-              <button
-                onClick={handleNewVersion}
-                className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
-              >
-                Save as v{pendingUpload.conflict.next_version}
-              </button>
+              {(() => {
+                const existingVersions = pendingUpload.conflict.existing_versions || [];
+                const latestVersion = existingVersions.length > 0
+                  ? Math.max(...existingVersions.map((v: any) => v.version))
+                  : 1;
+                const nextVersion = pendingUpload.conflict.next_version || (latestVersion + 1);
+
+                return (
+                  <>
+                    <button
+                      onClick={handleOverwrite}
+                      className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium text-sm rounded-lg transition-colors border border-red-400/30"
+                    >
+                      Overwrite v{latestVersion}
+                    </button>
+                    <button
+                      onClick={handleNewVersion}
+                      className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+                    >
+                      Save as v{nextVersion}
+                    </button>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
