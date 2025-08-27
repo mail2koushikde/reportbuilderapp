@@ -1235,18 +1235,28 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         const text = e.target?.result as string;
         const lines = text.split('\n');
         const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        const data = lines.slice(1)
-          .filter(line => line.trim())
-          .map(line => {
-            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-            const row: DataRow = {};
-            headers.forEach((header, index) => {
-              const value = values[index] || '';
+
+        // Optimize parsing for large files
+        const dataLines = lines.slice(1).filter(line => line.trim());
+        const data: DataRow[] = new Array(dataLines.length);
+
+        // Pre-allocate and process in more efficient way
+        for (let i = 0; i < dataLines.length; i++) {
+          const values = dataLines[i].split(',');
+          const row: DataRow = {};
+
+          for (let j = 0; j < headers.length; j++) {
+            const value = (values[j] || '').trim().replace(/"/g, '');
+            if (value === '') {
+              row[headers[j]] = '';
+            } else {
               const numValue = parseFloat(value);
-              row[header] = isNaN(numValue) ? value : numValue;
-            });
-            return row;
-          });
+              row[headers[j]] = isNaN(numValue) ? value : numValue;
+            }
+          }
+
+          data[i] = row;
+        }
 
         if (data.length === 0) {
           console.error('No data found in CSV file');
