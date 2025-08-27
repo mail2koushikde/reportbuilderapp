@@ -137,21 +137,33 @@ export class SQLiteAdapter implements IDatabase {
     const placeholders = columns.map(() => '?').join(', ');
     const sql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
 
-    // Use transaction for better performance
+    // Use transaction and prepared statement for much better performance
     await this.query('BEGIN TRANSACTION');
-    
+
     try {
-      for (const row of data) {
-        const values = columns.map(col => {
-          const value = row[col];
-          // Convert boolean to integer for SQLite
-          if (typeof value === 'boolean') {
-            return value ? 1 : 0;
-          }
-          return value;
-        });
-        await this.query(sql, values);
+      // Prepare statement once
+      const stmt = this.db!.prepare(sql);
+
+      // Batch insert for optimal performance
+      const batchSize = 1000; // Process in batches to avoid memory issues
+
+      for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize);
+
+        for (const row of batch) {
+          const values = columns.map(col => {
+            const value = row[col];
+            // Convert boolean to integer for SQLite
+            if (typeof value === 'boolean') {
+              return value ? 1 : 0;
+            }
+            return value;
+          });
+          stmt.run(values);
+        }
       }
+
+      stmt.finalize();
       await this.query('COMMIT');
     } catch (error) {
       await this.query('ROLLBACK');
