@@ -1179,6 +1179,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     initCache();
   }, []);
 
+  // Fetch versions when fileName and currentFileVersion are available
+  useEffect(() => {
+    const fetchVersionsForCurrentFile = async () => {
+      if (fileName && currentFileVersion && currentFileVersion > 0) {
+        const userEmail = 'mail2koushikde@gmail.com'; // Get from context/props in real app
+        console.log('Fetching versions for existing file:', fileName, 'version:', currentFileVersion);
+        await fetchFileVersions(userEmail, fileName);
+      }
+    };
+
+    fetchVersionsForCurrentFile();
+  }, [fileName, currentFileVersion, fetchFileVersions]);
+
   // Update cache status when data changes
   useEffect(() => {
     const updateCacheStatus = async () => {
