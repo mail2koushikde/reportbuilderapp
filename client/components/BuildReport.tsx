@@ -1369,15 +1369,60 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         }),
       });
 
+      // Handle response based on status first
+      if (!response.ok) {
+        // For non-ok responses, try to parse JSON for error details
+        let errorDetails = `HTTP ${response.status}`;
+        try {
+          const errorResult = await response.json();
+          if (errorResult.error) {
+            errorDetails = errorResult.error;
+          }
+
+          // Handle specific error types
+          if (response.status === 409 && errorResult.constraint_violation) {
+            console.error('Constraint violation - file version already exists:', errorDetails);
+            setUploadedFileName(`${file.name} (v${version}) - Version already exists`);
+          } else {
+            console.error('Failed to save to database:', errorDetails);
+          }
+        } catch (jsonError) {
+          console.error('Failed to parse error response as JSON:', jsonError);
+          console.error('Server returned non-JSON error response. Status:', response.status);
+        }
+
+        // Fallback: still load data into state for immediate use
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        // Update filename and version in header even for fallback
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+
+        throw new Error(`Database save failed: ${errorDetails}`);
+      }
+
+      // Response is ok, now parse JSON safely
       let result;
       try {
         result = await response.json();
       } catch (jsonError) {
-        console.error('Failed to parse response as JSON:', jsonError);
+        console.error('Failed to parse success response as JSON:', jsonError);
+        // Even if JSON parsing fails, we can still load the data
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+
         throw new Error(`Server response was not valid JSON. Status: ${response.status}`);
       }
 
-      if (response.ok && result.success) {
+      if (result.success) {
         // Success: load data into state for immediate visualization
         setColumns(headers);
         setImportedData(data);
@@ -1399,27 +1444,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           version: version
         });
       } else {
-        // Handle specific error types
-        if (response.status === 409 && result.constraint_violation) {
-          console.error('Constraint violation - file version already exists:', result.error);
-          // For constraint violations, show a more specific error
-          setUploadedFileName(`${file.name} (v${version}) - Version already exists`);
-        } else {
-          console.error('Failed to save to database:', result.error);
-        }
-
-        // Fallback: still load data into state for immediate use
-        setColumns(headers);
-        setImportedData(data);
-        setCacheEnabled(false);
-
-        // Update filename and version in header even for fallback
-        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
-        setFileName(fileNameWithoutExt);
-        setCurrentFileVersion(version);
-
-        setUploadedFileName(`${file.name} (v${version}) (DB save failed - using locally)`);
-        setShowUploadSuccess(true);
+        // Handle unexpected response format
+        console.error('Unexpected response format:', result);
+        throw new Error('Unexpected response format from server');
       }
     } catch (error) {
       console.error('Error saving to database:', error);
