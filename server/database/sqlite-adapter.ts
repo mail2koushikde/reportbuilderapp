@@ -134,36 +134,41 @@ export class SQLiteAdapter implements IDatabase {
     if (!data || data.length === 0) return;
 
     const columns = Object.keys(data[0]);
-    const placeholders = columns.map(() => '?').join(', ');
-    const sql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
 
-    // Use transaction and prepared statement for much better performance
+    // Use transaction and bulk VALUES for much better performance
     await this.query('BEGIN TRANSACTION');
 
     try {
-      // Prepare statement once
-      const stmt = this.db!.prepare(sql);
-
-      // Batch insert for optimal performance
-      const batchSize = 1000; // Process in batches to avoid memory issues
+      // Process in smaller batches for memory efficiency and speed
+      const batchSize = 500;
 
       for (let i = 0; i < data.length; i += batchSize) {
         const batch = data.slice(i, i + batchSize);
 
+        // Create bulk insert with multiple VALUES
+        const placeholders = batch.map(() =>
+          `(${columns.map(() => '?').join(', ')})`
+        ).join(', ');
+
+        const sql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ${placeholders}`;
+
+        // Flatten all values for the batch
+        const values: any[] = [];
         for (const row of batch) {
-          const values = columns.map(col => {
+          for (const col of columns) {
             const value = row[col];
             // Convert boolean to integer for SQLite
             if (typeof value === 'boolean') {
-              return value ? 1 : 0;
+              values.push(value ? 1 : 0);
+            } else {
+              values.push(value);
             }
-            return value;
-          });
-          stmt.run(values);
+          }
         }
+
+        await this.query(sql, values);
       }
 
-      stmt.finalize();
       await this.query('COMMIT');
     } catch (error) {
       await this.query('ROLLBACK');
