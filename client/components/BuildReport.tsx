@@ -1227,6 +1227,20 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Close version dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (versionDropdownRef.current && !versionDropdownRef.current.contains(event.target as Node)) {
+        setShowVersionDropdown(false);
+      }
+    };
+
+    if (showVersionDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showVersionDropdown]);
+
   // Fetch available versions for the current file
   const fetchFileVersions = useCallback(async (userEmail: string, filename: string) => {
     if (!userEmail || !filename) {
