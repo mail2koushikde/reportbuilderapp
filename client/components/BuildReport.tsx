@@ -5476,17 +5476,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               {fileName && (
                 <span className="text-xs sm:text-sm text-blue-300 font-light ml-1 sm:ml-2 flex items-center gap-1">
                   | {fileName}
-                  {/* Version Dropdown */}
-                  {availableVersions.length > 1 && (
+                  {/* Version Dropdown - show for any versioned file */}
+                  {currentFileVersion && currentFileVersion > 0 && (
                     <div className="relative" ref={versionDropdownRef}>
                       <button
                         onClick={() => setShowVersionDropdown(!showVersionDropdown)}
                         className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors px-1 py-0.5 rounded hover:bg-blue-500/10"
-                        title={`Switch version (currently v${currentFileVersion || 1})`}
+                        title={availableVersions.length > 1 ? `Switch version (currently v${currentFileVersion})` : `Version ${currentFileVersion} (click to check for other versions)`}
                         disabled={loadingVersions}
                       >
                         <span className="text-blue-400">
-                          (v{currentFileVersion || 1})
+                          (v{currentFileVersion})
                         </span>
                         {loadingVersions ? (
                           <div className="w-3 h-3 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
@@ -5500,47 +5500,49 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                         <div className="absolute top-full left-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50 min-w-48">
                           <div className="py-1 max-h-40 overflow-y-auto">
                             <div className="px-2 py-1 text-xs text-white/50 border-b border-white/10">
-                              Select Version:
+                              Available Versions:
                             </div>
-                            {availableVersions.map((version) => (
-                              <button
-                                key={version.version}
-                                onClick={() => {
-                                  const userEmail = 'mail2koushikde@gmail.com';
-                                  loadFileVersion(userEmail, fileName, version.version);
-                                }}
-                                className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors ${
-                                  version.version === currentFileVersion
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-white/80'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs font-medium">
-                                    Version {version.version}
-                                    {version.version === currentFileVersion && (
-                                      <span className="text-green-400 ml-1">• Current</span>
-                                    )}
-                                  </span>
-                                  <span className="text-xs text-white/50">
-                                    {new Date(version.upload_timestamp).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                {version.file_size_bytes && (
-                                  <div className="text-xs text-white/40 mt-0.5">
-                                    {(version.file_size_bytes / 1024).toFixed(1)} KB
+                            {availableVersions.length === 0 ? (
+                              <div className="px-3 py-2 text-xs text-white/50">
+                                {loadingVersions ? 'Loading versions...' : 'No other versions found'}
+                              </div>
+                            ) : (
+                              availableVersions.map((version) => (
+                                <button
+                                  key={version.version}
+                                  onClick={() => {
+                                    const userEmail = 'mail2koushikde@gmail.com';
+                                    loadFileVersion(userEmail, fileName, version.version);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors ${
+                                    version.version === currentFileVersion
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : 'text-white/80'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium">
+                                      Version {version.version}
+                                      {version.version === currentFileVersion && (
+                                        <span className="text-green-400 ml-1">• Current</span>
+                                      )}
+                                    </span>
+                                    <span className="text-xs text-white/50">
+                                      {new Date(version.upload_timestamp).toLocaleDateString()}
+                                    </span>
                                   </div>
-                                )}
-                              </button>
-                            ))}
+                                  {version.file_size_bytes && (
+                                    <div className="text-xs text-white/40 mt-0.5">
+                                      {(version.file_size_bytes / 1024).toFixed(1)} KB
+                                    </div>
+                                  )}
+                                </button>
+                              ))
+                            )}
                           </div>
                         </div>
                       )}
                     </div>
-                  )}
-                  {/* Show version without dropdown if only one version */}
-                  {availableVersions.length <= 1 && currentFileVersion && currentFileVersion > 0 && (
-                    <span className="text-blue-400"> (v{currentFileVersion})</span>
                   )}
                   {/* Data info */}
                   {importedData.length > 0 && columns.length > 0 && (
