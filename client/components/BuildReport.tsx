@@ -1555,6 +1555,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         setFileName(fileNameWithoutExt);
         setCurrentFileVersion(version);
 
+        // Fetch available versions for this file
+        const userEmail = 'mail2koushikde@gmail.com'; // Get from context/props in real app
+        fetchFileVersions(userEmail, fileNameWithoutExt);
+
         // Show success popup with versioned display name
         const displayName = result.metadata?.display_name || `${file.name} (v${version})`;
         setUploadedFileName(displayName);
