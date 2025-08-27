@@ -1369,12 +1369,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         }),
       });
 
-      // Handle response based on status first
+      // Read response body once as text first to avoid stream issues
+      let responseText;
+      try {
+        responseText = await response.text();
+      } catch (textError) {
+        console.error('Failed to read response body:', textError);
+        throw new Error(`Failed to read server response. Status: ${response.status}`);
+      }
+
+      // Handle response based on status
       if (!response.ok) {
         // For non-ok responses, try to parse JSON for error details
         let errorDetails = `HTTP ${response.status}`;
         try {
-          const errorResult = await response.json();
+          const errorResult = JSON.parse(responseText);
           if (errorResult.error) {
             errorDetails = errorResult.error;
           }
@@ -1387,8 +1396,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             console.error('Failed to save to database:', errorDetails);
           }
         } catch (jsonError) {
-          console.error('Failed to parse error response as JSON:', jsonError);
-          console.error('Server returned non-JSON error response. Status:', response.status);
+          console.error('Server returned non-JSON error response:', responseText);
+          console.error('Error parsing JSON:', jsonError);
         }
 
         // Fallback: still load data into state for immediate use
@@ -1407,9 +1416,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       // Response is ok, now parse JSON safely
       let result;
       try {
-        result = await response.json();
+        result = JSON.parse(responseText);
       } catch (jsonError) {
         console.error('Failed to parse success response as JSON:', jsonError);
+        console.error('Response text was:', responseText);
         // Even if JSON parsing fails, we can still load the data
         setColumns(headers);
         setImportedData(data);
