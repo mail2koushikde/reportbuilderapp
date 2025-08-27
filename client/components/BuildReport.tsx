@@ -1278,10 +1278,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
           let conflictResult;
           try {
-            conflictResult = await conflictResponse.json();
+            const conflictText = await conflictResponse.text();
+            conflictResult = JSON.parse(conflictText);
           } catch (jsonError) {
             console.error('Failed to parse conflict check response as JSON:', jsonError);
-            throw new Error(`Conflict check response was not valid JSON. Status: ${conflictResponse.status}`);
+            // Fallback to local loading if conflict check fails
+            setColumns(headers);
+            setImportedData(data);
+            setCacheEnabled(false);
+
+            const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+            setFileName(fileNameWithoutExt);
+            setCurrentFileVersion(null);
+
+            setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
+            setShowUploadSuccess(true);
+            return;
           }
 
           if (conflictResponse.ok && conflictResult.success) {
