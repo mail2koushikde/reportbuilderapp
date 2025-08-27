@@ -204,11 +204,25 @@ router.post("/tables/:tableName", async (req: Request, res: Response) => {
       // Check if this exact version already exists (to prevent duplicates)
       const existingFile = await databaseService.getFileMetadata(metadata.user_name, metadata.original_filename, metadata.version);
       if (existingFile.rowCount > 0 && !overwrite) {
+        // Get all versions of this file for proper conflict resolution
+        const allVersions = await databaseService.getFileMetadata(metadata.user_name, metadata.original_filename);
+        const existingVersions = allVersions.data.map((v: any) => ({
+          version: v.version,
+          upload_timestamp: v.upload_timestamp,
+          table_name: v.table_name
+        }));
+        const nextVersion = existingVersions.length > 0
+          ? Math.max(...existingVersions.map(v => v.version)) + 1
+          : 1;
+
         return res.status(409).json({
           success: false,
           error: `Version ${metadata.version} of file '${metadata.original_filename}' already exists for user '${metadata.user_name}'`,
-          conflict: true,
-          existing_metadata: existingFile.data[0]
+          constraint_violation: true,
+          existing_versions: existingVersions,
+          next_version: nextVersion,
+          user_name: metadata.user_name,
+          original_filename: metadata.original_filename
         });
       }
 
