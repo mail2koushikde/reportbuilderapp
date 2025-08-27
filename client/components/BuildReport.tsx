@@ -1121,6 +1121,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set());
   const [dimensionSelections, setDimensionSelections] = useState<Record<string, string[]>>({}); // Preserve selections per dimension
 
+  // Version management states
+  const [availableVersions, setAvailableVersions] = useState<any[]>([]);
+  const [showVersionDropdown, setShowVersionDropdown] = useState(false);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+
   // Responsive grid dimensions
   const [gridCols, setGridCols] = useState(DEFAULT_GRID_COLS);
   const [gridRows, setGridRows] = useState(DEFAULT_GRID_ROWS);
@@ -1128,6 +1133,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const versionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load saved report state when provided
   useEffect(() => {
