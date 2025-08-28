@@ -88,7 +88,7 @@ export function StorageOptionModal({
           onClick={onClose}
           className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 text-white/70 hover:text-white"
         >
-          <Zap className="h-4 w-4 rotate-45" />
+          <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
 
