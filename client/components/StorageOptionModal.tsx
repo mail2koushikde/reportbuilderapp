@@ -52,11 +52,8 @@ export function StorageOptionModal({
     title: 'Save Locally',
     description: 'Store in IndexedDB, query with DuckDB WASM',
     features: [
-      'Data persists in browser storage (IndexedDB)',
       'Perfect for sensitive information',
-      'Fast SQL queries with DuckDB WASM',
-      'No server upload required',
-      'Works offline - Excel → Disk → Query'
+      'Smaller data < 1M rows'
     ],
     recommended: !isLargeFile || isSensitiveData,
     icon: <HardDrive className="w-6 h-6" />
