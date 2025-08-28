@@ -1745,6 +1745,111 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [snowflakeQuery, queryType]);
 
+  // Storage option handlers
+  const handleStorageOptionSelect = useCallback(async (option: 'local' | 'server') => {
+    if (!pendingFileData) return;
+
+    const { file, headers, data, rowCount } = pendingFileData;
+
+    try {
+      if (option === 'local') {
+        // Store locally using DuckDB WASM
+        const dataset = await duckdbService.saveDataset(data, file.name, headers);
+
+        // Load the data into the app
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false); // Disable regular cache when using DuckDB
+
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(null);
+
+        // Update local datasets list
+        const datasets = await duckdbService.listDatasets();
+        setLocalDatasets(datasets);
+
+        setUploadedFileName(`${file.name} (Stored locally - ${rowCount.toLocaleString()} rows)`);
+        setShowUploadSuccess(true);
+
+      } else {
+        // Store on server - check for conflicts first
+        try {
+          const conflictResponse = await fetch('/api/database/uploads/check-conflict', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_name: userEmail,
+              original_filename: file.name
+            }),
+          });
+
+          let conflictResult;
+          try {
+            const conflictText = await conflictResponse.text();
+            conflictResult = JSON.parse(conflictText);
+          } catch (jsonError) {
+            console.error('Failed to parse conflict check response as JSON:', jsonError);
+            // Fallback to direct upload without version check
+            await uploadFileToDatabase(file, headers, data, 1);
+            return;
+          }
+
+          if (conflictResponse.ok && conflictResult.success) {
+            if (conflictResult.conflict) {
+              // File already exists, show version dialog
+              const safeConflictResult = {
+                ...conflictResult,
+                existing_versions: conflictResult.existing_versions || [],
+                next_version: conflictResult.next_version || 1
+              };
+
+              setPendingUpload({
+                file,
+                headers,
+                data,
+                conflict: safeConflictResult
+              });
+              setShowVersionDialog(true);
+            } else {
+              // No conflict, proceed with upload
+              await uploadFileToDatabase(file, headers, data, 1);
+            }
+          } else {
+            console.error('Failed to check conflict:', conflictResult.error);
+            // Fallback to direct upload
+            await uploadFileToDatabase(file, headers, data, 1);
+          }
+        } catch (error) {
+          console.error('Error checking conflict:', error);
+          // Fallback to direct upload
+          await uploadFileToDatabase(file, headers, data, 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error with storage option:', error);
+      alert(`Error storing data: ${error}`);
+    } finally {
+      setShowStorageModal(false);
+      setPendingFileData(null);
+    }
+  }, [pendingFileData, userEmail, uploadFileToDatabase]);
+
+  // Load local datasets on component mount
+  useEffect(() => {
+    const loadLocalDatasets = async () => {
+      try {
+        const datasets = await duckdbService.listDatasets();
+        setLocalDatasets(datasets);
+      } catch (error) {
+        console.error('Error loading local datasets:', error);
+      }
+    };
+    loadLocalDatasets();
+  }, []);
+
   // Cache management functions
   const toggleCache = useCallback(async () => {
     const newCacheEnabled = !cacheEnabled;
