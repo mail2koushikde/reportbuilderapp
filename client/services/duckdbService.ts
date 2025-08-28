@@ -308,11 +308,21 @@ class DuckDBService {
 
   private async openDBEnsureStore(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.DB_NAME, 1);
+      // Open without specifying a version to avoid VersionError when DB already exists with higher version
+      let request: IDBOpenDBRequest;
+      try {
+        request = indexedDB.open(this.DB_NAME);
+      } catch (e) {
+        return reject(e);
+      }
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        // If we hit a VersionError due to lower version, retry by opening without version (already done)
+        reject(request.error);
+      };
 
       request.onupgradeneeded = (event) => {
+        // DB is being created for the first time (version 1) or upgraded; ensure store exists
         const db = (event.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains(this.STORE_NAME)) {
           db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
@@ -321,7 +331,7 @@ class DuckDBService {
 
       request.onsuccess = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        // If store is missing (from a previous bad version), upgrade and create it
+        // If store is missing (edge case), bump version by 1 to create it
         if (!db.objectStoreNames.contains(this.STORE_NAME)) {
           const currentVersion = db.version;
           db.close();
