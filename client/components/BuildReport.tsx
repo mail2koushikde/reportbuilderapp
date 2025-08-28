@@ -1135,6 +1135,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [gridRows, setGridRows] = useState(DEFAULT_GRID_ROWS);
   const [containerWidth, setContainerWidth] = useState(1200);
 
+  // Storage option modal state
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  const [pendingFileData, setPendingFileData] = useState<{
+    file: File;
+    headers: string[];
+    data: DataRow[];
+    rowCount: number;
+  } | null>(null);
+  const [localDatasets, setLocalDatasets] = useState<LocalDataset[]>([]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const versionDropdownRef = useRef<HTMLDivElement>(null);
