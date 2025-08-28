@@ -146,8 +146,10 @@ export function StorageOptionModal({
               {/* Features */}
               <ul className="space-y-2 mb-6">
                 {option.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm text-gray-300">
-                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full flex-shrink-0" />
+                  <li key={index} className="flex items-center gap-2 text-sm text-white/80">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      option.type === 'local' ? 'bg-purple-400' : 'bg-blue-400'
+                    }`} />
                     {feature}
                   </li>
                 ))}
@@ -155,10 +157,10 @@ export function StorageOptionModal({
 
               {/* Action Button */}
               <Button
-                className={`w-full ${
+                className={`w-full transition-all duration-200 ${
                   option.type === 'local'
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    ? 'bg-purple-500/80 hover:bg-purple-500 text-white border border-purple-400/30'
+                    : 'bg-blue-500/80 hover:bg-blue-500 text-white border border-blue-400/30'
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -172,15 +174,15 @@ export function StorageOptionModal({
         </div>
 
         {/* Best Practices */}
-        <div className="mt-6 p-4 bg-blue-500/10 border border-blue-400/20 rounded-lg">
+        <div className="mt-6 glass-card p-4 border border-blue-400/20 rounded-lg">
           <h4 className="text-sm font-medium text-blue-300 mb-2 flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Best Practices
           </h4>
-          <div className="text-xs text-blue-200 space-y-1">
-            <p>• Choose <strong>Local Storage</strong> for sensitive data, quick analysis, or files under 1M rows</p>
-            <p>• Choose <strong>Server Storage</strong> for collaboration, large datasets, or permanent storage needs</p>
-            <p>• Local storage is faster for immediate analysis but data is only available in this browser</p>
+          <div className="text-xs text-white/70 space-y-1">
+            <p>• Choose <strong className="text-purple-300">Local Storage</strong> for sensitive data or files under 1M rows</p>
+            <p>• Choose <strong className="text-blue-300">Server Storage</strong> for collaboration, large datasets, or permanent storage</p>
+            <p>• Local storage is faster for immediate analysis but data stays only in this browser</p>
           </div>
         </div>
       </DialogContent>
