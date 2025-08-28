@@ -81,7 +81,50 @@ const FileHistory: React.FC = () => {
     fetchUploads();
   }, [userEmail]);
 
-  // Filter and sort uploads
+  // Group files by filename and get latest version
+  const groupFilesByName = (uploads: UploadMetadata[]): GroupedFile[] => {
+    const fileGroups = new Map<string, UploadMetadata[]>();
+
+    // Group uploads by filename
+    uploads.forEach(upload => {
+      const filename = upload.original_filename;
+      if (!fileGroups.has(filename)) {
+        fileGroups.set(filename, []);
+      }
+      fileGroups.get(filename)!.push(upload);
+    });
+
+    // Convert to GroupedFile array with latest version
+    const grouped: GroupedFile[] = [];
+    fileGroups.forEach((versions, filename) => {
+      // Sort versions by version number descending (latest first)
+      const sortedVersions = versions.sort((a, b) => b.version - a.version);
+
+      grouped.push({
+        filename,
+        latestVersion: sortedVersions[0],
+        allVersions: sortedVersions,
+        totalVersions: versions.length
+      });
+    });
+
+    return grouped;
+  };
+
+  // Toggle expansion of a file's versions
+  const toggleFileExpansion = (filename: string) => {
+    setExpandedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(filename)) {
+        newSet.delete(filename);
+      } else {
+        newSet.add(filename);
+      }
+      return newSet;
+    });
+  };
+
+  // Filter and sort grouped files
   useEffect(() => {
     let filtered = uploads.filter(upload => {
       const matchesSearch = searchTerm === '' ||
@@ -93,30 +136,34 @@ const FileHistory: React.FC = () => {
       return matchesSearch && matchesStatus;
     });
 
-    // Sort uploads
-    filtered.sort((a, b) => {
+    // Group the filtered uploads
+    const grouped = groupFilesByName(filtered);
+
+    // Sort grouped files
+    grouped.sort((a, b) => {
       let aValue, bValue;
-      
+
       switch (sortBy) {
         case 'upload_timestamp':
-          aValue = new Date(a.upload_timestamp).getTime();
-          bValue = new Date(b.upload_timestamp).getTime();
+          aValue = new Date(a.latestVersion.upload_timestamp).getTime();
+          bValue = new Date(b.latestVersion.upload_timestamp).getTime();
           break;
         case 'original_filename':
-          aValue = a.original_filename.toLowerCase();
-          bValue = b.original_filename.toLowerCase();
+          aValue = a.filename.toLowerCase();
+          bValue = b.filename.toLowerCase();
           break;
         default:
-          aValue = new Date(a.upload_timestamp).getTime();
-          bValue = new Date(b.upload_timestamp).getTime();
+          aValue = new Date(a.latestVersion.upload_timestamp).getTime();
+          bValue = new Date(b.latestVersion.upload_timestamp).getTime();
       }
-      
+
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
 
     setFilteredUploads(filtered);
+    setGroupedFiles(grouped);
   }, [uploads, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const formatFileSize = (bytes?: number) => {
