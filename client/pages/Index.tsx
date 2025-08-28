@@ -7,6 +7,7 @@ import ViewSavedReports, { SavedReport } from '../components/ViewSavedReports';
 import FileHistory from '../components/FileHistory';
 
 const Index: React.FC = () => {
+  const { userEmail } = useUser();
   const [navigationCollapsed, setNavigationCollapsed] = useState(window.innerWidth < 1024); // Auto-collapse on tablets and mobile
   const [currentPage, setCurrentPage] = useState<NavigationPage>('build-report');
   const [loadedReportState, setLoadedReportState] = useState<SavedReport['dashboardState'] | undefined>(undefined);
