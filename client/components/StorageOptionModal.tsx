@@ -49,7 +49,7 @@ export function StorageOptionModal({
   const localOption: StorageOption = {
     type: 'local',
     title: 'Save Locally',
-    description: 'Store in IndexedDB, query with DuckDB WASM',
+    description: '',
     features: [
       'Perfect for sensitive information',
       'Smaller data < 1M rows'
@@ -61,7 +61,7 @@ export function StorageOptionModal({
   const serverOption: StorageOption = {
     type: 'server',
     title: 'Save to Server',
-    description: 'Store in server database (SQLite/Snowflake)',
+    description: '',
     features: [
       'Permanent storage',
       'Handle large datasets (>1M rows)',
