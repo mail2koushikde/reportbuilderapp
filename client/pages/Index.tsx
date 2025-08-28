@@ -93,11 +93,6 @@ const Index: React.FC = () => {
         <main className={`glass-card rounded-xl sm:rounded-2xl lg:rounded-3xl flex-1 flex flex-col min-w-0 relative ${
           currentPage === 'build-report' ? 'overflow-visible' : 'overflow-hidden'
         }`}>
-          {/* User Profile - Top Right */}
-          <div className="absolute top-3 right-4 z-20">
-            <UserProfile userEmail="mail2koushikde@gmail.com" />
-          </div>
-
           {/* Collapse button when navigation is hidden */}
           {navigationCollapsed && (
             <button
