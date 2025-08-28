@@ -81,31 +81,31 @@ export function StorageOptionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl glass-card border-white/20">
+      <DialogContent className="max-w-3xl glass-card border-white/20 text-white">
         <DialogHeader>
           <DialogTitle className="text-xl text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-blue-400" />
             Choose Storage Option
           </DialogTitle>
-          <DialogDescription className="text-gray-300">
+          <DialogDescription className="text-white/70">
             Select where to store your data based on your needs and data characteristics.
           </DialogDescription>
         </DialogHeader>
 
         {/* File Information */}
-        <div className="bg-white/5 rounded-lg p-4 border border-white/10 mb-6">
+        <div className="glass-card rounded-lg p-4 border border-white/10 mb-6">
           <h3 className="text-sm font-medium text-white mb-2">File Information</h3>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-gray-400">Name:</span>
+              <span className="text-white/60">Name:</span>
               <p className="text-white truncate">{fileName}</p>
             </div>
             <div>
-              <span className="text-gray-400">Size:</span>
+              <span className="text-white/60">Size:</span>
               <p className="text-white">{formatFileSize(fileSize)}</p>
             </div>
             <div>
-              <span className="text-gray-400">Rows:</span>
+              <span className="text-white/60">Rows:</span>
               <p className="text-white">{formatNumber(rowCount)}</p>
             </div>
           </div>
@@ -116,10 +116,10 @@ export function StorageOptionModal({
           {[localOption, serverOption].map((option) => (
             <div
               key={option.type}
-              className={`relative p-6 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:border-blue-400/50 ${
+              className={`relative p-6 glass-card rounded-lg border transition-all duration-200 cursor-pointer hover:border-blue-400/50 hover:bg-white/10 ${
                 option.recommended
-                  ? 'border-green-400/50 bg-green-500/5'
-                  : 'border-white/20 bg-white/5'
+                  ? 'border-green-400/50 bg-green-500/10'
+                  : 'border-white/20'
               }`}
               onClick={() => handleSelect(option.type)}
             >
