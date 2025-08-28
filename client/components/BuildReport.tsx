@@ -5771,7 +5771,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             </div>
 
             {/* User Profile */}
-            <UserProfile userEmail={userEmail} />
+            <UserProfile />
           </div>
         </div>
       </header>
