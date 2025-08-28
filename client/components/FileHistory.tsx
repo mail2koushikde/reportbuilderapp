@@ -95,10 +95,6 @@ const FileHistory: React.FC = () => {
           aValue = a.original_filename.toLowerCase();
           bValue = b.original_filename.toLowerCase();
           break;
-        case 'user_name':
-          aValue = a.user_name.toLowerCase();
-          bValue = b.user_name.toLowerCase();
-          break;
         default:
           aValue = new Date(a.upload_timestamp).getTime();
           bValue = new Date(b.upload_timestamp).getTime();
