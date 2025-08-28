@@ -13,7 +13,12 @@ import {
   AlertCircle,
   Clock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Expand,
+  Minimize2
 } from 'lucide-react';
 
 interface UploadMetadata {
@@ -124,6 +129,40 @@ const FileHistory: React.FC = () => {
     });
   };
 
+  // Expand or collapse all files
+  const toggleAllFiles = () => {
+    const allFilenames = groupedFiles.filter(f => f.totalVersions > 1).map(f => f.filename);
+    if (expandedFiles.size === allFilenames.length) {
+      // All are expanded, collapse all
+      setExpandedFiles(new Set());
+    } else {
+      // Not all are expanded, expand all
+      setExpandedFiles(new Set(allFilenames));
+    }
+  };
+
+  // Handle column sorting
+  const handleColumnSort = (column: string) => {
+    if (sortBy === column) {
+      // Same column, toggle order
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to desc for most columns, asc for name
+      setSortBy(column as any);
+      setSortOrder(column === 'original_filename' ? 'asc' : 'desc');
+    }
+  };
+
+  // Get sort icon for column
+  const getSortIcon = (column: string) => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="w-4 h-4 text-white/30" />;
+    }
+    return sortOrder === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-blue-400" /> :
+      <ArrowDown className="w-4 h-4 text-blue-400" />;
+  };
+
   // Filter and sort grouped files
   useEffect(() => {
     let filtered = uploads.filter(upload => {
@@ -144,6 +183,10 @@ const FileHistory: React.FC = () => {
       let aValue, bValue;
 
       switch (sortBy) {
+        case 'upload_status':
+          aValue = a.latestVersion.upload_status;
+          bValue = b.latestVersion.upload_status;
+          break;
         case 'upload_timestamp':
           aValue = new Date(a.latestVersion.upload_timestamp).getTime();
           bValue = new Date(b.latestVersion.upload_timestamp).getTime();
@@ -151,6 +194,26 @@ const FileHistory: React.FC = () => {
         case 'original_filename':
           aValue = a.filename.toLowerCase();
           bValue = b.filename.toLowerCase();
+          break;
+        case 'version':
+          aValue = a.latestVersion.version;
+          bValue = b.latestVersion.version;
+          break;
+        case 'row_count':
+          aValue = a.latestVersion.row_count;
+          bValue = b.latestVersion.row_count;
+          break;
+        case 'column_count':
+          aValue = a.latestVersion.column_count;
+          bValue = b.latestVersion.column_count;
+          break;
+        case 'file_size_bytes':
+          aValue = a.latestVersion.file_size_bytes || 0;
+          bValue = b.latestVersion.file_size_bytes || 0;
+          break;
+        case 'table_name':
+          aValue = a.latestVersion.table_name.toLowerCase();
+          bValue = b.latestVersion.table_name.toLowerCase();
           break;
         default:
           aValue = new Date(a.latestVersion.upload_timestamp).getTime();
@@ -334,6 +397,28 @@ const FileHistory: React.FC = () => {
         </div>
       </div>
 
+      {/* Expand/Collapse All Button */}
+      {groupedFiles.some(f => f.totalVersions > 1) && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleAllFiles}
+            className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white text-sm transition-colors"
+          >
+            {expandedFiles.size === groupedFiles.filter(f => f.totalVersions > 1).length ? (
+              <>
+                <Minimize2 className="w-4 h-4" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <Expand className="w-4 h-4" />
+                Expand All
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {groupedFiles.length === 0 ? (
@@ -352,14 +437,78 @@ const FileHistory: React.FC = () => {
                 <thead className="bg-white/5">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70 w-8"></th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">File Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Version</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Upload Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Rows</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Columns</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Size</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Table Name</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('upload_status')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Status
+                        {getSortIcon('upload_status')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('original_filename')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        File Name
+                        {getSortIcon('original_filename')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('version')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Version
+                        {getSortIcon('version')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('upload_timestamp')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Upload Date
+                        {getSortIcon('upload_timestamp')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('row_count')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Rows
+                        {getSortIcon('row_count')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('column_count')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Columns
+                        {getSortIcon('column_count')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('file_size_bytes')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Size
+                        {getSortIcon('file_size_bytes')}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                      <button
+                        onClick={() => handleColumnSort('table_name')}
+                        className="flex items-center gap-2 hover:text-white transition-colors"
+                      >
+                        Table Name
+                        {getSortIcon('table_name')}
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
