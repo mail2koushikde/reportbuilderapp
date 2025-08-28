@@ -68,7 +68,7 @@ const FileHistory: React.FC = () => {
 
   useEffect(() => {
     fetchUploads();
-  }, []);
+  }, [userEmail]);
 
   // Filter and sort uploads
   useEffect(() => {
