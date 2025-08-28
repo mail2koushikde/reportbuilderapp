@@ -326,12 +326,6 @@ const FileHistory: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-purple-500" />
-                          <span className="text-white/80">{upload.user_name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-green-500" />
                           <span className="text-white/80">{formatTimestamp(upload.upload_timestamp)}</span>
                         </div>
