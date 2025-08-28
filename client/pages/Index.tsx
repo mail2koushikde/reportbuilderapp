@@ -46,13 +46,13 @@ const Index: React.FC = () => {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'build-report':
-        return <BuildReport loadedReportState={loadedReportState} userEmail="mayank.jain@abc.com" />;
+        return <BuildReport loadedReportState={loadedReportState} userEmail={userEmail} />;
       case 'saved-reports':
         return <ViewSavedReports onLoadReport={handleLoadReport} />;
       case 'file-history':
         return <FileHistory />;
       default:
-        return <BuildReport loadedReportState={loadedReportState} userEmail="mayank.jain@abc.com" />;
+        return <BuildReport loadedReportState={loadedReportState} userEmail={userEmail} />;
     }
   };
 
