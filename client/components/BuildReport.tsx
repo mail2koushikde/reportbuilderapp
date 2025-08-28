@@ -44,6 +44,7 @@ import {
 } from "recharts";
 import { storageService } from '../services/storageService';
 import { cacheService, CachedData } from '../services/cacheService';
+import UserProfile from './UserProfile';
 
 interface TextBox {
   id: string;
