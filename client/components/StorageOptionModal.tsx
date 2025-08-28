@@ -81,7 +81,13 @@ export function StorageOptionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl glass-card border-white/20 text-white">
+      <DialogContent className="max-w-3xl glass-card !bg-transparent border-white/20 text-white backdrop-blur-[25px]" style={{
+        background: 'rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(25px)',
+        WebkitBackdropFilter: 'blur(25px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)'
+      }}>
         <DialogHeader>
           <DialogTitle className="text-xl text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-blue-400" />
