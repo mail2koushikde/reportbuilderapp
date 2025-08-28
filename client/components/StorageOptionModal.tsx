@@ -79,24 +79,29 @@ export function StorageOptionModal({
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl glass-card !bg-transparent border-white/20 text-white backdrop-blur-[25px]" style={{
-        background: 'rgba(255, 255, 255, 0.08)',
-        backdropFilter: 'blur(25px)',
-        WebkitBackdropFilter: 'blur(25px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)'
-      }}>
-        <DialogHeader>
-          <DialogTitle className="text-xl text-white flex items-center gap-2">
+    <div className="fixed top-0 right-0 left-0 bottom-0 z-50 p-4 bg-black/80 backdrop-blur-sm">
+      <div className="glass-card rounded-2xl p-6 max-w-3xl mx-auto mt-16 relative text-white">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 text-white/70 hover:text-white"
+        >
+          <Zap className="h-4 w-4 rotate-45" />
+          <span className="sr-only">Close</span>
+        </button>
+
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
             <Zap className="w-5 h-5 text-blue-400" />
-            Choose Storage Option
-          </DialogTitle>
-          <DialogDescription className="text-white/70">
+            <h2 className="text-xl font-semibold text-white">Choose Storage Option</h2>
+          </div>
+          <p className="text-white/70">
             Select where to store your data based on your needs and data characteristics.
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
         {/* File Information */}
         <div className="glass-card rounded-lg p-4 border border-white/10 mb-6">
@@ -145,7 +150,7 @@ export function StorageOptionModal({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">{option.title}</h3>
-                  <p className="text-sm text-gray-400">{option.description}</p>
+                  <p className="text-sm text-white/60">{option.description}</p>
                 </div>
               </div>
 
@@ -191,7 +196,7 @@ export function StorageOptionModal({
             <p>• Local storage is faster for immediate analysis but data stays only in this browser</p>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
