@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogOverlay } from "./ui/dialog";
 import { Badge } from "./ui/badge";
 import { Database, HardDrive, Shield, Clock, Users, Zap } from "lucide-react";
 
