@@ -1855,6 +1855,28 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     loadLocalDatasets();
   }, []);
 
+  // Handler for loading a dataset from local storage
+  const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
+    try {
+      console.log(`Loading local dataset: ${dataset.name} (Flow: IndexedDB → DuckDB → App)`);
+
+      // Load dataset data into the app
+      setColumns(dataset.columns);
+      setImportedData(data);
+      setCacheEnabled(false); // Using local DuckDB storage
+
+      setFileName(dataset.name);
+      setCurrentFileVersion(null);
+
+      setUploadedFileName(`${dataset.originalFileName} (Loaded from IndexedDB - ${data.length.toLocaleString()} rows via DuckDB query)`);
+      setShowUploadSuccess(true);
+
+    } catch (error) {
+      console.error('Error loading local dataset into app:', error);
+      alert('Failed to load dataset');
+    }
+  }, []);
+
   // Cache management functions
   const toggleCache = useCallback(async () => {
     const newCacheEnabled = !cacheEnabled;
