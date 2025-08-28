@@ -1146,6 +1146,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   } | null>(null);
   const [localDatasets, setLocalDatasets] = useState<LocalDataset[]>([]);
 
+  // Local datasets modal state
+  const [showLocalDatasets, setShowLocalDatasets] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const versionDropdownRef = useRef<HTMLDivElement>(null);
