@@ -5598,7 +5598,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               )}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mr-12">
             <div className="flex items-center gap-1">
               <button
                 onClick={handleFileImport}
