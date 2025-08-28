@@ -1031,9 +1031,10 @@ interface BuildReportProps {
     hideControls: boolean;
     importedData: any[];
   };
+  userEmail?: string;
 }
 
-const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
+const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail = 'mayank.jain@abc.com' }) => {
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -1270,7 +1271,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   useEffect(() => {
     const fetchVersionsForCurrentFile = async () => {
       if (fileName && currentFileVersion && currentFileVersion > 0) {
-        const userEmail = 'mail2koushikde@gmail.com'; // Get from context/props in real app
+        // Using userEmail prop from component
         console.log('Fetching versions for existing file:', fileName, 'version:', currentFileVersion);
 
         // Try to determine the original filename with extension for database lookup
@@ -1405,7 +1406,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              user_name: 'mail2koushikde@gmail.com', // TODO: Get from actual user context
+              user_name: userEmail,
               original_filename: file.name
             }),
           });
@@ -1507,7 +1508,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           data: data,
           overwrite: overwrite,
           metadata: {
-            user_name: 'mail2koushikde@gmail.com', // TODO: Get from actual user context
+            user_name: userEmail,
             original_filename: file.name,
             version: version,
             file_size_bytes: file.size
@@ -5359,7 +5360,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         return (
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-white/60 text-center">
-              <div className="mb-3">📊</div>
+              <div className="mb-3">����</div>
               <div className="text-sm mb-2">No Chart Selected</div>
               <div className="text-xs opacity-70">Click the settings icon to configure this chart</div>
             </div>
