@@ -32,6 +32,13 @@ interface UploadMetadata {
   updated_at: string;
 }
 
+interface GroupedFile {
+  filename: string;
+  latestVersion: UploadMetadata;
+  allVersions: UploadMetadata[];
+  totalVersions: number;
+}
+
 const FileHistory: React.FC = () => {
   const { userEmail } = useUser();
   const [uploads, setUploads] = useState<UploadMetadata[]>([]);
