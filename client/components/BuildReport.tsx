@@ -46,6 +46,7 @@ import { storageService } from '../services/storageService';
 import { cacheService, CachedData } from '../services/cacheService';
 import { duckdbService, LocalDataset } from '../services/duckdbService';
 import { StorageOptionModal } from './StorageOptionModal';
+import { LocalDatasets } from './LocalDatasets';
 import UserProfile from './UserProfile';
 
 interface TextBox {
