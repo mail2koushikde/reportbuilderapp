@@ -53,27 +53,39 @@ class DuckDBService {
 
   private async setupPersistentStorage(): Promise<void> {
     if (!this.conn) return;
-    
+
     try {
-      // Install and load httpfs extension for better file handling
-      await this.conn.query("INSTALL httpfs;");
-      await this.conn.query("LOAD httpfs;");
-      
-      // Create metadata table for tracking datasets
+      // Try to install and load httpfs extension for better file handling
+      try {
+        await this.conn.query("INSTALL httpfs;");
+        await this.conn.query("LOAD httpfs;");
+        console.log('DuckDB httpfs extension loaded successfully');
+      } catch (httpfsError) {
+        console.warn('Could not load httpfs extension:', httpfsError);
+        // Continue without httpfs
+      }
+
+      // Create metadata table for tracking datasets - this is critical
       await this.conn.query(`
         CREATE TABLE IF NOT EXISTS __datasets_metadata (
           id VARCHAR PRIMARY KEY,
           name VARCHAR NOT NULL,
           table_name VARCHAR NOT NULL,
           row_count INTEGER NOT NULL,
-          columns JSON NOT NULL,
+          columns VARCHAR NOT NULL,
           created_at TIMESTAMP NOT NULL,
           file_size INTEGER NOT NULL
         );
       `);
+      console.log('DuckDB metadata table created successfully');
+
+      // Test the table exists
+      await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata;');
+      console.log('DuckDB metadata table verified');
+
     } catch (error) {
-      console.warn('Could not set up some DuckDB features:', error);
-      // Continue without these features
+      console.error('Critical error setting up DuckDB persistent storage:', error);
+      throw error; // This is critical, so throw the error
     }
   }
 
@@ -186,22 +198,31 @@ class DuckDBService {
   }
 
   async getDataset(datasetId: string): Promise<LocalDataset | null> {
-    await this.initialize();
-    
-    if (!this.conn) {
-      throw new Error('DuckDB connection not available');
-    }
-
     try {
+      await this.initialize();
+
+      if (!this.conn) {
+        console.warn('DuckDB connection not available for getting dataset');
+        return null;
+      }
+
+      // Check if metadata table exists first
+      try {
+        await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
+      } catch (tableError) {
+        console.warn('Metadata table does not exist when getting dataset');
+        return null;
+      }
+
       const result = await this.conn.query(`
         SELECT * FROM __datasets_metadata WHERE id = '${datasetId}';
       `);
-      
+
       const rows = result.toArray();
       if (rows.length === 0) {
         return null;
       }
-      
+
       const row = rows[0];
       return {
         id: row[0] as string,
@@ -219,17 +240,26 @@ class DuckDBService {
   }
 
   async listDatasets(): Promise<LocalDataset[]> {
-    await this.initialize();
-    
-    if (!this.conn) {
-      throw new Error('DuckDB connection not available');
-    }
-
     try {
+      await this.initialize();
+
+      if (!this.conn) {
+        console.warn('DuckDB connection not available for listing datasets');
+        return [];
+      }
+
+      // Check if metadata table exists first
+      try {
+        await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
+      } catch (tableError) {
+        console.warn('Metadata table does not exist, creating it...');
+        await this.setupPersistentStorage();
+      }
+
       const result = await this.conn.query(`
         SELECT * FROM __datasets_metadata ORDER BY created_at DESC;
       `);
-      
+
       return result.toArray().map(row => ({
         id: row[0] as string,
         name: row[1] as string,
@@ -279,21 +309,29 @@ class DuckDBService {
     totalRows: number;
     estimatedSizeMB: number;
   }> {
-    await this.initialize();
-    
-    if (!this.conn) {
-      return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
-    }
-
     try {
+      await this.initialize();
+
+      if (!this.conn) {
+        return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
+      }
+
+      // Check if metadata table exists first
+      try {
+        await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
+      } catch (tableError) {
+        console.warn('Metadata table does not exist when getting storage info');
+        return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
+      }
+
       const result = await this.conn.query(`
-        SELECT 
+        SELECT
           COUNT(*) as dataset_count,
           COALESCE(SUM(row_count), 0) as total_rows,
           COALESCE(SUM(file_size), 0) as total_bytes
         FROM __datasets_metadata;
       `);
-      
+
       const row = result.toArray()[0];
       return {
         datasetCount: row[0] as number,
