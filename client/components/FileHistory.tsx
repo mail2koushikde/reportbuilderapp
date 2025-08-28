@@ -147,10 +147,6 @@ const FileHistory: React.FC = () => {
     }
   };
 
-  const getOriginalFileName = (filename: string) => {
-    // Return the original filename exactly as uploaded (with extension)
-    return filename;
-  };
 
   if (loading) {
     return (
