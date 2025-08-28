@@ -30,9 +30,6 @@ const UserProfile: React.FC = () => {
     }
   }, [isOpen]);
 
-  const initials = getUserInitials(userEmail);
-  const displayName = getDisplayName(userEmail);
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Avatar Button */}
