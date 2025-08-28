@@ -1600,9 +1600,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         setFileName(fileNameWithoutExt);
         setCurrentFileVersion(version);
 
-        // Fetch available versions for this file
+        // Fetch available versions for this file using the original filename as stored in metadata
         const userEmail = 'mail2koushikde@gmail.com'; // Get from context/props in real app
-        fetchFileVersions(userEmail, fileNameWithoutExt);
+        fetchFileVersions(userEmail, file.name); // Use original filename with extension for database query
 
         // Show success popup with versioned display name
         const displayName = result.metadata?.display_name || `${file.name} (v${version})`;
