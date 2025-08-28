@@ -5684,6 +5684,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               >
                 <Database className="w-3 h-3" />
               </button>
+              <button
+                onClick={() => setShowLocalDatasets(true)}
+                className="p-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition-colors border border-purple-400/30"
+                title={`View Local Datasets (${localDatasets.length} stored)`}
+              >
+                <HardDrive className="w-3 h-3" />
+              </button>
 
               {/* Cache Toggle Button */}
               <button
