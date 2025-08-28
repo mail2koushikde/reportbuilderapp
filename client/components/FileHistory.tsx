@@ -367,7 +367,7 @@ const FileHistory: React.FC = () => {
                     const isExpanded = expandedFiles.has(file.filename);
                     return (
                       <Fragment key={file.filename}>
-                        {/* Main row - Latest version */}
+                        {/* Main row - Shows latest version when collapsed, file summary when expanded */}
                         <tr className="hover:bg-white/5 transition-colors">
                           <td className="px-4 py-3">
                             <button
@@ -386,61 +386,94 @@ const FileHistory: React.FC = () => {
                               )}
                             </button>
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(file.latestVersion.upload_status)}
-                              <span className="text-sm text-white/70 capitalize">
-                                {file.latestVersion.upload_status}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-blue-500" />
-                              <div className="flex flex-col">
-                                <span className="text-white font-medium">
-                                  {file.filename}
+                          {isExpanded ? (
+                            // Expanded state - Show file summary
+                            <>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-blue-500" />
+                                  <span className="text-sm text-white/70">Multiple Versions</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-blue-500" />
+                                  <div className="flex flex-col">
+                                    <span className="text-white font-medium">
+                                      {file.filename}
+                                    </span>
+                                    <span className="text-xs text-blue-300">
+                                      {file.totalVersions} versions available
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3" colSpan={6}>
+                                <span className="text-sm text-white/70 italic">
+                                  Showing all versions below
                                 </span>
-                                {file.totalVersions > 1 && (
-                                  <span className="text-xs text-white/50">
-                                    {file.totalVersions} versions
+                              </td>
+                            </>
+                          ) : (
+                            // Collapsed state - Show latest version details
+                            <>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  {getStatusIcon(file.latestVersion.upload_status)}
+                                  <span className="text-sm text-white/70 capitalize">
+                                    {file.latestVersion.upload_status}
                                   </span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <span className="px-2 py-1 bg-blue-600/30 text-blue-300 text-xs rounded-full">
-                                v{file.latestVersion.version}
-                              </span>
-                              {file.totalVersions > 1 && (
-                                <span className="text-xs text-green-400 font-medium">
-                                  LATEST
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-green-500" />
-                              <span className="text-white/80">{formatTimestamp(file.latestVersion.upload_timestamp)}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-white/80">{file.latestVersion.row_count.toLocaleString()}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-white/80">{file.latestVersion.column_count}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-white/80">{formatFileSize(file.latestVersion.file_size_bytes)}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <code className="text-xs bg-gray-700/50 px-2 py-1 rounded text-gray-300">
-                              {file.latestVersion.table_name}
-                            </code>
-                          </td>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-blue-500" />
+                                  <div className="flex flex-col">
+                                    <span className="text-white font-medium">
+                                      {file.filename}
+                                    </span>
+                                    {file.totalVersions > 1 && (
+                                      <span className="text-xs text-white/50">
+                                        {file.totalVersions} versions
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-1">
+                                  <span className="px-2 py-1 bg-blue-600/30 text-blue-300 text-xs rounded-full">
+                                    v{file.latestVersion.version}
+                                  </span>
+                                  {file.totalVersions > 1 && (
+                                    <span className="text-xs text-green-400 font-medium">
+                                      LATEST
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-green-500" />
+                                  <span className="text-white/80">{formatTimestamp(file.latestVersion.upload_timestamp)}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-white/80">{file.latestVersion.row_count.toLocaleString()}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-white/80">{file.latestVersion.column_count}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-white/80">{formatFileSize(file.latestVersion.file_size_bytes)}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <code className="text-xs bg-gray-700/50 px-2 py-1 rounded text-gray-300">
+                                  {file.latestVersion.table_name}
+                                </code>
+                              </td>
+                            </>
+                          )}
                         </tr>
 
                         {/* Expanded rows - All versions except latest */}
