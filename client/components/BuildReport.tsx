@@ -1753,13 +1753,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
     try {
       if (option === 'local') {
-        // Store locally using DuckDB WASM
+        // Flow: Excel → IndexedDB (primary storage)
+        console.log('Saving dataset to IndexedDB...');
         const dataset = await duckdbService.saveDataset(data, file.name, headers);
 
-        // Load the data into the app
+        // Load the data into the app for immediate use
         setColumns(headers);
         setImportedData(data);
-        setCacheEnabled(false); // Disable regular cache when using DuckDB
+        setCacheEnabled(false); // Disable regular cache when using local storage
 
         const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
         setFileName(fileNameWithoutExt);
@@ -1769,7 +1770,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const datasets = await duckdbService.listDatasets();
         setLocalDatasets(datasets);
 
-        setUploadedFileName(`${file.name} (Stored locally - ${rowCount.toLocaleString()} rows)`);
+        setUploadedFileName(`${file.name} (Stored locally in IndexedDB - ${rowCount.toLocaleString()} rows)`);
         setShowUploadSuccess(true);
 
       } else {
