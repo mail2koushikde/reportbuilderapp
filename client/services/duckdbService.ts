@@ -303,103 +303,125 @@ class DuckDBService {
   }
 
   // IndexedDB operations (primary storage)
-  
-  private async storeInIndexedDB(datasetId: string, dataset: LocalDataset, data: DataRow[]): Promise<void> {
+  private readonly DB_NAME = 'LocalDuckDBStorage';
+  private readonly STORE_NAME = 'datasets';
+
+  private async openDBEnsureStore(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('LocalDuckDBStorage', 1);
-      
+      const request = indexedDB.open(this.DB_NAME, 1);
+
       request.onerror = () => reject(request.error);
-      
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['datasets'], 'readwrite');
-        const store = transaction.objectStore('datasets');
-        
-        const storeData = {
-          id: datasetId,
-          dataset,
-          data
-        };
-        
-        const storeRequest = store.put(storeData);
-        storeRequest.onsuccess = () => resolve();
-        storeRequest.onerror = () => reject(storeRequest.error);
-      };
-      
+
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('datasets')) {
-          db.createObjectStore('datasets', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+          db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
         }
       };
+
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        // If store is missing (from a previous bad version), upgrade and create it
+        if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+          const currentVersion = db.version;
+          db.close();
+          const upgradeRequest = indexedDB.open(this.DB_NAME, currentVersion + 1);
+          upgradeRequest.onerror = () => reject(upgradeRequest.error);
+          upgradeRequest.onupgradeneeded = (e) => {
+            const udb = (e.target as IDBOpenDBRequest).result;
+            if (!udb.objectStoreNames.contains(this.STORE_NAME)) {
+              udb.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
+            }
+          };
+          upgradeRequest.onsuccess = (e2) => {
+            resolve((e2.target as IDBOpenDBRequest).result);
+          };
+          return;
+        }
+        resolve(db);
+      };
+    });
+  }
+
+  private async storeInIndexedDB(datasetId: string, dataset: LocalDataset, data: DataRow[]): Promise<void> {
+    const db = await this.openDBEnsureStore();
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = db.transaction([this.STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(this.STORE_NAME);
+        const storeData = { id: datasetId, dataset, data };
+        const storeRequest = store.put(storeData);
+        storeRequest.onsuccess = () => { db.close(); resolve(); };
+        storeRequest.onerror = () => { db.close(); reject(storeRequest.error); };
+      } catch (e) {
+        db.close();
+        reject(e);
+      }
     });
   }
 
   private async loadFromIndexedDB(datasetId: string): Promise<{ dataset: LocalDataset | null; data: DataRow[] | null }> {
+    const db = await this.openDBEnsureStore();
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('LocalDuckDBStorage', 1);
-      
-      request.onerror = () => reject(request.error);
-      
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['datasets'], 'readonly');
-        const store = transaction.objectStore('datasets');
-        
+      try {
+        const transaction = db.transaction([this.STORE_NAME], 'readonly');
+        const store = transaction.objectStore(this.STORE_NAME);
         const getRequest = store.get(datasetId);
         getRequest.onsuccess = () => {
-          if (getRequest.result) {
-            resolve({ 
-              dataset: getRequest.result.dataset, 
-              data: getRequest.result.data 
-            });
+          const result = getRequest.result;
+          db.close();
+          if (result) {
+            resolve({ dataset: result.dataset, data: result.data });
           } else {
             resolve({ dataset: null, data: null });
           }
         };
-        getRequest.onerror = () => reject(getRequest.error);
-      };
+        getRequest.onerror = () => { db.close(); reject(getRequest.error); };
+      } catch (e) {
+        db.close();
+        reject(e);
+      }
     });
   }
 
   private async getAllDatasetsFromIndexedDB(): Promise<LocalDataset[]> {
+    const db = await this.openDBEnsureStore();
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('LocalDuckDBStorage', 1);
-      
-      request.onerror = () => reject(request.error);
-      
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['datasets'], 'readonly');
-        const store = transaction.objectStore('datasets');
-        
+      try {
+        const transaction = db.transaction([this.STORE_NAME], 'readonly');
+        const store = transaction.objectStore(this.STORE_NAME);
         const getAllRequest = store.getAll();
         getAllRequest.onsuccess = () => {
-          const datasets = getAllRequest.result.map(item => item.dataset);
-          // Sort by creation date, newest first
+          const results = getAllRequest.result as Array<{ id: string; dataset: LocalDataset; data: DataRow[] }>;
+          db.close();
+          const datasets = (results || []).map(item => ({
+            ...item.dataset,
+            createdAt: new Date(item.dataset.createdAt)
+          }));
           datasets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           resolve(datasets);
         };
-        getAllRequest.onerror = () => reject(getAllRequest.error);
-      };
+        getAllRequest.onerror = () => { db.close(); reject(getAllRequest.error); };
+      } catch (e) {
+        db.close();
+        reject(e);
+      }
     });
   }
 
   private async removeFromIndexedDB(datasetId: string): Promise<void> {
+    const db = await this.openDBEnsureStore();
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('LocalDuckDBStorage', 1);
-      
-      request.onerror = () => reject(request.error);
-      
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['datasets'], 'readwrite');
-        const store = transaction.objectStore('datasets');
-        
+      try {
+        const transaction = db.transaction([this.STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(this.STORE_NAME);
         const deleteRequest = store.delete(datasetId);
-        deleteRequest.onsuccess = () => resolve();
-        deleteRequest.onerror = () => reject(deleteRequest.error);
-      };
+        deleteRequest.onsuccess = () => { db.close(); resolve(); };
+        deleteRequest.onerror = () => { db.close(); reject(deleteRequest.error); };
+      } catch (e) {
+        db.close();
+        reject(e);
+      }
     });
   }
 
