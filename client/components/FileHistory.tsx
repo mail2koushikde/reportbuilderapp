@@ -478,45 +478,33 @@ const FileHistory: React.FC = () => {
                         {isExpanded && (
                           <tr>
                             <td colSpan={9} className="px-0 py-0">
-                              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-2 rounded-r-lg">
-                                <div className="px-4 py-2 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
-                                  <div className="text-xs text-blue-300 font-medium mb-3 flex items-center gap-2">
-                                    <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                                    All Versions ({file.allVersions.length})
-                                  </div>
-                                  <div className="space-y-2">
+                              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg">
+                                <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
+                                  <div className="space-y-1">
                                     {file.allVersions.map((version, index) => (
-                                      <div key={`${file.filename}-v${version.version}`} className={`flex items-center py-2 rounded-lg border transition-colors ${
-                                        index === 0
-                                          ? 'bg-blue-500/20 border-blue-400/30 hover:bg-blue-500/30'
-                                          : 'bg-black/30 border-white/5 hover:bg-black/40'
-                                      }`}>
-                                        {/* Empty column to align with expand button */}
-                                        <div className="w-12 flex-shrink-0"></div>
+                                      <div key={`${file.filename}-v${version.version}`} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
+                                        {/* Empty space to align with expand button column */}
+                                        <div style={{ width: '32px' }} className="flex-shrink-0"></div>
 
-                                        {/* Status column */}
-                                        <div className="px-4 py-1 flex items-center gap-2 w-32 flex-shrink-0">
+                                        {/* Status column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
                                           {getStatusIcon(version.upload_status)}
                                           <span className="text-sm text-white capitalize">
                                             {version.upload_status}
                                           </span>
                                         </div>
 
-                                        {/* File Name column - shows version instead since filename is in header */}
-                                        <div className="px-4 py-1 flex items-center gap-2 flex-1 min-w-0">
+                                        {/* File Name column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '200px', maxWidth: '250px' }}>
                                           <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                           <span className="text-white text-sm truncate">
                                             {version.original_filename}
                                           </span>
                                         </div>
 
-                                        {/* Version column */}
-                                        <div className="px-4 py-1 flex items-center gap-1 w-24 flex-shrink-0">
-                                          <span className={`px-2 py-1 text-xs rounded-full ${
-                                            index === 0
-                                              ? 'bg-blue-600/40 text-blue-200'
-                                              : 'bg-slate-600/40 text-slate-200'
-                                          }`}>
+                                        {/* Version column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center gap-1" style={{ minWidth: '100px' }}>
+                                          <span className="px-2 py-1 bg-slate-600/40 text-slate-200 text-xs rounded-full">
                                             v{version.version}
                                           </span>
                                           {index === 0 && (
@@ -526,34 +514,30 @@ const FileHistory: React.FC = () => {
                                           )}
                                         </div>
 
-                                        {/* Upload Date column */}
-                                        <div className="px-4 py-1 flex items-center gap-2 w-40 flex-shrink-0">
+                                        {/* Upload Date column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '160px' }}>
                                           <Calendar className="w-4 h-4 text-green-500" />
                                           <span className="text-white text-sm">{formatTimestamp(version.upload_timestamp)}</span>
                                         </div>
 
-                                        {/* Rows column */}
-                                        <div className="px-4 py-1 flex items-center w-20 flex-shrink-0">
+                                        {/* Rows column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center" style={{ minWidth: '80px' }}>
                                           <span className="text-white text-sm">{version.row_count.toLocaleString()}</span>
                                         </div>
 
-                                        {/* Columns column */}
-                                        <div className="px-4 py-1 flex items-center w-20 flex-shrink-0">
+                                        {/* Columns column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center" style={{ minWidth: '80px' }}>
                                           <span className="text-white text-sm">{version.column_count}</span>
                                         </div>
 
-                                        {/* Size column */}
-                                        <div className="px-4 py-1 flex items-center w-20 flex-shrink-0">
+                                        {/* Size column - match table header width */}
+                                        <div className="px-4 py-0 flex items-center" style={{ minWidth: '80px' }}>
                                           <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
                                         </div>
 
-                                        {/* Table Name column */}
-                                        <div className="px-4 py-1 flex items-center flex-1 min-w-0">
-                                          <code className={`text-xs px-2 py-1 rounded truncate ${
-                                            index === 0
-                                              ? 'bg-blue-700/50 text-blue-200'
-                                              : 'bg-slate-700/50 text-slate-200'
-                                          }`}>
+                                        {/* Table Name column - flex to fill remaining space */}
+                                        <div className="px-4 py-0 flex items-center flex-1 min-w-0">
+                                          <code className="text-xs bg-slate-700/50 text-slate-200 px-2 py-1 rounded truncate">
                                             {version.table_name}
                                           </code>
                                         </div>
