@@ -409,9 +409,7 @@ const FileHistory: React.FC = () => {
                                 </div>
                               </td>
                               <td className="px-4 py-3" colSpan={6}>
-                                <span className="text-sm text-white/70 italic">
-                                  Showing all versions below
-                                </span>
+                                {/* Empty space for alignment */}
                               </td>
                             </>
                           ) : (
