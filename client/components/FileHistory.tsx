@@ -31,6 +31,7 @@ interface UploadMetadata {
 }
 
 const FileHistory: React.FC = () => {
+  const { userEmail } = useUser();
   const [uploads, setUploads] = useState<UploadMetadata[]>([]);
   const [filteredUploads, setFilteredUploads] = useState<UploadMetadata[]>([]);
   const [loading, setLoading] = useState(true);
