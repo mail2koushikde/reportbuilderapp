@@ -43,14 +43,15 @@ const FileHistory: React.FC = () => {
   const fetchUploads = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/database/uploads');
-      
+      const currentUser = 'mail2koushikde@gmail.com'; // TODO: Get from auth context
+      const response = await fetch(`/api/database/uploads/user/${encodeURIComponent(currentUser)}`);
+
       if (!response.ok) {
         throw new Error('Failed to fetch upload history');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setUploads(data.uploads);
         setError(null);
