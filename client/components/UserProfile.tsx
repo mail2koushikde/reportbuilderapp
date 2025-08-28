@@ -104,46 +104,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ userEmail }) => {
                 <Settings className="w-4 h-4" />
                 Profile Preferences
               </h4>
-              
-              {/* Theme Selection */}
-              <div className="space-y-2">
-                <label className="text-xs text-white/70">Theme</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setTheme('light')}
-                    className={`flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      theme === 'light'
-                        ? 'bg-blue-600/30 text-blue-300 border border-blue-400/30'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
-                    }`}
-                  >
-                    <Sun className="w-3 h-3" />
-                    Light
-                  </button>
-                  <button
-                    onClick={() => setTheme('dark')}
-                    className={`flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      theme === 'dark'
-                        ? 'bg-blue-600/30 text-blue-300 border border-blue-400/30'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
-                    }`}
-                  >
-                    <Moon className="w-3 h-3" />
-                    Dark
-                  </button>
-                  <button
-                    onClick={() => setTheme('auto')}
-                    className={`flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs transition-colors ${
-                      theme === 'auto'
-                        ? 'bg-blue-600/30 text-blue-300 border border-blue-400/30'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'
-                    }`}
-                  >
-                    <Monitor className="w-3 h-3" />
-                    Auto
-                  </button>
-                </div>
-              </div>
 
               {/* Notifications */}
               <div className="flex items-center justify-between py-2">
