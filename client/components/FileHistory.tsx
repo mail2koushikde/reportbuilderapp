@@ -486,18 +486,32 @@ const FileHistory: React.FC = () => {
                                   </div>
                                   <div className="space-y-2">
                                     {file.allVersions.map((version, index) => (
-                                      <div key={`${file.filename}-v${version.version}`} className={`grid grid-cols-8 gap-4 py-2 px-3 rounded-lg border transition-colors ${
+                                      <div key={`${file.filename}-v${version.version}`} className={`flex items-center py-2 rounded-lg border transition-colors ${
                                         index === 0
                                           ? 'bg-blue-500/20 border-blue-400/30 hover:bg-blue-500/30'
                                           : 'bg-black/30 border-white/5 hover:bg-black/40'
                                       }`}>
-                                        <div className="flex items-center gap-2">
+                                        {/* Empty column to align with expand button */}
+                                        <div className="w-12 flex-shrink-0"></div>
+
+                                        {/* Status column */}
+                                        <div className="px-4 py-1 flex items-center gap-2 w-32 flex-shrink-0">
                                           {getStatusIcon(version.upload_status)}
                                           <span className="text-sm text-white capitalize">
                                             {version.upload_status}
                                           </span>
                                         </div>
-                                        <div className="flex items-center gap-1">
+
+                                        {/* File Name column - shows version instead since filename is in header */}
+                                        <div className="px-4 py-1 flex items-center gap-2 flex-1 min-w-0">
+                                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                          <span className="text-white text-sm truncate">
+                                            {version.original_filename}
+                                          </span>
+                                        </div>
+
+                                        {/* Version column */}
+                                        <div className="px-4 py-1 flex items-center gap-1 w-24 flex-shrink-0">
                                           <span className={`px-2 py-1 text-xs rounded-full ${
                                             index === 0
                                               ? 'bg-blue-600/40 text-blue-200'
@@ -511,20 +525,30 @@ const FileHistory: React.FC = () => {
                                             </span>
                                           )}
                                         </div>
-                                        <div className="flex items-center gap-2">
+
+                                        {/* Upload Date column */}
+                                        <div className="px-4 py-1 flex items-center gap-2 w-40 flex-shrink-0">
                                           <Calendar className="w-4 h-4 text-green-500" />
                                           <span className="text-white text-sm">{formatTimestamp(version.upload_timestamp)}</span>
                                         </div>
-                                        <div className="flex items-center">
+
+                                        {/* Rows column */}
+                                        <div className="px-4 py-1 flex items-center w-20 flex-shrink-0">
                                           <span className="text-white text-sm">{version.row_count.toLocaleString()}</span>
                                         </div>
-                                        <div className="flex items-center">
+
+                                        {/* Columns column */}
+                                        <div className="px-4 py-1 flex items-center w-20 flex-shrink-0">
                                           <span className="text-white text-sm">{version.column_count}</span>
                                         </div>
-                                        <div className="flex items-center">
+
+                                        {/* Size column */}
+                                        <div className="px-4 py-1 flex items-center w-20 flex-shrink-0">
                                           <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
                                         </div>
-                                        <div className="flex items-center col-span-2">
+
+                                        {/* Table Name column */}
+                                        <div className="px-4 py-1 flex items-center flex-1 min-w-0">
                                           <code className={`text-xs px-2 py-1 rounded truncate ${
                                             index === 0
                                               ? 'bg-blue-700/50 text-blue-200'
