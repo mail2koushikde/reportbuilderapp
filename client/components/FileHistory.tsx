@@ -444,56 +444,55 @@ const FileHistory: React.FC = () => {
                         </tr>
 
                         {/* Expanded rows - All versions except latest */}
-                        {isExpanded && file.allVersions.slice(1).map((version, index) => (
-                          <tr key={`${file.filename}-v${version.version}`} className="bg-white/2 hover:bg-white/5 transition-colors">
-                            <td className="px-4 py-2">
-                              <div className="ml-6 w-4 h-4 flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={9} className="px-0 py-0">
+                              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-2 rounded-r-lg">
+                                <div className="px-4 py-2 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
+                                  <div className="text-xs text-blue-300 font-medium mb-3 flex items-center gap-2">
+                                    <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                                    Previous Versions ({file.allVersions.length - 1})
+                                  </div>
+                                  <div className="space-y-2">
+                                    {file.allVersions.slice(1).map((version, index) => (
+                                      <div key={`${file.filename}-v${version.version}`} className="grid grid-cols-8 gap-4 py-2 px-3 bg-black/30 rounded-lg border border-white/5 hover:bg-black/40 transition-colors">
+                                        <div className="flex items-center gap-2">
+                                          {getStatusIcon(version.upload_status)}
+                                          <span className="text-sm text-white capitalize">
+                                            {version.upload_status}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <span className="px-2 py-1 bg-slate-600/40 text-slate-200 text-xs rounded-full">
+                                            v{version.version}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Calendar className="w-4 h-4 text-green-500" />
+                                          <span className="text-white text-sm">{formatTimestamp(version.upload_timestamp)}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <span className="text-white text-sm">{version.row_count.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <span className="text-white text-sm">{version.column_count}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
+                                        </div>
+                                        <div className="flex items-center col-span-2">
+                                          <code className="text-xs bg-slate-700/50 px-2 py-1 rounded text-slate-200 truncate">
+                                            {version.table_name}
+                                          </code>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
-                            </td>
-                            <td className="px-4 py-2">
-                              <div className="flex items-center gap-2">
-                                {getStatusIcon(version.upload_status)}
-                                <span className="text-sm text-white/60 capitalize">
-                                  {version.upload_status}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-2">
-                              <div className="flex items-center gap-2 ml-6">
-                                <FileText className="w-3 h-3 text-blue-400/70" />
-                                <span className="text-white/70 text-sm">
-                                  {version.original_filename}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-2">
-                              <span className="px-2 py-1 bg-gray-600/30 text-gray-300 text-xs rounded-full">
-                                v{version.version}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-3 h-3 text-green-400/70" />
-                                <span className="text-white/60 text-sm">{formatTimestamp(version.upload_timestamp)}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-2">
-                              <span className="text-white/60 text-sm">{version.row_count.toLocaleString()}</span>
-                            </td>
-                            <td className="px-4 py-2">
-                              <span className="text-white/60 text-sm">{version.column_count}</span>
-                            </td>
-                            <td className="px-4 py-2">
-                              <span className="text-white/60 text-sm">{formatFileSize(version.file_size_bytes)}</span>
-                            </td>
-                            <td className="px-4 py-2">
-                              <code className="text-xs bg-gray-600/30 px-2 py-1 rounded text-gray-400">
-                                {version.table_name}
-                              </code>
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </Fragment>
                     );
                   })}
