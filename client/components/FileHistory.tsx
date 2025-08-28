@@ -293,7 +293,6 @@ const FileHistory: React.FC = () => {
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Status</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">File Name</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Version</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">User</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Upload Date</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Rows</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Columns</th>
