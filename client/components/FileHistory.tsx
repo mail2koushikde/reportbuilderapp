@@ -37,7 +37,7 @@ const FileHistory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed' | 'processing'>('all');
-  const [sortBy, setSortBy] = useState<'upload_timestamp' | 'original_filename' | 'user_name'>('upload_timestamp');
+  const [sortBy, setSortBy] = useState<'upload_timestamp' | 'original_filename'>('upload_timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const fetchUploads = async () => {
