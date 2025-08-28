@@ -5521,11 +5521,23 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                               Available Versions:
                             </div>
                             {availableVersions.length === 0 ? (
-                              <div className="px-3 py-2 text-xs text-white/50">
-                                {loadingVersions ? 'Loading versions...' : (
-                                  currentFileVersion ?
-                                    'No other versions found in database' :
-                                    'File loaded locally only - no database versions found'
+                              <div className="px-3 py-2 text-xs">
+                                {loadingVersions ? (
+                                  <span className="text-white/50">Loading versions...</span>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <div className="text-white/50">
+                                      {currentFileVersion ?
+                                        'No other versions found in database' :
+                                        'File loaded locally only'
+                                      }
+                                    </div>
+                                    {!currentFileVersion && (
+                                      <div className="text-white/40 text-xs">
+                                        Tip: Re-upload this file to save versions to the database
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             ) : (
