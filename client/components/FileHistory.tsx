@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { useUser } from '../contexts/UserContext';
 import {
   FileText,
   Calendar,
