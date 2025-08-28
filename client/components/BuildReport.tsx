@@ -7088,6 +7088,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         </div>
       )}
 
+      {/* Storage Option Modal */}
+      <StorageOptionModal
+        isOpen={showStorageModal}
+        onClose={() => {
+          setShowStorageModal(false);
+          setPendingFileData(null);
+        }}
+        onSelect={handleStorageOptionSelect}
+        fileName={pendingFileData?.file.name || ''}
+        fileSize={pendingFileData?.file.size || 0}
+        rowCount={pendingFileData?.rowCount || 0}
+      />
+
       {/* File Version Conflict Dialog */}
       {showVersionDialog && pendingUpload && pendingUpload.conflict && (
         <div className="fixed top-0 right-0 left-0 z-50 p-4">
