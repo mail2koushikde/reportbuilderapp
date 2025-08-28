@@ -43,6 +43,8 @@ const FileHistory: React.FC = () => {
   const { userEmail } = useUser();
   const [uploads, setUploads] = useState<UploadMetadata[]>([]);
   const [filteredUploads, setFilteredUploads] = useState<UploadMetadata[]>([]);
+  const [groupedFiles, setGroupedFiles] = useState<GroupedFile[]>([]);
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
