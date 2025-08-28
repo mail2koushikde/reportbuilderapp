@@ -18,7 +18,6 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ userEmail }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('dark');
   const [notifications, setNotifications] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
