@@ -23,30 +23,41 @@ class DuckDBService {
     }
 
     try {
+      console.log('Initializing DuckDB WASM...');
+
       // Import DuckDB WASM bundles
       const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-      
+      console.log('DuckDB bundles loaded');
+
       // Select bundle (prefer the browser bundle)
       const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-      
+      console.log('DuckDB bundle selected');
+
       // Instantiate worker
       const worker = await duckdb.createWorker(bundle.mainWorker!);
       const logger = new duckdb.ConsoleLogger();
       this.db = new duckdb.AsyncDuckDB(logger, worker);
-      
+      console.log('DuckDB worker created');
+
       // Initialize database
       await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-      
+      console.log('DuckDB database instantiated');
+
       // Create connection
       this.conn = await this.db.connect();
-      
+      console.log('DuckDB connection established');
+
       // Set up IndexedDB persistent storage
       await this.setupPersistentStorage();
-      
+
       this.initialized = true;
       console.log('DuckDB WASM initialized successfully');
     } catch (error) {
       console.error('Failed to initialize DuckDB WASM:', error);
+      // Reset state on failure
+      this.initialized = false;
+      this.db = null;
+      this.conn = null;
       throw error;
     }
   }
