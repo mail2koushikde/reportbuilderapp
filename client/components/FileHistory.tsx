@@ -272,8 +272,6 @@ const FileHistory: React.FC = () => {
               <option value="upload_timestamp-asc">Oldest First</option>
               <option value="original_filename-asc">File Name A-Z</option>
               <option value="original_filename-desc">File Name Z-A</option>
-              <option value="user_name-asc">User A-Z</option>
-              <option value="user_name-desc">User Z-A</option>
             </select>
           </div>
         </div>
