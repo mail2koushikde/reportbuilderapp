@@ -4,6 +4,7 @@ import Navigation, { NavigationPage } from '../components/Navigation';
 import BuildReport from '../components/BuildReport';
 import ViewSavedReports, { SavedReport } from '../components/ViewSavedReports';
 import FileHistory from '../components/FileHistory';
+import UserProfile from '../components/UserProfile';
 
 const Index: React.FC = () => {
   const [navigationCollapsed, setNavigationCollapsed] = useState(window.innerWidth < 1024); // Auto-collapse on tablets and mobile
