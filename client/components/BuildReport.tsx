@@ -5768,6 +5768,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 {filtersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
+
+            {/* User Profile */}
+            <UserProfile userEmail="mail2koushikde@gmail.com" />
           </div>
         </div>
       </header>
