@@ -1156,20 +1156,38 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
     try {
       setLoadingVersions(true);
-      const encodedFilename = encodeURIComponent(filename);
-      const response = await fetch(`/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`);
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.versions) {
-          // Sort versions by version number descending (newest first)
-          const sortedVersions = result.versions.sort((a: any, b: any) => b.version - a.version);
-          setAvailableVersions(sortedVersions);
+      // Try both with and without .csv extension to handle different storage scenarios
+      const filenameVariants = [
+        filename,
+        filename.endsWith('.csv') ? filename.slice(0, -4) : `${filename}.csv`
+      ];
+
+      let foundVersions = false;
+
+      for (const filenameVariant of filenameVariants) {
+        const encodedFilename = encodeURIComponent(filenameVariant);
+        const response = await fetch(`/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`);
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.versions && result.versions.length > 0) {
+            // Sort versions by version number descending (newest first)
+            const sortedVersions = result.versions.sort((a: any, b: any) => b.version - a.version);
+            setAvailableVersions(sortedVersions);
+            foundVersions = true;
+            console.log(`Found ${sortedVersions.length} versions for file: ${filenameVariant}`);
+            break;
+          }
+        } else if (response.status === 404) {
+          console.log(`No versions found for filename variant: ${filenameVariant}`);
         } else {
-          setAvailableVersions([]);
+          console.warn(`Failed to fetch file versions for ${filenameVariant}:`, response.status, response.statusText);
         }
-      } else {
-        console.warn('Failed to fetch file versions:', response.statusText);
+      }
+
+      if (!foundVersions) {
+        console.log(`No versions found in database for file: ${filename} (tried variants: ${filenameVariants.join(', ')})`);
         setAvailableVersions([]);
       }
     } catch (error) {
