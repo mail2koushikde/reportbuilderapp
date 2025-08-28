@@ -461,7 +461,11 @@ const FileHistory: React.FC = () => {
                                 <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
                                   <div className="space-y-1">
                                     {file.allVersions.map((version, index) => (
-                                      <div key={`${file.filename}-v${version.version}`} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
+                                      <div key={`${file.filename}-v${version.version}`} className={`flex items-center py-3 border-white/5 transition-colors ${
+                                        index === 0
+                                          ? 'bg-green-500/20 border-green-400/30 hover:bg-green-500/30'
+                                          : 'bg-black/30 hover:bg-black/40'
+                                      }`}>
                                         {/* Empty space to align with expand button column */}
                                         <div style={{ width: '32px' }} className="flex-shrink-0"></div>
 
@@ -486,11 +490,6 @@ const FileHistory: React.FC = () => {
                                           <span className="px-2 py-1 bg-slate-600/40 text-slate-200 text-xs rounded-full">
                                             v{version.version}
                                           </span>
-                                          {index === 0 && (
-                                            <span className="text-xs text-green-400 font-medium">
-                                              LATEST
-                                            </span>
-                                          )}
                                         </div>
 
                                         {/* Upload Date column - match table header width */}
