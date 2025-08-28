@@ -461,11 +461,7 @@ const FileHistory: React.FC = () => {
                                 <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
                                   <div className="space-y-1">
                                     {file.allVersions.map((version, index) => (
-                                      <div key={`${file.filename}-v${version.version}`} className={`flex items-center py-3 border-white/5 transition-colors ${
-                                        index === 0
-                                          ? 'bg-green-500/20 border-green-400/30 hover:bg-green-500/30'
-                                          : 'bg-black/30 hover:bg-black/40'
-                                      }`}>
+                                      <div key={`${file.filename}-v${version.version}`} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
                                         {/* Empty space to align with expand button column */}
                                         <div style={{ width: '32px' }} className="flex-shrink-0"></div>
 
@@ -487,7 +483,11 @@ const FileHistory: React.FC = () => {
 
                                         {/* Version column - match table header width */}
                                         <div className="px-4 py-0 flex items-center gap-1" style={{ minWidth: '100px' }}>
-                                          <span className="px-2 py-1 bg-slate-600/40 text-slate-200 text-xs rounded-full">
+                                          <span className={`px-2 py-1 text-xs rounded-full ${
+                                            index === 0
+                                              ? 'bg-green-600/40 text-green-200 border border-green-400/50'
+                                              : 'bg-slate-600/40 text-slate-200'
+                                          }`}>
                                             v{version.version}
                                           </span>
                                         </div>
