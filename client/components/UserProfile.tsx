@@ -16,28 +16,6 @@ const UserProfile: React.FC = () => {
   const [notifications, setNotifications] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Get user initials from email
-  const getUserInitials = (email: string) => {
-    const namePart = email.split('@')[0];
-    const parts = namePart.split(/[._-]/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return namePart.slice(0, 2).toUpperCase();
-  };
-
-  // Get display name from email
-  const getDisplayName = (email: string) => {
-    const namePart = email.split('@')[0];
-    const parts = namePart.split(/[._-]/);
-    if (parts.length >= 2) {
-      return parts.map(part => 
-        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-      ).join(' ');
-    }
-    return namePart.charAt(0).toUpperCase() + namePart.slice(1).toLowerCase();
-  };
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
