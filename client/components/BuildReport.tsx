@@ -1543,7 +1543,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               conflict: true,
               existing_versions: errorResult.existing_versions || [],
               next_version: errorResult.next_version || version + 1,
-              user_name: 'mail2koushikde@gmail.com',
+              user_name: userEmail,
               original_filename: file.name
             };
 
@@ -1607,7 +1607,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         setCurrentFileVersion(version);
 
         // Fetch available versions for this file using the original filename as stored in metadata
-        const userEmail = 'mail2koushikde@gmail.com'; // Get from context/props in real app
+        // Using userEmail prop from component
         fetchFileVersions(userEmail, file.name); // Use original filename with extension for database query
 
         // Show success popup with versioned display name
@@ -5360,7 +5360,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         return (
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-white/60 text-center">
-              <div className="mb-3">����</div>
+              <div className="mb-3">📊</div>
               <div className="text-sm mb-2">No Chart Selected</div>
               <div className="text-xs opacity-70">Click the settings icon to configure this chart</div>
             </div>
@@ -5551,7 +5551,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                 <button
                                   key={version.version}
                                   onClick={() => {
-                                    const userEmail = 'mail2koushikde@gmail.com';
+                                    // Using userEmail prop from component
                                     loadFileVersion(userEmail, fileName, version.version);
                                   }}
                                   className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors ${
@@ -5771,7 +5771,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             </div>
 
             {/* User Profile */}
-            <UserProfile userEmail="mail2koushikde@gmail.com" />
+            <UserProfile userEmail={userEmail} />
           </div>
         </div>
       </header>
