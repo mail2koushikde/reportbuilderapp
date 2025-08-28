@@ -73,13 +73,12 @@ const FileHistory: React.FC = () => {
   // Filter and sort uploads
   useEffect(() => {
     let filtered = uploads.filter(upload => {
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         upload.original_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        upload.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         upload.table_name.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus = statusFilter === 'all' || upload.upload_status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
 
