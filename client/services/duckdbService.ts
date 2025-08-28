@@ -121,15 +121,18 @@ class DuckDBService {
     columns: string[]
   ): Promise<LocalDataset> {
     await this.initialize();
-    
+
     if (!this.conn) {
       throw new Error('DuckDB connection not available');
     }
 
+    // Ensure metadata table exists before proceeding
+    await this.ensureMetadataTableExists();
+
     const datasetId = `dataset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const tableName = `data_${datasetId}`;
     const cleanFileName = fileName.replace(/\.csv$/i, '').replace(/[^a-zA-Z0-9_]/g, '_');
-    
+
     try {
       // Create table dynamically based on columns
       const columnDefs = columns.map(col => `"${col}" VARCHAR`).join(', ');
