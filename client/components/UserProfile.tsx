@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useUser } from '../contexts/UserContext';
 import {
   User,
   Settings,
@@ -9,11 +10,8 @@ import {
   Shield
 } from 'lucide-react';
 
-interface UserProfileProps {
-  userEmail: string;
-}
-
-const UserProfile: React.FC<UserProfileProps> = ({ userEmail }) => {
+const UserProfile: React.FC = () => {
+  const { userEmail, displayName, initials } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
