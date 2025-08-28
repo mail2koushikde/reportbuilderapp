@@ -366,7 +366,7 @@ const FileHistory: React.FC = () => {
                   {groupedFiles.map((file) => {
                     const isExpanded = expandedFiles.has(file.filename);
                     return (
-                      <React.Fragment key={file.filename}>
+                      <Fragment key={file.filename}>
                         {/* Main row - Latest version */}
                         <tr className="hover:bg-white/5 transition-colors">
                           <td className="px-4 py-3">
@@ -494,7 +494,7 @@ const FileHistory: React.FC = () => {
                             </td>
                           </tr>
                         ))}
-                      </React.Fragment>
+                      </Fragment>
                     );
                   })}
                 </tbody>
