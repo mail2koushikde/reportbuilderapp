@@ -11,7 +11,9 @@ import {
   Filter,
   CheckCircle,
   AlertCircle,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 interface UploadMetadata {
