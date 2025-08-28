@@ -1271,7 +1271,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       if (fileName && currentFileVersion && currentFileVersion > 0) {
         const userEmail = 'mail2koushikde@gmail.com'; // Get from context/props in real app
         console.log('Fetching versions for existing file:', fileName, 'version:', currentFileVersion);
-        await fetchFileVersions(userEmail, fileName);
+
+        // Try to determine the original filename with extension for database lookup
+        // If fileName doesn't end with .csv, add it since database stores original filename
+        const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
+        await fetchFileVersions(userEmail, searchFilename);
       }
     };
 
