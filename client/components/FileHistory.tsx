@@ -147,9 +147,9 @@ const FileHistory: React.FC = () => {
     }
   };
 
-  const getVersionedFileName = (filename: string, version: number) => {
-    const nameWithoutExt = filename.replace(/\.csv$/i, '');
-    return version > 1 ? `${nameWithoutExt} (v${version})` : nameWithoutExt;
+  const getOriginalFileName = (filename: string) => {
+    // Return the original filename exactly as uploaded (with extension)
+    return filename;
   };
 
   if (loading) {
