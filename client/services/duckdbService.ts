@@ -89,6 +89,32 @@ class DuckDBService {
     }
   }
 
+  private async ensureMetadataTableExists(): Promise<void> {
+    if (!this.conn) {
+      throw new Error('DuckDB connection not available');
+    }
+
+    try {
+      // Try to query the table to see if it exists
+      await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
+    } catch (error) {
+      // Table doesn't exist, create it
+      console.log('Creating metadata table...');
+      await this.conn.query(`
+        CREATE TABLE __datasets_metadata (
+          id VARCHAR PRIMARY KEY,
+          name VARCHAR NOT NULL,
+          table_name VARCHAR NOT NULL,
+          row_count INTEGER NOT NULL,
+          columns VARCHAR NOT NULL,
+          created_at TIMESTAMP NOT NULL,
+          file_size INTEGER NOT NULL
+        );
+      `);
+      console.log('Metadata table created successfully');
+    }
+  }
+
   async saveDataset(
     data: DataRow[],
     fileName: string,
