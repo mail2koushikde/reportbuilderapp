@@ -2,9 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   User,
   Settings,
-  Moon,
-  Sun,
-  Monitor,
   Bell,
   LogOut,
   ChevronDown,
