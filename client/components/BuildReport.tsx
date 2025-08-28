@@ -7135,6 +7135,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         rowCount={pendingFileData?.rowCount || 0}
       />
 
+      {/* Local Datasets Modal */}
+      <LocalDatasets
+        isOpen={showLocalDatasets}
+        onClose={() => setShowLocalDatasets(false)}
+        onLoadDataset={handleLoadLocalDataset}
+      />
+
       {/* File Version Conflict Dialog */}
       {showVersionDialog && pendingUpload && pendingUpload.conflict && (
         <div className="fixed top-0 right-0 left-0 z-50 p-4">
