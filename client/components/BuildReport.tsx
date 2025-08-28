@@ -1410,90 +1410,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           return;
         }
 
-        // Check for file conflicts before uploading
-        try {
-          const conflictResponse = await fetch('/api/database/uploads/check-conflict', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              user_name: userEmail,
-              original_filename: file.name
-            }),
-          });
-
-          let conflictResult;
-          try {
-            const conflictText = await conflictResponse.text();
-            conflictResult = JSON.parse(conflictText);
-          } catch (jsonError) {
-            console.error('Failed to parse conflict check response as JSON:', jsonError);
-            // Fallback to local loading if conflict check fails
-            setColumns(headers);
-            setImportedData(data);
-            setCacheEnabled(false);
-
-            const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
-            setFileName(fileNameWithoutExt);
-            setCurrentFileVersion(null);
-
-            setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
-            setShowUploadSuccess(true);
-            return;
-          }
-
-          if (conflictResponse.ok && conflictResult.success) {
-            if (conflictResult.conflict) {
-              // File already exists, show version dialog
-              // Ensure conflict data has required properties with fallbacks
-              const safeConflictResult = {
-                ...conflictResult,
-                existing_versions: conflictResult.existing_versions || [],
-                next_version: conflictResult.next_version || 1
-              };
-
-              setPendingUpload({
-                file,
-                headers,
-                data,
-                conflict: safeConflictResult
-              });
-              setShowVersionDialog(true);
-            } else {
-              // No conflict, proceed with upload
-              await uploadFileToDatabase(file, headers, data, 1);
-            }
-          } else {
-            console.error('Failed to check conflict:', conflictResult.error);
-            // Fallback to local loading
-            setColumns(headers);
-            setImportedData(data);
-            setCacheEnabled(false);
-
-            // Update filename without version for local-only loading
-            const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
-            setFileName(fileNameWithoutExt);
-            setCurrentFileVersion(null); // No version for local-only loading
-
-            setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
-            setShowUploadSuccess(true);
-          }
-        } catch (error) {
-          console.error('Error checking conflict:', error);
-          // Fallback to local loading
-          setColumns(headers);
-          setImportedData(data);
-          setCacheEnabled(false);
-
-          // Update filename without version for local-only loading
-          const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
-          setFileName(fileNameWithoutExt);
-          setCurrentFileVersion(null); // No version for local-only loading
-
-          setUploadedFileName(`${file.name} (Conflict check failed - using locally)`);
-          setShowUploadSuccess(true);
-        }
+        // Show storage options modal instead of direct upload
+        setPendingFileData({
+          file,
+          headers,
+          data,
+          rowCount: data.length
+        });
+        setShowStorageModal(true);
       };
       reader.readAsText(file);
     }
