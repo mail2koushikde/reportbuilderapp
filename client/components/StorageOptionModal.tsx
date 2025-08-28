@@ -64,10 +64,8 @@ export function StorageOptionModal({
     description: 'Store in server database (SQLite/Snowflake)',
     features: [
       'Permanent storage',
-      'Share with team members',
       'Handle large datasets (>1M rows)',
-      'Cross-device access',
-      'Version control'
+      'Cross-device access'
     ],
     recommended: isLargeFile && !isSensitiveData,
     icon: <Database className="w-6 h-6" />
