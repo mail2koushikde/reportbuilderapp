@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { useUser } from '../contexts/UserContext';
 import Navigation, { NavigationPage } from '../components/Navigation';
 import BuildReport from '../components/BuildReport';
 import ViewSavedReports, { SavedReport } from '../components/ViewSavedReports';
