@@ -200,7 +200,7 @@ const FileHistory: React.FC = () => {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass-card p-4 rounded-lg">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
@@ -228,17 +228,6 @@ const FileHistory: React.FC = () => {
                 <p className="text-sm text-white/70">Failed</p>
                 <p className="text-xl font-semibold text-white">
                   {uploads.filter(u => u.upload_status === 'failed').length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="glass-card p-4 rounded-lg">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-purple-500" />
-              <div>
-                <p className="text-sm text-white/70">Unique Users</p>
-                <p className="text-xl font-semibold text-white">
-                  {new Set(uploads.map(u => u.user_name)).size}
                 </p>
               </div>
             </div>
