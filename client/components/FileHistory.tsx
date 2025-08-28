@@ -387,31 +387,10 @@ const FileHistory: React.FC = () => {
                             </button>
                           </td>
                           {isExpanded ? (
-                            // Expanded state - Show file summary
-                            <>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-blue-500" />
-                                  <span className="text-sm text-white/70">Multiple Versions</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-blue-500" />
-                                  <div className="flex flex-col">
-                                    <span className="text-white font-medium">
-                                      {file.filename}
-                                    </span>
-                                    <span className="text-xs text-blue-300">
-                                      {file.totalVersions} versions available
-                                    </span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3" colSpan={6}>
-                                {/* Empty space for alignment */}
-                              </td>
-                            </>
+                            // Expanded state - Show only empty row with proper height
+                            <td className="px-4 py-3" colSpan={8}>
+                              {/* Empty content - only expand/collapse button shows */}
+                            </td>
                           ) : (
                             // Collapsed state - Show latest version details
                             <>
