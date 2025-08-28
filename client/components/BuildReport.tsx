@@ -44,6 +44,8 @@ import {
 } from "recharts";
 import { storageService } from '../services/storageService';
 import { cacheService, CachedData } from '../services/cacheService';
+import { duckdbService, LocalDataset } from '../services/duckdbService';
+import { StorageOptionModal } from './StorageOptionModal';
 import UserProfile from './UserProfile';
 
 interface TextBox {
@@ -7251,7 +7253,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 "{uploadedFileName}" has been imported and is ready to use.
                 {importedData.length > 0 && columns.length > 0 && (
                   <span className="block text-white/50 text-xs mt-1">
-                    • {importedData.length} rows • {columns.length} columns
+                    • {importedData.length} rows �� {columns.length} columns
                   </span>
                 )}
               </p>
