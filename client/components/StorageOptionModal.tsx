@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Database, HardDrive, Shield, Zap } from "lucide-react";
+import { Database, HardDrive, Shield, Zap, X } from "lucide-react";
 
 export interface StorageOption {
   type: 'local' | 'server';
