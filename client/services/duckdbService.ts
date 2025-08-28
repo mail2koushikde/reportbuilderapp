@@ -5,17 +5,18 @@ export type DataRow = Record<string, any>;
 export interface LocalDataset {
   id: string;
   name: string;
-  tableName: string;
   rowCount: number;
   columns: string[];
   createdAt: Date;
   fileSize: number;
+  originalFileName: string;
 }
 
 class DuckDBService {
   private db: duckdb.AsyncDuckDB | null = null;
   private conn: duckdb.AsyncDuckDBConnection | null = null;
   private initialized = false;
+  private loadedTables = new Set<string>(); // Track which datasets are currently loaded in DuckDB
 
   private async initialize(): Promise<void> {
     if (this.initialized && this.db && this.conn) {
@@ -24,34 +25,31 @@ class DuckDBService {
 
     try {
       console.log('Initializing DuckDB WASM...');
-
+      
       // Import DuckDB WASM bundles
       const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
       console.log('DuckDB bundles loaded');
-
+      
       // Select bundle (prefer the browser bundle)
       const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
       console.log('DuckDB bundle selected');
-
+      
       // Instantiate worker
       const worker = await duckdb.createWorker(bundle.mainWorker!);
       const logger = new duckdb.ConsoleLogger();
       this.db = new duckdb.AsyncDuckDB(logger, worker);
       console.log('DuckDB worker created');
-
+      
       // Initialize database
       await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
       console.log('DuckDB database instantiated');
-
+      
       // Create connection
       this.conn = await this.db.connect();
       console.log('DuckDB connection established');
-
-      // Set up IndexedDB persistent storage
-      await this.setupPersistentStorage();
-
+      
       this.initialized = true;
-      console.log('DuckDB WASM initialized successfully');
+      console.log('DuckDB WASM initialized successfully - ready for queries');
     } catch (error) {
       console.error('Failed to initialize DuckDB WASM:', error);
       // Reset state on failure
@@ -62,91 +60,73 @@ class DuckDBService {
     }
   }
 
-  private async setupPersistentStorage(): Promise<void> {
-    if (!this.conn) return;
-
-    try {
-      // Try to install and load httpfs extension for better file handling
-      try {
-        await this.conn.query("INSTALL httpfs;");
-        await this.conn.query("LOAD httpfs;");
-        console.log('DuckDB httpfs extension loaded successfully');
-      } catch (httpfsError) {
-        console.warn('Could not load httpfs extension:', httpfsError);
-        // Continue without httpfs
-      }
-
-      // Create metadata table for tracking datasets - this is critical
-      await this.conn.query(`
-        CREATE TABLE IF NOT EXISTS __datasets_metadata (
-          id VARCHAR PRIMARY KEY,
-          name VARCHAR NOT NULL,
-          table_name VARCHAR NOT NULL,
-          row_count INTEGER NOT NULL,
-          columns VARCHAR NOT NULL,
-          created_at TIMESTAMP NOT NULL,
-          file_size INTEGER NOT NULL
-        );
-      `);
-      console.log('DuckDB metadata table created successfully');
-
-      // Test the table exists
-      await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata;');
-      console.log('DuckDB metadata table verified');
-
-    } catch (error) {
-      console.error('Critical error setting up DuckDB persistent storage:', error);
-      throw error; // This is critical, so throw the error
-    }
-  }
-
-  private async ensureMetadataTableExists(): Promise<void> {
-    if (!this.conn) {
-      throw new Error('DuckDB connection not available');
-    }
-
-    try {
-      // Try to query the table to see if it exists
-      await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
-    } catch (error) {
-      // Table doesn't exist, create it
-      console.log('Creating metadata table...');
-      await this.conn.query(`
-        CREATE TABLE __datasets_metadata (
-          id VARCHAR PRIMARY KEY,
-          name VARCHAR NOT NULL,
-          table_name VARCHAR NOT NULL,
-          row_count INTEGER NOT NULL,
-          columns VARCHAR NOT NULL,
-          created_at TIMESTAMP NOT NULL,
-          file_size INTEGER NOT NULL
-        );
-      `);
-      console.log('Metadata table created successfully');
-    }
-  }
-
+  /**
+   * Step 1: Save dataset to IndexedDB (primary storage)
+   * Flow: Excel → IndexedDB
+   */
   async saveDataset(
     data: DataRow[],
     fileName: string,
     columns: string[]
   ): Promise<LocalDataset> {
-    await this.initialize();
+    const datasetId = `dataset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const cleanFileName = fileName.replace(/\.csv$/i, '').replace(/[^a-zA-Z0-9_]/g, '_');
+    
+    // Create dataset metadata
+    const dataset: LocalDataset = {
+      id: datasetId,
+      name: cleanFileName,
+      rowCount: data.length,
+      columns,
+      createdAt: new Date(),
+      fileSize: new Blob([JSON.stringify(data)]).size,
+      originalFileName: fileName
+    };
+    
+    try {
+      // Step 1: Store in IndexedDB (primary storage)
+      await this.storeInIndexedDB(datasetId, dataset, data);
+      console.log(`Dataset "${cleanFileName}" saved to IndexedDB with ${data.length} rows`);
+      
+      return dataset;
+      
+    } catch (error) {
+      console.error('Failed to save dataset to IndexedDB:', error);
+      throw error;
+    }
+  }
 
+  /**
+   * Step 2: Load dataset from IndexedDB into DuckDB for querying
+   * Flow: IndexedDB → DuckDB WASM
+   */
+  private async loadDatasetIntoMemory(datasetId: string): Promise<{ dataset: LocalDataset; tableName: string }> {
+    // Check if already loaded
+    if (this.loadedTables.has(datasetId)) {
+      const dataset = await this.getDatasetMetadata(datasetId);
+      if (!dataset) throw new Error(`Dataset ${datasetId} not found`);
+      return { dataset, tableName: `data_${datasetId}` };
+    }
+
+    await this.initialize();
+    
     if (!this.conn) {
       throw new Error('DuckDB connection not available');
     }
 
-    // Ensure metadata table exists before proceeding
-    await this.ensureMetadataTableExists();
+    // Load from IndexedDB
+    const { dataset, data } = await this.loadFromIndexedDB(datasetId);
+    if (!dataset || !data) {
+      throw new Error(`Dataset ${datasetId} not found in IndexedDB`);
+    }
 
-    const datasetId = `dataset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const tableName = `data_${datasetId}`;
-    const cleanFileName = fileName.replace(/\.csv$/i, '').replace(/[^a-zA-Z0-9_]/g, '_');
-
+    
     try {
-      // Create table dynamically based on columns
-      const columnDefs = columns.map(col => `"${col}" VARCHAR`).join(', ');
+      console.log(`Loading dataset "${dataset.name}" from IndexedDB into DuckDB...`);
+      
+      // Create table in DuckDB memory
+      const columnDefs = dataset.columns.map(col => `"${col}" VARCHAR`).join(', ');
       await this.conn.query(`CREATE TABLE "${tableName}" (${columnDefs});`);
       
       // Insert data in batches for better performance
@@ -154,7 +134,7 @@ class DuckDBService {
       for (let i = 0; i < data.length; i += batchSize) {
         const batch = data.slice(i, i + batchSize);
         const values = batch.map(row => {
-          const rowValues = columns.map(col => {
+          const rowValues = dataset.columns.map(col => {
             const value = row[col];
             if (value === null || value === undefined) return 'NULL';
             if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
@@ -168,213 +148,165 @@ class DuckDBService {
         }
       }
       
-      // Create dataset metadata
-      const dataset: LocalDataset = {
-        id: datasetId,
-        name: cleanFileName,
-        tableName,
-        rowCount: data.length,
-        columns,
-        createdAt: new Date(),
-        fileSize: new Blob([JSON.stringify(data)]).size
-      };
+      // Mark as loaded
+      this.loadedTables.add(datasetId);
+      console.log(`Dataset "${dataset.name}" loaded into DuckDB memory for querying`);
       
-      // Save metadata
-      await this.conn.query(`
-        INSERT INTO __datasets_metadata 
-        (id, name, table_name, row_count, columns, created_at, file_size)
-        VALUES (
-          '${dataset.id}',
-          '${dataset.name}',
-          '${dataset.tableName}',
-          ${dataset.rowCount},
-          '${JSON.stringify(dataset.columns)}',
-          '${dataset.createdAt.toISOString()}',
-          ${dataset.fileSize}
-        );
-      `);
-      
-      // Store in IndexedDB for persistence
-      await this.storeInIndexedDB(datasetId, dataset, data);
-      
-      console.log(`Dataset "${cleanFileName}" saved locally with ${data.length} rows`);
-      return dataset;
+      return { dataset, tableName };
       
     } catch (error) {
-      console.error('Failed to save dataset to DuckDB:', error);
+      console.error('Failed to load dataset into DuckDB:', error);
       // Cleanup on error
       try {
         await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
-        await this.conn.query(`DELETE FROM __datasets_metadata WHERE id = '${datasetId}';`);
       } catch (cleanupError) {
-        console.warn('Failed to cleanup after error:', cleanupError);
+        console.warn('Failed to cleanup table after error:', cleanupError);
       }
       throw error;
     }
   }
 
+  /**
+   * Step 3: Query dataset using DuckDB
+   * Flow: DuckDB WASM → SQL query → Results
+   */
   async queryDataset(datasetId: string, query: string): Promise<any[]> {
-    await this.initialize();
-    
-    if (!this.conn) {
-      throw new Error('DuckDB connection not available');
-    }
-
     try {
-      const dataset = await this.getDataset(datasetId);
-      if (!dataset) {
-        throw new Error(`Dataset ${datasetId} not found`);
+      // Load dataset into memory if not already loaded
+      const { dataset, tableName } = await this.loadDatasetIntoMemory(datasetId);
+      
+      if (!this.conn) {
+        throw new Error('DuckDB connection not available');
       }
 
       // Replace table references with actual table name
-      const processedQuery = query.replace(/\{table\}/g, `"${dataset.tableName}"`);
+      const processedQuery = query.replace(/\{table\}/g, `"${tableName}"`);
       
+      console.log(`Executing query on dataset "${dataset.name}": ${processedQuery}`);
       const result = await this.conn.query(processedQuery);
       return result.toArray().map(row => Object.fromEntries(row));
+      
     } catch (error) {
       console.error('Failed to query dataset:', error);
       throw error;
     }
   }
 
-  async getDataset(datasetId: string): Promise<LocalDataset | null> {
-    try {
-      await this.initialize();
-
-      if (!this.conn) {
-        console.warn('DuckDB connection not available for getting dataset');
-        return null;
-      }
-
-      // Ensure metadata table exists
-      await this.ensureMetadataTableExists();
-
-      const result = await this.conn.query(`
-        SELECT * FROM __datasets_metadata WHERE id = '${datasetId}';
-      `);
-
-      const rows = result.toArray();
-      if (rows.length === 0) {
-        return null;
-      }
-
-      const row = rows[0];
-      return {
-        id: row[0] as string,
-        name: row[1] as string,
-        tableName: row[2] as string,
-        rowCount: row[3] as number,
-        columns: JSON.parse(row[4] as string),
-        createdAt: new Date(row[5] as string),
-        fileSize: row[6] as number
-      };
-    } catch (error) {
-      console.error('Failed to get dataset:', error);
-      return null;
-    }
-  }
-
+  /**
+   * Get all available datasets from IndexedDB
+   */
   async listDatasets(): Promise<LocalDataset[]> {
     try {
-      await this.initialize();
-
-      if (!this.conn) {
-        console.warn('DuckDB connection not available for listing datasets');
-        return [];
-      }
-
-      // Ensure metadata table exists
-      await this.ensureMetadataTableExists();
-
-      const result = await this.conn.query(`
-        SELECT * FROM __datasets_metadata ORDER BY created_at DESC;
-      `);
-
-      return result.toArray().map(row => ({
-        id: row[0] as string,
-        name: row[1] as string,
-        tableName: row[2] as string,
-        rowCount: row[3] as number,
-        columns: JSON.parse(row[4] as string),
-        createdAt: new Date(row[5] as string),
-        fileSize: row[6] as number
-      }));
+      return await this.getAllDatasetsFromIndexedDB();
     } catch (error) {
       console.error('Failed to list datasets:', error);
       return [];
     }
   }
 
-  async deleteDataset(datasetId: string): Promise<void> {
-    await this.initialize();
-
-    if (!this.conn) {
-      throw new Error('DuckDB connection not available');
-    }
-
-    // Ensure metadata table exists
-    await this.ensureMetadataTableExists();
-
+  /**
+   * Get specific dataset metadata from IndexedDB
+   */
+  async getDatasetMetadata(datasetId: string): Promise<LocalDataset | null> {
     try {
-      const dataset = await this.getDataset(datasetId);
-      if (!dataset) {
-        throw new Error(`Dataset ${datasetId} not found`);
-      }
+      const { dataset } = await this.loadFromIndexedDB(datasetId);
+      return dataset;
+    } catch (error) {
+      console.error('Failed to get dataset metadata:', error);
+      return null;
+    }
+  }
 
-      // Drop the data table
-      await this.conn.query(`DROP TABLE IF EXISTS "${dataset.tableName}";`);
-      
-      // Remove metadata
-      await this.conn.query(`DELETE FROM __datasets_metadata WHERE id = '${datasetId}';`);
+  /**
+   * Delete dataset from IndexedDB and unload from DuckDB
+   */
+  async deleteDataset(datasetId: string): Promise<void> {
+    try {
+      // Remove from DuckDB memory if loaded
+      if (this.loadedTables.has(datasetId) && this.conn) {
+        const tableName = `data_${datasetId}`;
+        await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+        this.loadedTables.delete(datasetId);
+        console.log(`Dataset ${datasetId} unloaded from DuckDB memory`);
+      }
       
       // Remove from IndexedDB
       await this.removeFromIndexedDB(datasetId);
+      console.log(`Dataset ${datasetId} deleted from IndexedDB`);
       
-      console.log(`Dataset "${dataset.name}" deleted successfully`);
     } catch (error) {
       console.error('Failed to delete dataset:', error);
       throw error;
     }
   }
 
+  /**
+   * Get storage information
+   */
   async getStorageInfo(): Promise<{
     datasetCount: number;
     totalRows: number;
     estimatedSizeMB: number;
+    loadedInMemory: number;
   }> {
     try {
-      await this.initialize();
-
-      if (!this.conn) {
-        return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
-      }
-
-      // Ensure metadata table exists
-      await this.ensureMetadataTableExists();
-
-      const result = await this.conn.query(`
-        SELECT
-          COUNT(*) as dataset_count,
-          COALESCE(SUM(row_count), 0) as total_rows,
-          COALESCE(SUM(file_size), 0) as total_bytes
-        FROM __datasets_metadata;
-      `);
-
-      const row = result.toArray()[0];
+      const datasets = await this.listDatasets();
+      const totalRows = datasets.reduce((sum, ds) => sum + ds.rowCount, 0);
+      const totalBytes = datasets.reduce((sum, ds) => sum + ds.fileSize, 0);
+      
       return {
-        datasetCount: row[0] as number,
-        totalRows: row[1] as number,
-        estimatedSizeMB: Math.round((row[2] as number) / (1024 * 1024) * 100) / 100
+        datasetCount: datasets.length,
+        totalRows,
+        estimatedSizeMB: Math.round(totalBytes / (1024 * 1024) * 100) / 100,
+        loadedInMemory: this.loadedTables.size
       };
     } catch (error) {
       console.error('Failed to get storage info:', error);
-      return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
+      return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0, loadedInMemory: 0 };
     }
   }
 
+  /**
+   * Unload dataset from DuckDB memory to free up resources
+   */
+  async unloadDataset(datasetId: string): Promise<void> {
+    if (!this.loadedTables.has(datasetId) || !this.conn) {
+      return;
+    }
+
+    try {
+      const tableName = `data_${datasetId}`;
+      await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+      this.loadedTables.delete(datasetId);
+      console.log(`Dataset ${datasetId} unloaded from memory`);
+    } catch (error) {
+      console.error('Failed to unload dataset from memory:', error);
+    }
+  }
+
+  /**
+   * Clean up all loaded datasets from memory
+   */
+  async clearMemory(): Promise<void> {
+    if (!this.conn) return;
+
+    try {
+      for (const datasetId of this.loadedTables) {
+        const tableName = `data_${datasetId}`;
+        await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+      }
+      this.loadedTables.clear();
+      console.log('All datasets unloaded from DuckDB memory');
+    } catch (error) {
+      console.error('Failed to clear DuckDB memory:', error);
+    }
+  }
+
+  // IndexedDB operations (primary storage)
+  
   private async storeInIndexedDB(datasetId: string, dataset: LocalDataset, data: DataRow[]): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('DuckDBStorage', 1);
+      const request = indexedDB.open('LocalDuckDBStorage', 1);
       
       request.onerror = () => reject(request.error);
       
@@ -403,9 +335,59 @@ class DuckDBService {
     });
   }
 
+  private async loadFromIndexedDB(datasetId: string): Promise<{ dataset: LocalDataset | null; data: DataRow[] | null }> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('LocalDuckDBStorage', 1);
+      
+      request.onerror = () => reject(request.error);
+      
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        const transaction = db.transaction(['datasets'], 'readonly');
+        const store = transaction.objectStore('datasets');
+        
+        const getRequest = store.get(datasetId);
+        getRequest.onsuccess = () => {
+          if (getRequest.result) {
+            resolve({ 
+              dataset: getRequest.result.dataset, 
+              data: getRequest.result.data 
+            });
+          } else {
+            resolve({ dataset: null, data: null });
+          }
+        };
+        getRequest.onerror = () => reject(getRequest.error);
+      };
+    });
+  }
+
+  private async getAllDatasetsFromIndexedDB(): Promise<LocalDataset[]> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('LocalDuckDBStorage', 1);
+      
+      request.onerror = () => reject(request.error);
+      
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        const transaction = db.transaction(['datasets'], 'readonly');
+        const store = transaction.objectStore('datasets');
+        
+        const getAllRequest = store.getAll();
+        getAllRequest.onsuccess = () => {
+          const datasets = getAllRequest.result.map(item => item.dataset);
+          // Sort by creation date, newest first
+          datasets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          resolve(datasets);
+        };
+        getAllRequest.onerror = () => reject(getAllRequest.error);
+      };
+    });
+  }
+
   private async removeFromIndexedDB(datasetId: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('DuckDBStorage', 1);
+      const request = indexedDB.open('LocalDuckDBStorage', 1);
       
       request.onerror = () => reject(request.error);
       
@@ -423,6 +405,10 @@ class DuckDBService {
 
   async cleanup(): Promise<void> {
     try {
+      // Clear all loaded datasets from memory
+      await this.clearMemory();
+      
+      // Close DuckDB connection
       if (this.conn) {
         await this.conn.close();
         this.conn = null;
@@ -432,6 +418,7 @@ class DuckDBService {
         this.db = null;
       }
       this.initialized = false;
+      console.log('DuckDB service cleanup completed');
     } catch (error) {
       console.error('Error during DuckDB cleanup:', error);
     }
