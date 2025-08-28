@@ -235,13 +235,8 @@ class DuckDBService {
         return null;
       }
 
-      // Check if metadata table exists first
-      try {
-        await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
-      } catch (tableError) {
-        console.warn('Metadata table does not exist when getting dataset');
-        return null;
-      }
+      // Ensure metadata table exists
+      await this.ensureMetadataTableExists();
 
       const result = await this.conn.query(`
         SELECT * FROM __datasets_metadata WHERE id = '${datasetId}';
@@ -277,13 +272,8 @@ class DuckDBService {
         return [];
       }
 
-      // Check if metadata table exists first
-      try {
-        await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
-      } catch (tableError) {
-        console.warn('Metadata table does not exist, creating it...');
-        await this.setupPersistentStorage();
-      }
+      // Ensure metadata table exists
+      await this.ensureMetadataTableExists();
 
       const result = await this.conn.query(`
         SELECT * FROM __datasets_metadata ORDER BY created_at DESC;
@@ -306,10 +296,13 @@ class DuckDBService {
 
   async deleteDataset(datasetId: string): Promise<void> {
     await this.initialize();
-    
+
     if (!this.conn) {
       throw new Error('DuckDB connection not available');
     }
+
+    // Ensure metadata table exists
+    await this.ensureMetadataTableExists();
 
     try {
       const dataset = await this.getDataset(datasetId);
@@ -345,13 +338,8 @@ class DuckDBService {
         return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
       }
 
-      // Check if metadata table exists first
-      try {
-        await this.conn.query('SELECT COUNT(*) FROM __datasets_metadata LIMIT 1;');
-      } catch (tableError) {
-        console.warn('Metadata table does not exist when getting storage info');
-        return { datasetCount: 0, totalRows: 0, estimatedSizeMB: 0 };
-      }
+      // Ensure metadata table exists
+      await this.ensureMetadataTableExists();
 
       const result = await this.conn.query(`
         SELECT
