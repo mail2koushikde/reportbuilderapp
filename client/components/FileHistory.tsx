@@ -333,7 +333,7 @@ const FileHistory: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-blue-500" />
                           <span className="text-white font-medium">
-                            {getOriginalFileName(upload.original_filename)}
+                            {upload.original_filename}
                           </span>
                         </div>
                       </td>
