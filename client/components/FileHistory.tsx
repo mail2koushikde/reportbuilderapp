@@ -608,6 +608,17 @@ const FileHistory: React.FC = () => {
                                   <span className="text-sm text-white/70 capitalize">
                                     {file.latestVersion.upload_status}
                                   </span>
+                                  {/* Storage type indicator */}
+                                  <div className="flex items-center gap-1">
+                                    {file.latestVersion.storage_type === 'local' ? (
+                                      <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
+                                    ) : (
+                                      <Database className="w-3 h-3 text-blue-400" title="Stored on server" />
+                                    )}
+                                    <span className="text-xs text-white/50">
+                                      {file.latestVersion.storage_type === 'local' ? 'Local' : 'Server'}
+                                    </span>
+                                  </div>
                                 </div>
                               </td>
                               <td className="px-4 py-3">
