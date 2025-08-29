@@ -1942,7 +1942,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Handler for loading a dataset from local storage
   const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
     try {
-      console.log(`Loading local dataset: ${dataset.name} (Flow: IndexedDB → DuckDB → App)`);
+      console.log(`Loading local dataset: ${dataset.name} (Flow: Local storage → DuckDB → App)`);
 
       // Load dataset data into the app
       setColumns(dataset.columns);
@@ -1952,7 +1952,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setFileName(dataset.name);
       setCurrentFileVersion(null);
 
-      setUploadedFileName(`${dataset.originalFileName} (Loaded from IndexedDB - ${data.length.toLocaleString()} rows via DuckDB query)`);
+      setUploadedFileName(`${dataset.originalFileName} (Loaded from Local storage - ${data.length.toLocaleString()} rows via DuckDB query)`);
       setShowUploadSuccess(true);
 
     } catch (error) {
