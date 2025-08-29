@@ -1666,16 +1666,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   }, []);
 
   // Handle new version choice from version dialog
-  const handleNewVersion = useCallback(async () => {
-    if (!pendingUpload || !pendingUpload.conflict) return;
+  const handleStorageNewVersion = useCallback(async (storageType: 'local' | 'server') => {
+    if (!pendingFileData || !storageConflictData) return;
 
-    const { file, headers, data, conflict, isLocal } = pendingUpload;
-    const nextVersion = conflict.next_version || 1;
-
-    setNewVersionLoading(true);
+    const { file, headers, data } = pendingFileData;
+    const nextVersion = storageConflictData.next_version || 1;
 
     try {
-      if (isLocal) {
+      if (storageType === 'local') {
         // Handle local storage new version
         await saveToLocalStorage(file, headers, data, userEmail, nextVersion);
       } else {
@@ -1683,14 +1681,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         await uploadFileToDatabase(file, headers, data, nextVersion, false);
       }
 
-      setShowVersionDialog(false);
-      setPendingUpload(null);
+      // Close modal and clean up
+      setShowStorageModal(false);
+      setPendingFileData(null);
+      setStorageConflictData(null);
+      setSelectedStorageType(null);
     } catch (error) {
       console.error('Error during new version upload:', error);
-    } finally {
-      setNewVersionLoading(false);
+      setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowUploadSuccess(true);
     }
-  }, [pendingUpload, uploadFileToDatabase, saveToLocalStorage, userEmail]);
+  }, [pendingFileData, storageConflictData, uploadFileToDatabase, saveToLocalStorage, userEmail]);
 
   // Handle cancel from version dialog
   const handleStorageModalClose = useCallback(() => {
@@ -4023,7 +4024,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ���
+                            ����
                           </button>
                         </div>
                       )}
