@@ -1578,23 +1578,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   }, []);
 
   // Handle overwrite choice from version dialog
-  const handleOverwrite = useCallback(async () => {
-    if (!pendingUpload || !pendingUpload.conflict) return;
+  const handleStorageOverwrite = useCallback(async (storageType: 'local' | 'server') => {
+    if (!pendingFileData || !storageConflictData) return;
 
-    const { file, headers, data, conflict, isLocal } = pendingUpload;
-    const existingVersions = conflict.existing_versions || [];
+    const { file, headers, data } = pendingFileData;
+    const existingVersions = storageConflictData.existing_versions || [];
 
     if (existingVersions.length === 0) {
       console.error('No existing versions found for overwrite');
       return;
     }
 
-    setOverwriteLoading(true);
-
     try {
       const latestVersion = Math.max(...existingVersions.map((v: any) => v.version));
 
-      if (isLocal) {
+      if (storageType === 'local') {
         // Handle local storage overwrite
         await duckdbService.overwriteLocalFile(data, file.name, headers, userEmail, latestVersion);
 
@@ -1620,14 +1618,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         await uploadFileToDatabase(file, headers, data, latestVersion, true);
       }
 
-      setShowVersionDialog(false);
-      setPendingUpload(null);
+      // Close modal and clean up
+      setShowStorageModal(false);
+      setPendingFileData(null);
+      setStorageConflictData(null);
+      setSelectedStorageType(null);
     } catch (error) {
       console.error('Error during overwrite:', error);
-    } finally {
-      setOverwriteLoading(false);
+      setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowUploadSuccess(true);
     }
-  }, [pendingUpload, uploadFileToDatabase, userEmail]);
+  }, [pendingFileData, storageConflictData, uploadFileToDatabase, userEmail]);
 
   // Helper function to save to local storage with versioning
   const saveToLocalStorage = useCallback(async (
