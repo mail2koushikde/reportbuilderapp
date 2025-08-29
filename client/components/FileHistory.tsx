@@ -458,7 +458,7 @@ const FileHistory: React.FC = () => {
               className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Storage</option>
-              <option value="server">Server Only</option>
+              <option value="server">Snowflake Only</option>
               <option value="local">Local Only</option>
             </select>
 
