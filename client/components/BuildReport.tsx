@@ -5782,7 +5782,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         disabled={loadingVersions}
                       >
                         <span className="text-blue-400">
-                          (v{currentFileVersion})
+                          (v{currentFileVersion}
+                          {(() => {
+                            const currentVersion = availableVersions.find(v => v.version === currentFileVersion);
+                            return currentVersion ? ` • ${currentVersion.sourceLabel}` : '';
+                          })()})
                         </span>
                         {loadingVersions ? (
                           <div className="w-3 h-3 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
