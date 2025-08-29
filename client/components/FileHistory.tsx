@@ -37,6 +37,8 @@ interface UploadMetadata {
   notes?: string;
   created_at: string;
   updated_at: string;
+  storage_type?: 'server' | 'local'; // Add field to distinguish storage type
+  dataset_id?: string; // For local storage, this will be the dataset ID
 }
 
 interface GroupedFile {
