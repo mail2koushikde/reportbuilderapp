@@ -146,27 +146,30 @@ const FileHistory: React.FC = () => {
     fetchUploads();
   }, [userEmail]);
 
-  // Group files by filename and get latest version
+  // Group files by filename and storage type to avoid duplicate keys
   const groupFilesByName = (uploads: UploadMetadata[]): GroupedFile[] => {
     const fileGroups = new Map<string, UploadMetadata[]>();
 
-    // Group uploads by filename
+    // Group uploads by filename and storage type combination
     uploads.forEach(upload => {
-      const filename = upload.original_filename;
-      if (!fileGroups.has(filename)) {
-        fileGroups.set(filename, []);
+      const groupKey = `${upload.original_filename}-${upload.storage_type}`;
+      if (!fileGroups.has(groupKey)) {
+        fileGroups.set(groupKey, []);
       }
-      fileGroups.get(filename)!.push(upload);
+      fileGroups.get(groupKey)!.push(upload);
     });
 
     // Convert to GroupedFile array with latest version
     const grouped: GroupedFile[] = [];
-    fileGroups.forEach((versions, filename) => {
+    fileGroups.forEach((versions, groupKey) => {
       // Sort versions by version number descending (latest first)
       const sortedVersions = versions.sort((a, b) => b.version - a.version);
 
+      // Use the original filename for display, but keep unique groupKey
+      const filename = sortedVersions[0].original_filename;
+
       grouped.push({
-        filename,
+        filename: groupKey, // Use unique key for React keys
         latestVersion: sortedVersions[0],
         allVersions: sortedVersions,
         totalVersions: versions.length
