@@ -1862,6 +1862,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
             setStorageConflictData(safeConflictResult);
             console.log('Storage conflict data set:', safeConflictResult);
+            console.log('Selected storage type:', option);
             // Modal will stay open and show conflict resolution UI
           } else {
             // No conflict, proceed with local save
