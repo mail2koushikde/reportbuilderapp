@@ -1420,9 +1420,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         }
 
         // Show storage options modal instead of direct upload
-        // Clear any previous conflict state to ensure clean modal state
-        // Don't clear selectedStorageType here as it needs to be set when user selects storage option
+        // Clear any previous state to ensure clean modal state for new file upload
         setStorageConflictData(null);
+        setSelectedStorageType(null);
 
         setPendingFileData({
           file,
