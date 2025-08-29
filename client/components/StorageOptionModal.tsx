@@ -189,7 +189,7 @@ export function StorageOptionModal({
           </h4>
           <div className="text-xs text-white/70 space-y-1">
             <p>• Choose <strong className="text-purple-300">Local Storage</strong> for sensitive data or files under 1M rows</p>
-            <p>• Choose <strong className="text-blue-300">Server Storage</strong> for collaboration, large datasets, or permanent storage</p>
+            <p>• Choose <strong className="text-blue-300">Snowflake Storage</strong> for collaboration, large datasets, or permanent storage</p>
             <p>• Local storage is faster for immediate analysis but data stays only in this browser</p>
           </div>
         </div>
