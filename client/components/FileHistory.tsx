@@ -169,10 +169,7 @@ const FileHistory: React.FC = () => {
 
       // Clear local data
       try {
-        const localDatasets = await duckdbService.getLocalUserUploads(userEmail);
-        for (const dataset of localDatasets) {
-          await duckdbService.deleteDataset(dataset.id);
-        }
+        await duckdbService.clearAllUserData(userEmail);
         console.log('Local data cleared');
       } catch (localError) {
         console.warn('Failed to clear some local data:', localError);
