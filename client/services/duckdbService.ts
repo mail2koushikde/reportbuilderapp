@@ -10,6 +10,9 @@ export interface LocalDataset {
   createdAt: Date;
   fileSize: number;
   originalFileName: string;
+  version: number;
+  userEmail: string;
+  updatedAt: Date;
 }
 
 class DuckDBService {
@@ -61,17 +64,23 @@ class DuckDBService {
   }
 
   /**
-   * Step 1: Save dataset to IndexedDB (primary storage)
+   * Step 1: Save dataset to IndexedDB (primary storage) with versioning
    * Flow: Excel → IndexedDB
    */
   async saveDataset(
     data: DataRow[],
     fileName: string,
-    columns: string[]
+    columns: string[],
+    userEmail: string,
+    version?: number
   ): Promise<LocalDataset> {
-    const datasetId = `dataset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const cleanFileName = fileName.replace(/\.csv$/i, '').replace(/[^a-zA-Z0-9_]/g, '_');
-    
+
+    // If no version specified, determine next version
+    const finalVersion = version || await this.getNextVersion(userEmail, fileName);
+
+    const datasetId = `dataset_${userEmail}_${cleanFileName}_v${finalVersion}_${Date.now()}`;
+
     // Create dataset metadata
     const dataset: LocalDataset = {
       id: datasetId,
@@ -79,17 +88,20 @@ class DuckDBService {
       rowCount: data.length,
       columns,
       createdAt: new Date(),
+      updatedAt: new Date(),
       fileSize: new Blob([JSON.stringify(data)]).size,
-      originalFileName: fileName
+      originalFileName: fileName,
+      version: finalVersion,
+      userEmail
     };
-    
+
     try {
       // Step 1: Store in IndexedDB (primary storage)
       await this.storeInIndexedDB(datasetId, dataset, data);
-      console.log(`Dataset "${cleanFileName}" saved to IndexedDB with ${data.length} rows`);
-      
+      console.log(`Dataset "${cleanFileName}" v${finalVersion} saved to IndexedDB with ${data.length} rows`);
+
       return dataset;
-      
+
     } catch (error) {
       console.error('Failed to save dataset to IndexedDB:', error);
       throw error;
