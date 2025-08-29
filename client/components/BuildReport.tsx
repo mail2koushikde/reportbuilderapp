@@ -5855,7 +5855,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   </div>
                                   {version.file_size_bytes && (
                                     <div className="text-xs text-white/40 mt-0.5">
-                                      {(version.file_size_bytes / 1024).toFixed(1)} KB
+                                      {(() => {
+                                        const bytes = version.file_size_bytes;
+                                        if (bytes >= 1024 * 1024 * 1024) {
+                                          return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                                        } else if (bytes >= 1024 * 1024) {
+                                          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+                                        } else if (bytes >= 1024) {
+                                          return `${(bytes / 1024).toFixed(1)} KB`;
+                                        } else {
+                                          return `${bytes} bytes`;
+                                        }
+                                      })()}
                                     </div>
                                   )}
                                 </button>
