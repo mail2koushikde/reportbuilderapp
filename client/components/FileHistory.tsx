@@ -393,11 +393,11 @@ const FileHistory: React.FC = () => {
             <div className="flex items-center gap-2">
               <Database className="w-5 h-5 text-blue-400" />
               <div>
-                <p className="text-sm text-white/70">Server Storage</p>
+                <p className="text-sm text-white/70">Snowflake Storage</p>
                 <p className="text-xl font-semibold text-white">
                   {groupedFiles.filter(f => f.latestVersion.storage_type === 'server').length}
                 </p>
-                <p className="text-xs text-white/50">files on server</p>
+                <p className="text-xs text-white/50">files in Snowflake</p>
               </div>
             </div>
           </div>
