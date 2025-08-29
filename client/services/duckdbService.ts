@@ -604,6 +604,29 @@ class DuckDBService {
       console.error('Error during DuckDB cleanup:', error);
     }
   }
+
+  /**
+   * Clear all data for a specific user from local storage
+   */
+  async clearAllUserData(userEmail: string): Promise<void> {
+    try {
+      console.log(`Clearing all local data for user: ${userEmail}`);
+
+      // Get all datasets for this user
+      const userDatasets = await this.getLocalUserUploads(userEmail);
+
+      // Delete each dataset
+      for (const dataset of userDatasets) {
+        await this.deleteDataset(dataset.id);
+        console.log(`Deleted local dataset: ${dataset.id}`);
+      }
+
+      console.log(`Cleared ${userDatasets.length} local datasets for user: ${userEmail}`);
+    } catch (error) {
+      console.error('Failed to clear user data:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
