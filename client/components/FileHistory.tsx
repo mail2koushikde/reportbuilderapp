@@ -637,10 +637,10 @@ const FileHistory: React.FC = () => {
                                     {file.latestVersion.storage_type === 'local' ? (
                                       <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
                                     ) : (
-                                      <Database className="w-3 h-3 text-blue-400" title="Stored on server" />
+                                      <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
                                     )}
                                     <span className="text-xs text-white/50">
-                                      {file.latestVersion.storage_type === 'local' ? 'Local' : 'Server'}
+                                      {file.latestVersion.storage_type === 'local' ? 'Local' : 'Snowflake'}
                                     </span>
                                   </div>
                                 </div>
