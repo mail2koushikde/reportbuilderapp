@@ -64,25 +64,80 @@ const FileHistory: React.FC = () => {
   const fetchUploads = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch upload history');
-      }
+      // Fetch from both server and local storage
+      const [serverUploads, localUploads] = await Promise.allSettled([
+        fetchServerUploads(),
+        fetchLocalUploads()
+      ]);
 
-      const data = await response.json();
+      const serverData = serverUploads.status === 'fulfilled' ? serverUploads.value : [];
+      const localData = localUploads.status === 'fulfilled' ? localUploads.value : [];
 
-      if (data.success) {
-        setUploads(data.uploads);
-        setError(null);
-      } else {
-        throw new Error(data.error || 'Failed to fetch upload history');
-      }
+      // Merge server and local uploads
+      const allUploads = [...serverData, ...localData];
+      setUploads(allUploads);
+      setError(null);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       console.error('Error fetching uploads:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchServerUploads = async (): Promise<UploadMetadata[]> => {
+    try {
+      const response = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch server uploads:', response.status);
+        return [];
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        return data.uploads.map((upload: any) => ({
+          ...upload,
+          storage_type: 'server' as const
+        }));
+      } else {
+        console.warn('Server uploads API returned error:', data.error);
+        return [];
+      }
+    } catch (err) {
+      console.warn('Error fetching server uploads:', err);
+      return [];
+    }
+  };
+
+  const fetchLocalUploads = async (): Promise<UploadMetadata[]> => {
+    try {
+      const localDatasets = await duckdbService.getLocalUserUploads(userEmail);
+
+      // Convert LocalDataset to UploadMetadata format
+      return localDatasets.map((dataset: LocalDataset) => ({
+        user_name: dataset.userEmail,
+        original_filename: dataset.originalFileName,
+        version: dataset.version,
+        table_name: dataset.id, // Use dataset ID as table name for local storage
+        upload_timestamp: dataset.createdAt.toISOString(),
+        row_count: dataset.rowCount,
+        column_count: dataset.columns.length,
+        column_names: dataset.columns.join(', '),
+        file_size_bytes: dataset.fileSize,
+        upload_status: 'success' as const, // Local datasets are always successful
+        notes: '',
+        created_at: dataset.createdAt.toISOString(),
+        updated_at: dataset.updatedAt.toISOString(),
+        storage_type: 'local' as const,
+        dataset_id: dataset.id
+      }));
+    } catch (err) {
+      console.warn('Error fetching local uploads:', err);
+      return [];
     }
   };
 
