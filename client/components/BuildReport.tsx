@@ -5797,7 +5797,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
                       {/* Version Dropdown Menu */}
                       {showVersionDropdown && (
-                        <div className="absolute top-full left-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50 min-w-48">
+                        <div className="absolute top-full left-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50 min-w-64">
                           <div className="py-1 max-h-40 overflow-y-auto">
                             <div className="px-2 py-1 text-xs text-white/50 border-b border-white/10">
                               Available Versions:
@@ -5840,9 +5840,6 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                     <div className="flex items-center gap-2">
                                       <span className="text-xs font-medium">
                                         Version {version.version}
-                                        {version.version === currentFileVersion && (
-                                          <span className="text-green-400 ml-1">• Current</span>
-                                        )}
                                       </span>
                                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                                         version.source === 'local'
