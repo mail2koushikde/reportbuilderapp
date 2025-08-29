@@ -1906,10 +1906,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           }
         } catch (error) {
           console.error('Error checking conflict:', error);
-          // Fallback to direct upload
-          await uploadFileToDatabase(file, headers, data, 1);
-          setShowStorageModal(false);
-          setPendingFileData(null);
+          // Show error to user instead of silent fallback
+          alert('Network error while checking for file conflicts. Please check your connection and try again.');
+          return;
         }
       }
     } catch (error) {
