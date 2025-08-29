@@ -2017,7 +2017,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setClearingStatus('Removing cached data...');
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      setClearingStatus('Clearing IndexedDB storage...');
+      setClearingStatus('Clearing Local storage...');
       await cacheService.clearCache();
 
       setClearingStatus('Updating application state...');
