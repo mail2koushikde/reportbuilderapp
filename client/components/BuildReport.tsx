@@ -4146,7 +4146,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ������
+                            ����
                           </button>
                         </div>
                       )}
@@ -5806,13 +5806,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   <div className="space-y-1">
                                     <div className="text-white/50">
                                       {currentFileVersion ?
-                                        'No other versions found in database' :
+                                        'No other versions found in database or local storage' :
                                         'File loaded locally only'
                                       }
                                     </div>
                                     {!currentFileVersion && (
                                       <div className="text-white/40 text-xs">
-                                        Tip: Re-upload this file to save versions to the database
+                                        Tip: Re-upload this file to save versions to storage
                                       </div>
                                     )}
                                   </div>
@@ -5821,7 +5821,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             ) : (
                               availableVersions.map((version) => (
                                 <button
-                                  key={version.version}
+                                  key={`${version.version}-${version.source}`}
                                   onClick={() => {
                                     // Using userEmail prop from component
                                     loadFileVersion(userEmail, fileName, version.version);
@@ -5833,12 +5833,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
-                                    <span className="text-xs font-medium">
-                                      Version {version.version}
-                                      {version.version === currentFileVersion && (
-                                        <span className="text-green-400 ml-1">• Current</span>
-                                      )}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-medium">
+                                        Version {version.version}
+                                        {version.version === currentFileVersion && (
+                                          <span className="text-green-400 ml-1">• Current</span>
+                                        )}
+                                      </span>
+                                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                        version.source === 'local'
+                                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                          : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                      }`}>
+                                        {version.sourceLabel}
+                                      </span>
+                                    </div>
                                     <span className="text-xs text-white/50">
                                       {new Date(version.upload_timestamp).toLocaleDateString()}
                                     </span>
