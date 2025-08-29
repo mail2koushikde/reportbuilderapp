@@ -217,6 +217,139 @@ class DuckDBService {
   }
 
   /**
+   * Check if a file exists and get conflict information for local storage
+   */
+  async checkLocalFileConflict(
+    userEmail: string,
+    originalFileName: string
+  ): Promise<{
+    exists: boolean;
+    versions: Array<{ version: number; id: string; createdAt: string }>;
+    nextVersion: number;
+  }> {
+    try {
+      const allDatasets = await this.getAllDatasetsFromIndexedDB();
+      const userFileVersions = allDatasets
+        .filter(dataset =>
+          dataset.userEmail === userEmail &&
+          dataset.originalFileName === originalFileName
+        )
+        .map(dataset => ({
+          version: dataset.version,
+          id: dataset.id,
+          createdAt: dataset.createdAt.toISOString()
+        }))
+        .sort((a, b) => b.version - a.version);
+
+      const exists = userFileVersions.length > 0;
+      const nextVersion = exists
+        ? Math.max(...userFileVersions.map(v => v.version)) + 1
+        : 1;
+
+      return {
+        exists,
+        versions: userFileVersions,
+        nextVersion
+      };
+    } catch (error) {
+      console.error('Failed to check local file conflict:', error);
+      return { exists: false, versions: [], nextVersion: 1 };
+    }
+  }
+
+  /**
+   * Get next version number for a file
+   */
+  async getNextVersion(userEmail: string, originalFileName: string): Promise<number> {
+    const conflict = await this.checkLocalFileConflict(userEmail, originalFileName);
+    return conflict.nextVersion;
+  }
+
+  /**
+   * Get all versions of a specific file for a user
+   */
+  async getLocalFileVersions(
+    userEmail: string,
+    originalFileName: string
+  ): Promise<LocalDataset[]> {
+    try {
+      const allDatasets = await this.getAllDatasetsFromIndexedDB();
+      return allDatasets
+        .filter(dataset =>
+          dataset.userEmail === userEmail &&
+          dataset.originalFileName === originalFileName
+        )
+        .sort((a, b) => b.version - a.version);
+    } catch (error) {
+      console.error('Failed to get local file versions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all uploads for a specific user (for FileHistory integration)
+   */
+  async getLocalUserUploads(userEmail: string): Promise<LocalDataset[]> {
+    try {
+      const allDatasets = await this.getAllDatasetsFromIndexedDB();
+      return allDatasets
+        .filter(dataset => dataset.userEmail === userEmail)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    } catch (error) {
+      console.error('Failed to get local user uploads:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete a specific version of a file
+   */
+  async deleteLocalFileVersion(
+    userEmail: string,
+    originalFileName: string,
+    version: number
+  ): Promise<void> {
+    try {
+      const allDatasets = await this.getAllDatasetsFromIndexedDB();
+      const targetDataset = allDatasets.find(dataset =>
+        dataset.userEmail === userEmail &&
+        dataset.originalFileName === originalFileName &&
+        dataset.version === version
+      );
+
+      if (targetDataset) {
+        await this.deleteDataset(targetDataset.id);
+        console.log(`Deleted local file version: ${originalFileName} v${version}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete local file version:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Overwrite an existing version (delete old, save new with same version)
+   */
+  async overwriteLocalFile(
+    data: DataRow[],
+    fileName: string,
+    columns: string[],
+    userEmail: string,
+    version: number
+  ): Promise<LocalDataset> {
+    try {
+      // Delete existing version
+      await this.deleteLocalFileVersion(userEmail, fileName, version);
+
+      // Save new data with same version
+      return await this.saveDataset(data, fileName, columns, userEmail, version);
+    } catch (error) {
+      console.error('Failed to overwrite local file:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get specific dataset metadata from IndexedDB
    */
   async getDatasetMetadata(datasetId: string): Promise<LocalDataset | null> {
