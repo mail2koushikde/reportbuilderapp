@@ -7207,14 +7207,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       {/* Storage Option Modal */}
       <StorageOptionModal
         isOpen={showStorageModal}
-        onClose={() => {
-          setShowStorageModal(false);
-          setPendingFileData(null);
-        }}
+        onClose={handleStorageModalClose}
         onSelect={handleStorageOptionSelect}
+        onOverwrite={handleStorageOverwrite}
+        onNewVersion={handleStorageNewVersion}
         fileName={pendingFileData?.file.name || ''}
         fileSize={pendingFileData?.file.size || 0}
         rowCount={pendingFileData?.rowCount || 0}
+        conflictData={storageConflictData}
+        selectedStorage={selectedStorageType}
       />
 
       {/* Local Datasets Modal */}
