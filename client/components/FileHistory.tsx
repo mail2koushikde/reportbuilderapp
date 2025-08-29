@@ -194,13 +194,13 @@ const FileHistory: React.FC = () => {
 
   // Expand or collapse all files
   const toggleAllFiles = () => {
-    const allFilenames = groupedFiles.filter(f => f.totalVersions > 1).map(f => f.filename);
-    if (expandedFiles.size === allFilenames.length) {
+    const allFileKeys = groupedFiles.filter(f => f.totalVersions > 1).map(f => f.filename);
+    if (expandedFiles.size === allFileKeys.length) {
       // All are expanded, collapse all
       setExpandedFiles(new Set());
     } else {
       // Not all are expanded, expand all
-      setExpandedFiles(new Set(allFilenames));
+      setExpandedFiles(new Set(allFileKeys));
     }
   };
 
