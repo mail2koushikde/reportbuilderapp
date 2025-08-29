@@ -180,13 +180,13 @@ const FileHistory: React.FC = () => {
   };
 
   // Toggle expansion of a file's versions
-  const toggleFileExpansion = (filename: string) => {
+  const toggleFileExpansion = (fileKey: string) => {
     setExpandedFiles(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(filename)) {
-        newSet.delete(filename);
+      if (newSet.has(fileKey)) {
+        newSet.delete(fileKey);
       } else {
-        newSet.add(filename);
+        newSet.add(fileKey);
       }
       return newSet;
     });
@@ -653,7 +653,7 @@ const FileHistory: React.FC = () => {
                                   <FileText className="w-4 h-4 text-blue-500" />
                                   <div className="flex flex-col">
                                     <span className="text-white font-medium">
-                                      {file.filename}
+                                      {file.latestVersion.original_filename}
                                     </span>
                                     {file.totalVersions > 1 && (
                                       <span className="text-xs text-white/50">
@@ -707,7 +707,7 @@ const FileHistory: React.FC = () => {
                                 <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
                                   <div className="space-y-1">
                                     {file.allVersions.map((version, index) => (
-                                      <div key={`${file.filename}-v${version.version}`} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
+                                      <div key={`${file.filename}-v${version.version}-${version.storage_type}-${version.upload_timestamp}`} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
                                         {/* Empty space to align with expand button column */}
                                         <div style={{ width: '32px' }} className="flex-shrink-0"></div>
 
