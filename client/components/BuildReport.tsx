@@ -1587,7 +1587,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const handleOverwrite = useCallback(async () => {
     if (!pendingUpload || !pendingUpload.conflict) return;
 
-    const { file, headers, data, conflict } = pendingUpload;
+    const { file, headers, data, conflict, isLocal } = pendingUpload;
     const existingVersions = conflict.existing_versions || [];
 
     if (existingVersions.length === 0) {
@@ -1599,7 +1599,32 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
     try {
       const latestVersion = Math.max(...existingVersions.map((v: any) => v.version));
-      await uploadFileToDatabase(file, headers, data, latestVersion, true);
+
+      if (isLocal) {
+        // Handle local storage overwrite
+        await duckdbService.overwriteLocalFile(data, file.name, headers, userEmail, latestVersion);
+
+        // Load the data into the app for immediate use
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(latestVersion);
+
+        // Update local datasets list
+        const datasets = await duckdbService.listDatasets();
+        setLocalDatasets(datasets);
+
+        setUploadedFileName(`${file.name} (v${latestVersion}) (Overwritten locally - ${data.length.toLocaleString()} rows)`);
+        setShowUploadSuccess(true);
+
+        console.log(`Local file overwritten successfully: ${file.name} v${latestVersion}`);
+      } else {
+        // Handle server storage overwrite
+        await uploadFileToDatabase(file, headers, data, latestVersion, true);
+      }
 
       setShowVersionDialog(false);
       setPendingUpload(null);
@@ -1608,7 +1633,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } finally {
       setOverwriteLoading(false);
     }
-  }, [pendingUpload, uploadFileToDatabase]);
+  }, [pendingUpload, uploadFileToDatabase, userEmail]);
 
   // Handle new version choice from version dialog
   const handleNewVersion = useCallback(async () => {
