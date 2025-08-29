@@ -63,6 +63,17 @@ export function StorageOptionModal({
   const [showingConflict, setShowingConflict] = useState(false);
   const [overwriteLoading, setOverwriteLoading] = useState(false);
   const [newVersionLoading, setNewVersionLoading] = useState(false);
+
+  // Debug logging to track state changes
+  React.useEffect(() => {
+    console.log('StorageOptionModal state:', {
+      isOpen,
+      conflictData: !!conflictData,
+      selectedStorage,
+      hasConflict: conflictData?.conflict,
+      existingVersionsCount: conflictData?.existing_versions?.length || 0
+    });
+  }, [isOpen, conflictData, selectedStorage]);
   // Determine recommendations based on file characteristics
   const isLargeFile = rowCount > 1000000; // > 1M rows
   const isSensitiveData = fileName.toLowerCase().includes('personal') || 
@@ -95,10 +106,10 @@ export function StorageOptionModal({
   };
 
   const handleSelect = (type: 'local' | 'server') => {
+    console.log('StorageOptionModal: handleSelect called with type:', type);
     onSelect(type);
-    if (!conflictData) {
-      onClose();
-    }
+    // Don't close automatically - let the parent component handle the modal state
+    // The modal will either close if no conflict, or stay open to show conflict resolution
   };
 
   const handleOverwrite = async (type: 'local' | 'server') => {
@@ -189,7 +200,7 @@ export function StorageOptionModal({
         </div>
 
         {/* Show conflict resolution if there's a conflict and storage is selected */}
-        {conflictData && selectedStorage ? (
+        {conflictData && selectedStorage && conflictData.conflict ? (
           <div className="space-y-6">
             {/* Existing Versions */}
             <div className="glass-card rounded-lg p-4 border border-yellow-400/20">
