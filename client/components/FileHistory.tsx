@@ -231,8 +231,9 @@ const FileHistory: React.FC = () => {
         upload.table_name.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === 'all' || upload.upload_status === statusFilter;
+      const matchesStorage = storageFilter === 'all' || upload.storage_type === storageFilter;
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesStorage;
     });
 
     // Group the filtered uploads
