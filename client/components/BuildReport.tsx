@@ -1158,7 +1158,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [loadedReportState]);
 
-  // Fetch available versions for the current file
+  // Fetch available versions for the current file from both local and server storage
   const fetchFileVersions = useCallback(async (userEmail: string, filename: string) => {
     if (!userEmail || !filename) {
       setAvailableVersions([]);
@@ -1167,46 +1167,97 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
     try {
       setLoadingVersions(true);
+      console.log(`Fetching versions for file: ${filename}, user: ${userEmail}`);
 
-      // Try both with and without .csv extension to handle different storage scenarios
+      const allVersions: any[] = [];
+
+      // 1. Fetch SERVER versions (Snowflake database)
       const filenameVariants = [
         filename,
         filename.endsWith('.csv') ? filename.slice(0, -4) : `${filename}.csv`
       ];
 
-      let foundVersions = false;
-
+      let foundServerVersions = false;
       for (const filenameVariant of filenameVariants) {
-        const encodedFilename = encodeURIComponent(filenameVariant);
-        const response = await fetch(`/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`);
+        try {
+          const encodedFilename = encodeURIComponent(filenameVariant);
+          const response = await fetch(`/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`);
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.versions && result.versions.length > 0) {
-            // Sort versions by version number descending (newest first)
-            const sortedVersions = result.versions.sort((a: any, b: any) => b.version - a.version);
-            setAvailableVersions(sortedVersions);
-
-            // Set current version to the highest version if not already set or if current is lower
-            const highestVersion = sortedVersions[0].version;
-            if (!currentFileVersion || currentFileVersion < highestVersion) {
-              console.log(`Setting current version to highest available: v${highestVersion}`);
-              setCurrentFileVersion(highestVersion);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.versions && result.versions.length > 0) {
+              // Add server versions with source tag
+              const serverVersions = result.versions.map((v: any) => ({
+                ...v,
+                source: 'server',
+                sourceLabel: 'Snowflake',
+                sourceColor: 'text-blue-400'
+              }));
+              allVersions.push(...serverVersions);
+              foundServerVersions = true;
+              console.log(`Found ${serverVersions.length} server versions for: ${filenameVariant}`);
+              break;
             }
-
-            foundVersions = true;
-            console.log(`Found ${sortedVersions.length} versions for file: ${filenameVariant}, highest: v${highestVersion}`);
-            break;
+          } else if (response.status === 404) {
+            console.log(`No server versions found for: ${filenameVariant}`);
+          } else {
+            console.warn(`Failed to fetch server versions for ${filenameVariant}:`, response.status, response.statusText);
           }
-        } else if (response.status === 404) {
-          console.log(`No versions found for filename variant: ${filenameVariant}`);
-        } else {
-          console.warn(`Failed to fetch file versions for ${filenameVariant}:`, response.status, response.statusText);
+        } catch (serverError) {
+          console.error(`Error fetching server versions for ${filenameVariant}:`, serverError);
         }
       }
 
-      if (!foundVersions) {
-        console.log(`No versions found in database for file: ${filename} (tried variants: ${filenameVariants.join(', ')})`);
+      // 2. Fetch LOCAL versions (IndexedDB via DuckDB service)
+      try {
+        const localVersions = await duckdbService.getLocalFileVersions(userEmail, filename);
+        if (localVersions && localVersions.length > 0) {
+          // Add local versions with source tag
+          const localVersionsWithSource = localVersions.map((dataset: LocalDataset) => ({
+            version: dataset.version,
+            upload_timestamp: dataset.createdAt.toISOString(),
+            table_name: dataset.id, // Use dataset ID as table name for local versions
+            file_size_bytes: dataset.fileSize,
+            original_filename: dataset.originalFileName,
+            source: 'local',
+            sourceLabel: 'Local',
+            sourceColor: 'text-purple-400',
+            dataset_id: dataset.id // Store dataset ID for local loading
+          }));
+          allVersions.push(...localVersionsWithSource);
+          console.log(`Found ${localVersionsWithSource.length} local versions for: ${filename}`);
+        } else {
+          console.log(`No local versions found for: ${filename}`);
+        }
+      } catch (localError) {
+        console.error('Error fetching local versions:', localError);
+      }
+
+      // 3. Combine and sort all versions
+      if (allVersions.length > 0) {
+        // Sort by version number descending (newest first), then by source priority (server first)
+        const sortedVersions = allVersions.sort((a, b) => {
+          if (a.version !== b.version) {
+            return b.version - a.version; // Higher version first
+          }
+          // If same version, prefer server over local
+          if (a.source === 'server' && b.source === 'local') return -1;
+          if (a.source === 'local' && b.source === 'server') return 1;
+          return 0;
+        });
+
+        setAvailableVersions(sortedVersions);
+
+        // Set current version to the highest version if not already set or if current is lower
+        const highestVersion = sortedVersions[0].version;
+        if (!currentFileVersion || currentFileVersion < highestVersion) {
+          console.log(`Setting current version to highest available: v${highestVersion} (${sortedVersions[0].sourceLabel})`);
+          setCurrentFileVersion(highestVersion);
+        }
+
+        console.log(`Total versions found: ${sortedVersions.length} (${foundServerVersions ? 'server + ' : ''}local)`);
+      } else {
+        console.log(`No versions found for file: ${filename} (tried server + local)`);
         setAvailableVersions([]);
       }
     } catch (error) {
@@ -1215,9 +1266,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } finally {
       setLoadingVersions(false);
     }
-  }, []);
+  }, [currentFileVersion]);
 
-  // Load data for a specific version
+  // Load data for a specific version from either local or server storage
   const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number) => {
     try {
       const versionData = availableVersions.find(v => v.version === version);
@@ -1226,29 +1277,76 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         return;
       }
 
-      const tableName = versionData.table_name;
-      const response = await fetch(`/api/database/tables/${tableName}/data`);
+      console.log(`Loading version ${version} from ${versionData.sourceLabel}:`, versionData);
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setColumns(result.columns || []);
-          setImportedData(result.data || []);
+      if (versionData.source === 'local') {
+        // Load from local storage (IndexedDB)
+        try {
+          const datasetId = versionData.dataset_id || versionData.table_name;
+          const dataset = await duckdbService.getDatasetMetadata(datasetId);
+
+          if (!dataset) {
+            console.error('Local dataset not found:', datasetId);
+            return;
+          }
+
+          // Load the dataset data from IndexedDB
+          const query = 'SELECT * FROM {table} LIMIT 10000'; // Limit for performance
+          const data = await duckdbService.queryDataset(datasetId, query);
+
+          setColumns(dataset.columns || []);
+          setImportedData(data || []);
           setCurrentFileVersion(version);
           setShowVersionDropdown(false);
+          setCacheEnabled(false); // Local data doesn't use cache
 
           // Show success notification
-          setUploadedFileName(`${filename} (v${version})`);
+          setUploadedFileName(`${filename} (v${version}) - Local Storage`);
           setShowUploadSuccess(true);
           setTimeout(() => setShowUploadSuccess(false), 3000);
-        } else {
-          console.error('Failed to load version data:', result.error);
+
+          console.log(`Loaded local version ${version} with ${data.length} rows`);
+        } catch (localError) {
+          console.error('Error loading local version:', localError);
+          alert('Failed to load local version. The data may have been removed from local storage.');
         }
       } else {
-        console.error('Failed to fetch version data:', response.statusText);
+        // Load from server storage (Snowflake)
+        try {
+          const tableName = versionData.table_name;
+          const response = await fetch(`/api/database/tables/${tableName}/data`);
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              setColumns(result.columns || []);
+              setImportedData(result.data || []);
+              setCurrentFileVersion(version);
+              setShowVersionDropdown(false);
+              setCacheEnabled(false); // Fresh data doesn't use cache
+
+              // Show success notification
+              setUploadedFileName(`${filename} (v${version}) - Snowflake`);
+              setShowUploadSuccess(true);
+              setTimeout(() => setShowUploadSuccess(false), 3000);
+
+              console.log(`Loaded server version ${version} with ${result.data.length} rows`);
+            } else {
+              console.error('Failed to load version data:', result.error);
+              alert(`Failed to load server version: ${result.error}`);
+            }
+          } else {
+            console.error('Failed to fetch version data:', response.statusText);
+            alert(`Failed to fetch server version: ${response.status} ${response.statusText}`);
+          }
+        } catch (serverError) {
+          console.error('Error loading server version:', serverError);
+          alert('Failed to load server version. Please check your connection.');
+        }
       }
     } catch (error) {
       console.error('Error loading file version:', error);
+      alert('Failed to load version data.');
     }
   }, [availableVersions]);
 
@@ -4048,7 +4146,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ����
+                            ������
                           </button>
                         </div>
                       )}
