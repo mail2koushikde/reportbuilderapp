@@ -1301,6 +1301,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     fetchVersionsForCurrentFile();
   }, [fileName, currentFileVersion, fetchFileVersions]);
 
+  // Debug logging for current version changes
+  useEffect(() => {
+    console.log('Current file version changed to:', currentFileVersion, 'for file:', fileName);
+  }, [currentFileVersion, fileName]);
+
   // Update cache status when data changes
   useEffect(() => {
     const updateCacheStatus = async () => {
