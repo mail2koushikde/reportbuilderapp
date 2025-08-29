@@ -1757,25 +1757,42 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
     try {
       if (option === 'local') {
-        // Flow: Excel → IndexedDB (primary storage)
-        console.log('Saving dataset to IndexedDB...');
-        const dataset = await duckdbService.saveDataset(data, file.name, headers);
+        // Check for local file conflicts first
+        console.log('Checking for local file conflicts...');
+        try {
+          const conflictResult = await duckdbService.checkLocalFileConflict(userEmail, file.name);
 
-        // Load the data into the app for immediate use
-        setColumns(headers);
-        setImportedData(data);
-        setCacheEnabled(false); // Disable regular cache when using local storage
+          if (conflictResult.exists) {
+            // File already exists locally, show version dialog
+            const safeConflictResult = {
+              conflict: true,
+              existing_versions: conflictResult.versions.map(v => ({
+                version: v.version,
+                upload_timestamp: v.createdAt,
+                table_name: v.id
+              })),
+              next_version: conflictResult.nextVersion,
+              user_name: userEmail,
+              original_filename: file.name
+            };
 
-        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
-        setFileName(fileNameWithoutExt);
-        setCurrentFileVersion(null);
-
-        // Update local datasets list
-        const datasets = await duckdbService.listDatasets();
-        setLocalDatasets(datasets);
-
-        setUploadedFileName(`${file.name} (Stored locally in IndexedDB - ${rowCount.toLocaleString()} rows)`);
-        setShowUploadSuccess(true);
+            setPendingUpload({
+              file,
+              headers,
+              data,
+              conflict: safeConflictResult,
+              isLocal: true // Add flag to indicate this is local storage
+            });
+            setShowVersionDialog(true);
+          } else {
+            // No conflict, proceed with local save
+            await saveToLocalStorage(file, headers, data, userEmail, 1);
+          }
+        } catch (error) {
+          console.error('Error checking local file conflict:', error);
+          // Fallback to direct save
+          await saveToLocalStorage(file, headers, data, userEmail, 1);
+        }
 
       } else {
         // Store on server - check for conflicts first
