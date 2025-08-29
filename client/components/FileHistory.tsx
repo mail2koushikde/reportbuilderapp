@@ -288,7 +288,7 @@ const FileHistory: React.FC = () => {
 
     setFilteredUploads(filtered);
     setGroupedFiles(grouped);
-  }, [uploads, searchTerm, statusFilter, sortBy, sortOrder]);
+  }, [uploads, searchTerm, statusFilter, storageFilter, sortBy, sortOrder]);
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return 'N/A';
