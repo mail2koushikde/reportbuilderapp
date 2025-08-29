@@ -1371,7 +1371,6 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
-      setFileName(file.name);
       const reader = new FileReader();
       reader.onload = async (e) => {
         const text = e.target?.result as string;
