@@ -1676,13 +1676,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [pendingFileData, storageConflictData, uploadFileToDatabase, saveToLocalStorage, userEmail]);
 
-  // Handle cancel from version dialog
+  // Handle storage modal close
   const handleStorageModalClose = useCallback(() => {
     setShowStorageModal(false);
     setPendingFileData(null);
     setStorageConflictData(null);
     setSelectedStorageType(null);
-    setNewVersionLoading(false);
   }, []);
 
   // Snowflake data import functionality
