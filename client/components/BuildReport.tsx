@@ -1804,12 +1804,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     try {
       if (option === 'local') {
         // Check for local file conflicts first
-        console.log('Checking for local file conflicts...');
+        console.log('Checking for local file conflicts for:', file.name, 'user:', userEmail);
         try {
           const conflictResult = await duckdbService.checkLocalFileConflict(userEmail, file.name);
+          console.log('Conflict check result:', conflictResult);
 
           if (conflictResult.exists) {
             // File already exists locally, show conflict options in modal
+            console.log('File conflict detected, showing conflict resolution');
             const safeConflictResult = {
               conflict: true,
               existing_versions: conflictResult.versions.map(v => ({
@@ -1826,6 +1828,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             // Keep modal open to show conflict resolution
           } else {
             // No conflict, proceed with local save
+            console.log('No conflict, proceeding with local save');
             await saveToLocalStorage(file, headers, data, userEmail, 1);
             setShowStorageModal(false);
             setPendingFileData(null);
@@ -1833,6 +1836,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         } catch (error) {
           console.error('Error checking local file conflict:', error);
           // Fallback to direct save
+          console.log('Fallback: attempting direct save to local storage');
           await saveToLocalStorage(file, headers, data, userEmail, 1);
           setShowStorageModal(false);
           setPendingFileData(null);
