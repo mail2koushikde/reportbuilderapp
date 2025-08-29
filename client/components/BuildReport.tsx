@@ -7393,7 +7393,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <div className="bg-red-400 h-2 rounded-full animate-pulse" style={{
                   width: clearingStatus.includes('Initializing') ? '20%' :
                          clearingStatus.includes('Removing') ? '40%' :
-                         clearingStatus.includes('Clearing IndexedDB') ? '60%' :
+                         clearingStatus.includes('Clearing Local storage') ? '60%' :
                          clearingStatus.includes('Updating application') ? '80%' :
                          clearingStatus.includes('Clearing current') ? '90%' :
                          clearingStatus.includes('successfully') ? '100%' : '0%',
