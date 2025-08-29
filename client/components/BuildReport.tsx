@@ -1618,10 +1618,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const datasets = await duckdbService.listDatasets();
         setLocalDatasets(datasets);
 
-        setUploadedFileName(`${file.name} (v${latestVersion}) (Overwritten locally - ${data.length.toLocaleString()} rows)`);
+        setUploadedFileName(`${file.name} (v${latestVersion}) (Overwritten in Local storage - ${data.length.toLocaleString()} rows)`);
         setShowUploadSuccess(true);
 
-        console.log(`Local file overwritten successfully: ${file.name} v${latestVersion}`);
+        console.log(`Local storage file overwritten successfully: ${file.name} v${latestVersion}`);
       } else {
         // Handle server storage overwrite
         await uploadFileToDatabase(file, headers, data, latestVersion, true);
