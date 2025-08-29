@@ -1639,13 +1639,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const handleNewVersion = useCallback(async () => {
     if (!pendingUpload || !pendingUpload.conflict) return;
 
-    const { file, headers, data, conflict } = pendingUpload;
+    const { file, headers, data, conflict, isLocal } = pendingUpload;
     const nextVersion = conflict.next_version || 1;
 
     setNewVersionLoading(true);
 
     try {
-      await uploadFileToDatabase(file, headers, data, nextVersion, false);
+      if (isLocal) {
+        // Handle local storage new version
+        await saveToLocalStorage(file, headers, data, userEmail, nextVersion);
+      } else {
+        // Handle server storage new version
+        await uploadFileToDatabase(file, headers, data, nextVersion, false);
+      }
 
       setShowVersionDialog(false);
       setPendingUpload(null);
@@ -1654,7 +1660,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } finally {
       setNewVersionLoading(false);
     }
-  }, [pendingUpload, uploadFileToDatabase]);
+  }, [pendingUpload, uploadFileToDatabase, saveToLocalStorage, userEmail]);
 
   // Handle cancel from version dialog
   const handleVersionCancel = useCallback(() => {
