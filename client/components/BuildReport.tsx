@@ -1092,15 +1092,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
-  // Versioning dialog state
-  const [showVersionDialog, setShowVersionDialog] = useState(false);
-  const [pendingUpload, setPendingUpload] = useState<{
-    file: File;
-    headers: string[];
-    data: DataRow[];
-    conflict: any;
-    isLocal?: boolean;
-  } | null>(null);
+  // Storage conflict state
+  const [storageConflictData, setStorageConflictData] = useState<any>(null);
+  const [selectedStorageType, setSelectedStorageType] = useState<'local' | 'server' | null>(null);
   const [overwriteLoading, setOverwriteLoading] = useState(false);
   const [newVersionLoading, setNewVersionLoading] = useState(false);
 
@@ -1698,10 +1692,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   }, [pendingUpload, uploadFileToDatabase, saveToLocalStorage, userEmail]);
 
   // Handle cancel from version dialog
-  const handleVersionCancel = useCallback(() => {
-    setShowVersionDialog(false);
-    setPendingUpload(null);
-    setOverwriteLoading(false);
+  const handleStorageModalClose = useCallback(() => {
+    setShowStorageModal(false);
+    setPendingFileData(null);
+    setStorageConflictData(null);
+    setSelectedStorageType(null);
     setNewVersionLoading(false);
   }, []);
 
