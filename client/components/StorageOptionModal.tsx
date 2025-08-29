@@ -60,7 +60,7 @@ export function StorageOptionModal({
 
   const serverOption: StorageOption = {
     type: 'server',
-    title: 'Save to Server',
+    title: 'Save to Snowflake',
     description: '',
     features: [
       'Permanent storage',
