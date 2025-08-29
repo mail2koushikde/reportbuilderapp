@@ -551,9 +551,13 @@ class DuckDBService {
           db.close();
           const datasets = (results || []).map(item => ({
             ...item.dataset,
-            createdAt: new Date(item.dataset.createdAt)
+            createdAt: new Date(item.dataset.createdAt),
+            updatedAt: new Date(item.dataset.updatedAt || item.dataset.createdAt),
+            // Backward compatibility for existing datasets without versioning
+            version: item.dataset.version || 1,
+            userEmail: item.dataset.userEmail || 'unknown@local.user'
           }));
-          datasets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          datasets.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
           resolve(datasets);
         };
         getAllRequest.onerror = () => { db.close(); reject(getAllRequest.error); };
