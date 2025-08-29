@@ -1623,6 +1623,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setPendingFileData(null);
       setStorageConflictData(null);
       setSelectedStorageType(null);
+
+      console.log('Storage overwrite completed, modal closed');
     } catch (error) {
       console.error('Error during overwrite:', error);
       setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -1694,6 +1696,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setPendingFileData(null);
       setStorageConflictData(null);
       setSelectedStorageType(null);
+
+      console.log('Storage new version completed, modal closed');
     } catch (error) {
       console.error('Error during new version upload:', error);
       setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -1836,7 +1840,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
           if (conflictResult.exists) {
             // File already exists locally, show conflict options in modal
-            console.log('File conflict detected, showing conflict resolution');
+            console.log('Local file conflict detected, showing conflict resolution');
+            console.log('Conflict data:', conflictResult);
             const safeConflictResult = {
               conflict: true,
               existing_versions: conflictResult.versions.map(v => ({
@@ -1850,7 +1855,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             };
 
             setStorageConflictData(safeConflictResult);
-            // Keep modal open to show conflict resolution
+            console.log('Storage conflict data set:', safeConflictResult);
+            // Modal will stay open and show conflict resolution UI
           } else {
             // No conflict, proceed with local save
             console.log('No conflict, proceeding with local save');
@@ -1892,7 +1898,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
           if (conflictResponse.ok && conflictResult.success) {
             if (conflictResult.conflict) {
-              // File already exists, show conflict options in modal
+              // File already exists on server, show conflict options in modal
+              console.log('Server file conflict detected, showing conflict resolution');
+              console.log('Server conflict data:', conflictResult);
               const safeConflictResult = {
                 ...conflictResult,
                 existing_versions: conflictResult.existing_versions || [],
@@ -1900,7 +1908,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               };
 
               setStorageConflictData(safeConflictResult);
-              // Keep modal open to show conflict resolution
+              console.log('Storage conflict data set:', safeConflictResult);
+              // Modal will stay open and show conflict resolution UI
             } else {
               // No conflict, proceed with upload
               await uploadFileToDatabase(file, headers, data, 1);
@@ -7332,7 +7341,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 "{uploadedFileName}" has been imported and is ready to use.
                 {importedData.length > 0 && columns.length > 0 && (
                   <span className="block text-white/50 text-xs mt-1">
-                    • {importedData.length} rows �� {columns.length} columns
+                    �� {importedData.length} rows �� {columns.length} columns
                   </span>
                 )}
               </p>
