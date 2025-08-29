@@ -1815,6 +1815,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     if (!pendingFileData) return;
 
     const { file, headers, data, rowCount } = pendingFileData;
+    setSelectedStorageType(option);
 
     try {
       if (option === 'local') {
@@ -1824,7 +1825,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           const conflictResult = await duckdbService.checkLocalFileConflict(userEmail, file.name);
 
           if (conflictResult.exists) {
-            // File already exists locally, show version dialog
+            // File already exists locally, show conflict options in modal
             const safeConflictResult = {
               conflict: true,
               existing_versions: conflictResult.versions.map(v => ({
@@ -1837,22 +1838,20 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               original_filename: file.name
             };
 
-            setPendingUpload({
-              file,
-              headers,
-              data,
-              conflict: safeConflictResult,
-              isLocal: true // Add flag to indicate this is local storage
-            });
-            setShowVersionDialog(true);
+            setStorageConflictData(safeConflictResult);
+            // Keep modal open to show conflict resolution
           } else {
             // No conflict, proceed with local save
             await saveToLocalStorage(file, headers, data, userEmail, 1);
+            setShowStorageModal(false);
+            setPendingFileData(null);
           }
         } catch (error) {
           console.error('Error checking local file conflict:', error);
           // Fallback to direct save
           await saveToLocalStorage(file, headers, data, userEmail, 1);
+          setShowStorageModal(false);
+          setPendingFileData(null);
         }
 
       } else {
@@ -1877,38 +1876,41 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             console.error('Failed to parse conflict check response as JSON:', jsonError);
             // Fallback to direct upload without version check
             await uploadFileToDatabase(file, headers, data, 1);
+            setShowStorageModal(false);
+            setPendingFileData(null);
             return;
           }
 
           if (conflictResponse.ok && conflictResult.success) {
             if (conflictResult.conflict) {
-              // File already exists, show version dialog
+              // File already exists, show conflict options in modal
               const safeConflictResult = {
                 ...conflictResult,
                 existing_versions: conflictResult.existing_versions || [],
                 next_version: conflictResult.next_version || 1
               };
 
-              setPendingUpload({
-                file,
-                headers,
-                data,
-                conflict: safeConflictResult
-              });
-              setShowVersionDialog(true);
+              setStorageConflictData(safeConflictResult);
+              // Keep modal open to show conflict resolution
             } else {
               // No conflict, proceed with upload
               await uploadFileToDatabase(file, headers, data, 1);
+              setShowStorageModal(false);
+              setPendingFileData(null);
             }
           } else {
             console.error('Failed to check conflict:', conflictResult.error);
             // Fallback to direct upload
             await uploadFileToDatabase(file, headers, data, 1);
+            setShowStorageModal(false);
+            setPendingFileData(null);
           }
         } catch (error) {
           console.error('Error checking conflict:', error);
           // Fallback to direct upload
           await uploadFileToDatabase(file, headers, data, 1);
+          setShowStorageModal(false);
+          setPendingFileData(null);
         }
       }
     } catch (error) {
