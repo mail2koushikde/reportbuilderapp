@@ -5790,7 +5790,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 title={
                   showCachingDialog
                     ? 'Caching in progress...'
-                    : `${cacheEnabled ? 'Disable' : 'Enable'} data caching (IndexedDB)${
+                    : `${cacheEnabled ? 'Disable' : 'Enable'} data caching (Local storage)${
                         !cacheEnabled && importedData.length > 0 ? ' - Click to cache current dataset' : ''
                       }`
                 }
