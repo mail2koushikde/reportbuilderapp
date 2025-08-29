@@ -847,6 +847,66 @@ const FileHistory: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Clear All Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-white/20 rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-600/20 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Clear All Data</h3>
+                <p className="text-white/70 text-sm">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-white/80 mb-4">
+                This will permanently delete <strong>all {groupedFiles.length} files</strong> and their versions from both:
+              </p>
+              <ul className="space-y-2 text-sm text-white/70">
+                <li className="flex items-center gap-2">
+                  <Database className="w-4 h-4 text-blue-400" />
+                  <span>Snowflake database ({groupedFiles.filter(f => f.latestVersion.storage_type === 'server').length} files)</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <HardDrive className="w-4 h-4 text-purple-400" />
+                  <span>Local browser storage ({groupedFiles.filter(f => f.latestVersion.storage_type === 'local').length} files)</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                disabled={clearing}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={clearAllData}
+                disabled={clearing}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors"
+              >
+                {clearing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Yes, Clear All
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
