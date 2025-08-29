@@ -20,7 +20,8 @@ import {
   ArrowDown,
   Expand,
   Minimize2,
-  HardDrive
+  HardDrive,
+  Trash2
 } from 'lucide-react';
 
 interface UploadMetadata {
