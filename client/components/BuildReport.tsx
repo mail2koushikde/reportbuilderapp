@@ -1661,7 +1661,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const datasets = await duckdbService.listDatasets();
       setLocalDatasets(datasets);
 
-      setUploadedFileName(`${file.name} (v${version}) (Stored locally in IndexedDB - ${data.length.toLocaleString()} rows)`);
+      setUploadedFileName(`${file.name} (v${version}) (Saved to Local storage - ${data.length.toLocaleString()} rows)`);
       setShowUploadSuccess(true);
 
       console.log(`Local dataset saved successfully: ${dataset.name} v${version}`);
