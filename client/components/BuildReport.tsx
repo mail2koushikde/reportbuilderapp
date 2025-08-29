@@ -1556,7 +1556,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         setUploadedFileName(displayName);
         setShowUploadSuccess(true);
 
-        console.log(`File uploaded successfully to database table: ${tableName}`, {
+        console.log(`File uploaded successfully to Snowflake table: ${tableName}`, {
           rowCount: result.rowCount,
           columns: result.columns,
           version: version
