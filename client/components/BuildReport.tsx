@@ -1623,7 +1623,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   ) => {
     try {
       console.log(`Saving dataset to Local storage v${version}...`);
+      console.log('SaveToLocalStorage params:', {
+        fileName: file.name,
+        userEmail,
+        version,
+        dataLength: data.length,
+        columnsLength: headers.length
+      });
       const dataset = await duckdbService.saveDataset(data, file.name, headers, userEmail, version);
+      console.log('Dataset saved successfully:', dataset);
 
       // Load the data into the app for immediate use
       setColumns(headers);
