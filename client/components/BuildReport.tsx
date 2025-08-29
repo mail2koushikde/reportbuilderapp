@@ -1645,7 +1645,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     version: number
   ) => {
     try {
-      console.log(`Saving dataset to IndexedDB v${version}...`);
+      console.log(`Saving dataset to Local storage v${version}...`);
       const dataset = await duckdbService.saveDataset(data, file.name, headers, userEmail, version);
 
       // Load the data into the app for immediate use
