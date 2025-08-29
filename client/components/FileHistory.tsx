@@ -451,7 +451,17 @@ const FileHistory: React.FC = () => {
               <option value="failed">Failed</option>
               <option value="processing">Processing</option>
             </select>
-            
+
+            <select
+              value={storageFilter}
+              onChange={(e) => setStorageFilter(e.target.value as any)}
+              className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Storage</option>
+              <option value="server">Server Only</option>
+              <option value="local">Local Only</option>
+            </select>
+
             <select
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
