@@ -1859,6 +1859,41 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [pendingFileData, userEmail, uploadFileToDatabase]);
 
+  // Helper function to save to local storage with versioning
+  const saveToLocalStorage = useCallback(async (
+    file: File,
+    headers: string[],
+    data: any[],
+    userEmail: string,
+    version: number
+  ) => {
+    try {
+      console.log(`Saving dataset to IndexedDB v${version}...`);
+      const dataset = await duckdbService.saveDataset(data, file.name, headers, userEmail, version);
+
+      // Load the data into the app for immediate use
+      setColumns(headers);
+      setImportedData(data);
+      setCacheEnabled(false); // Disable regular cache when using local storage
+
+      const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+      setFileName(fileNameWithoutExt);
+      setCurrentFileVersion(version);
+
+      // Update local datasets list
+      const datasets = await duckdbService.listDatasets();
+      setLocalDatasets(datasets);
+
+      setUploadedFileName(`${file.name} (v${version}) (Stored locally in IndexedDB - ${data.length.toLocaleString()} rows)`);
+      setShowUploadSuccess(true);
+
+      console.log(`Local dataset saved successfully: ${dataset.name} v${version}`);
+    } catch (error) {
+      console.error('Error saving to local storage:', error);
+      throw error;
+    }
+  }, []);
+
   // Load local datasets on component mount
   useEffect(() => {
     const loadLocalDatasets = async () => {
