@@ -1099,6 +1099,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     headers: string[];
     data: DataRow[];
     conflict: any;
+    isLocal?: boolean;
   } | null>(null);
   const [overwriteLoading, setOverwriteLoading] = useState(false);
   const [newVersionLoading, setNewVersionLoading] = useState(false);
