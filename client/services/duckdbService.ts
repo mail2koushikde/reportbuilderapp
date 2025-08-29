@@ -228,12 +228,23 @@ class DuckDBService {
     nextVersion: number;
   }> {
     try {
+      console.log('🔍 checkLocalFileConflict called with:', { userEmail, originalFileName });
+
       const allDatasets = await this.getAllDatasetsFromIndexedDB();
+      console.log('📊 Found total datasets:', allDatasets.length);
+      console.log('📋 All datasets:', allDatasets.map(d => ({
+        userEmail: d.userEmail,
+        originalFileName: d.originalFileName,
+        version: d.version
+      })));
+
       const userFileVersions = allDatasets
-        .filter(dataset =>
-          dataset.userEmail === userEmail &&
-          dataset.originalFileName === originalFileName
-        )
+        .filter(dataset => {
+          const emailMatch = dataset.userEmail === userEmail;
+          const fileMatch = dataset.originalFileName === originalFileName;
+          console.log(`🔎 Dataset ${dataset.id}: email(${dataset.userEmail}) matches(${emailMatch}), file(${dataset.originalFileName}) matches(${fileMatch})`);
+          return emailMatch && fileMatch;
+        })
         .map(dataset => ({
           version: dataset.version,
           id: dataset.id,
@@ -241,18 +252,23 @@ class DuckDBService {
         }))
         .sort((a, b) => b.version - a.version);
 
+      console.log('🎯 Matching file versions found:', userFileVersions);
+
       const exists = userFileVersions.length > 0;
       const nextVersion = exists
         ? Math.max(...userFileVersions.map(v => v.version)) + 1
         : 1;
 
-      return {
+      const result = {
         exists,
         versions: userFileVersions,
         nextVersion
       };
+
+      console.log('✅ checkLocalFileConflict result:', result);
+      return result;
     } catch (error) {
-      console.error('Failed to check local file conflict:', error);
+      console.error('❌ Failed to check local file conflict:', error);
       return { exists: false, versions: [], nextVersion: 1 };
     }
   }
