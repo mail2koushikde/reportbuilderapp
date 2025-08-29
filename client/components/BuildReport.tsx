@@ -1186,8 +1186,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             // Sort versions by version number descending (newest first)
             const sortedVersions = result.versions.sort((a: any, b: any) => b.version - a.version);
             setAvailableVersions(sortedVersions);
+
+            // Set current version to the highest version if not already set or if current is lower
+            const highestVersion = sortedVersions[0].version;
+            if (!currentFileVersion || currentFileVersion < highestVersion) {
+              console.log(`Setting current version to highest available: v${highestVersion}`);
+              setCurrentFileVersion(highestVersion);
+            }
+
             foundVersions = true;
-            console.log(`Found ${sortedVersions.length} versions for file: ${filenameVariant}`);
+            console.log(`Found ${sortedVersions.length} versions for file: ${filenameVariant}, highest: v${highestVersion}`);
             break;
           }
         } else if (response.status === 404) {
@@ -1843,11 +1851,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           }
         } catch (error) {
           console.error('Error checking local file conflict:', error);
-          // Fallback to direct save
-          console.log('Fallback: attempting direct save to local storage');
-          await saveToLocalStorage(file, headers, data, userEmail, 1);
-          setShowStorageModal(false);
-          setPendingFileData(null);
+          // Show error to user instead of silent fallback
+          alert('Error checking for file conflicts. Please try again.');
+          return;
         }
 
       } else {
@@ -1870,10 +1876,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             conflictResult = JSON.parse(conflictText);
           } catch (jsonError) {
             console.error('Failed to parse conflict check response as JSON:', jsonError);
-            // Fallback to direct upload without version check
-            await uploadFileToDatabase(file, headers, data, 1);
-            setShowStorageModal(false);
-            setPendingFileData(null);
+            // Show error to user instead of silent fallback
+            alert('Error checking for file conflicts. Please try again.');
             return;
           }
 
@@ -1896,10 +1900,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             }
           } else {
             console.error('Failed to check conflict:', conflictResult.error);
-            // Fallback to direct upload
-            await uploadFileToDatabase(file, headers, data, 1);
-            setShowStorageModal(false);
-            setPendingFileData(null);
+            // Show error to user instead of silent fallback
+            alert(`Error checking for file conflicts: ${conflictResult.error || 'Unknown error'}. Please try again.`);
+            return;
           }
         } catch (error) {
           console.error('Error checking conflict:', error);
