@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { format } from 'date-fns';
 import { useUser } from '../contexts/UserContext';
+import { duckdbService, LocalDataset } from '../services/duckdbService';
 import {
   FileText,
   Calendar,
@@ -18,7 +19,8 @@ import {
   ArrowUp,
   ArrowDown,
   Expand,
-  Minimize2
+  Minimize2,
+  HardDrive
 } from 'lucide-react';
 
 interface UploadMetadata {
