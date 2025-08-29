@@ -1828,6 +1828,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     if (!pendingFileData) return;
 
     const { file, headers, data, rowCount } = pendingFileData;
+
+    console.log('handleStorageOptionSelect called with option:', option);
+    console.log('Pending file data:', {fileName: file.name, userEmail});
+
+    // Clear any previous conflict data before checking new storage option
+    setStorageConflictData(null);
     setSelectedStorageType(option);
 
     try {
@@ -1909,6 +1915,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
               setStorageConflictData(safeConflictResult);
               console.log('Storage conflict data set:', safeConflictResult);
+              console.log('Selected storage type:', option);
               // Modal will stay open and show conflict resolution UI
             } else {
               // No conflict, proceed with upload
@@ -7341,7 +7348,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 "{uploadedFileName}" has been imported and is ready to use.
                 {importedData.length > 0 && columns.length > 0 && (
                   <span className="block text-white/50 text-xs mt-1">
-                    �� {importedData.length} rows �� {columns.length} columns
+                    • {importedData.length} rows �� {columns.length} columns
                   </span>
                 )}
               </p>
