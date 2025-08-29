@@ -464,4 +464,133 @@ router.put("/uploads/:tableName/status", async (req: Request, res: Response) => 
   }
 });
 
+// Delete a specific table
+router.delete("/tables/:tableName", async (req: Request, res: Response) => {
+  try {
+    const { tableName } = req.params;
+
+    // Validate table name (basic sanitization)
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid table name. Use only letters, numbers, and underscores."
+      });
+    }
+
+    // Check if table exists
+    const exists = await databaseService.tableExists(tableName);
+    if (!exists) {
+      return res.status(404).json({
+        success: false,
+        error: `Table '${tableName}' does not exist`
+      });
+    }
+
+    // Drop the table
+    await databaseService.query(`DROP TABLE IF EXISTS ${tableName}`);
+
+    // Delete associated metadata
+    await databaseService.deleteUploadMetadata(tableName);
+
+    res.json({
+      success: true,
+      message: `Table '${tableName}' deleted successfully`,
+      tableName
+    });
+  } catch (error) {
+    console.error('Error deleting table:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to delete table: ${error}`
+    });
+  }
+});
+
+// Delete all user uploads for a specific user
+router.delete("/uploads/user/:userName", async (req: Request, res: Response) => {
+  try {
+    const { userName } = req.params;
+
+    // Get all uploads for this user
+    const userUploads = await databaseService.getUserUploadMetadata(userName);
+
+    if (userUploads.rowCount === 0) {
+      return res.json({
+        success: true,
+        message: `No uploads found for user '${userName}'`,
+        deletedTables: [],
+        deletedCount: 0
+      });
+    }
+
+    const deletedTables = [];
+
+    // Delete each table and its metadata
+    for (const upload of userUploads.data) {
+      try {
+        // Drop the table
+        await databaseService.query(`DROP TABLE IF EXISTS ${upload.table_name}`);
+        deletedTables.push(upload.table_name);
+        console.log(`Deleted table: ${upload.table_name}`);
+      } catch (error) {
+        console.error(`Failed to delete table ${upload.table_name}:`, error);
+      }
+    }
+
+    // Delete all metadata for this user
+    await databaseService.query('DELETE FROM user_uploads_metadata WHERE user_name = ?', [userName]);
+
+    res.json({
+      success: true,
+      message: `All uploads for user '${userName}' deleted successfully`,
+      deletedTables,
+      deletedCount: deletedTables.length,
+      user_name: userName
+    });
+  } catch (error) {
+    console.error('Error deleting user uploads:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to delete user uploads: ${error}`
+    });
+  }
+});
+
+// Clear ALL data (admin function)
+router.delete("/clear-all", async (req: Request, res: Response) => {
+  try {
+    // Get all upload metadata
+    const allUploads = await databaseService.getAllUploadMetadata();
+
+    const deletedTables = [];
+
+    // Delete each user table
+    for (const upload of allUploads.data) {
+      try {
+        await databaseService.query(`DROP TABLE IF EXISTS ${upload.table_name}`);
+        deletedTables.push(upload.table_name);
+        console.log(`Deleted table: ${upload.table_name}`);
+      } catch (error) {
+        console.error(`Failed to delete table ${upload.table_name}:`, error);
+      }
+    }
+
+    // Clear all metadata
+    await databaseService.query('DELETE FROM user_uploads_metadata');
+
+    res.json({
+      success: true,
+      message: 'All data cleared successfully',
+      deletedTables,
+      deletedCount: deletedTables.length
+    });
+  } catch (error) {
+    console.error('Error clearing all data:', error);
+    res.status(500).json({
+      success: false,
+      error: `Failed to clear all data: ${error}`
+    });
+  }
+});
+
 export default router;
