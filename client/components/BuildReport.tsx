@@ -1900,9 +1900,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } catch (error) {
       console.error('Error with storage option:', error);
       alert(`Error storing data: ${error}`);
-    } finally {
+      // Close modal on error
       setShowStorageModal(false);
       setPendingFileData(null);
+      setStorageConflictData(null);
+      setSelectedStorageType(null);
     }
   }, [pendingFileData, userEmail, uploadFileToDatabase]);
 
