@@ -16,7 +16,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <UserProvider initialUserEmail="mayank.jain@abc.com">
+      <UserProvider initialUserEmail="mail2koushikde@gmail.com">
         {/* <Toaster /> */}
         {/* <Sonner /> */}
         <BrowserRouter>
