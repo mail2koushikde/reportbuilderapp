@@ -62,6 +62,8 @@ const FileHistory: React.FC = () => {
   const [storageFilter, setStorageFilter] = useState<'all' | 'server' | 'local'>('all');
   const [sortBy, setSortBy] = useState<'upload_timestamp' | 'original_filename'>('upload_timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [clearing, setClearing] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const fetchUploads = async () => {
     try {
