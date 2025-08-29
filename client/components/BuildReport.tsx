@@ -1095,8 +1095,6 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Storage conflict state
   const [storageConflictData, setStorageConflictData] = useState<any>(null);
   const [selectedStorageType, setSelectedStorageType] = useState<'local' | 'server' | null>(null);
-  const [overwriteLoading, setOverwriteLoading] = useState(false);
-  const [newVersionLoading, setNewVersionLoading] = useState(false);
 
   // Snowflake modal state
   const [showSnowflakeModal, setShowSnowflakeModal] = useState(false);
