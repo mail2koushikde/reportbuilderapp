@@ -149,6 +149,50 @@ const FileHistory: React.FC = () => {
     fetchUploads();
   }, [userEmail]);
 
+  // Clear all data from both local and server storage
+  const clearAllData = async () => {
+    try {
+      setClearing(true);
+      console.log('Starting clear all data operation...');
+
+      // Clear server data
+      const serverResponse = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`, {
+        method: 'DELETE'
+      });
+
+      if (serverResponse.ok) {
+        const serverResult = await serverResponse.json();
+        console.log('Server data cleared:', serverResult);
+      } else {
+        console.warn('Failed to clear server data:', serverResponse.status);
+      }
+
+      // Clear local data
+      try {
+        const localDatasets = await duckdbService.getLocalUserUploads(userEmail);
+        for (const dataset of localDatasets) {
+          await duckdbService.deleteDataset(dataset.id);
+        }
+        console.log('Local data cleared');
+      } catch (localError) {
+        console.warn('Failed to clear some local data:', localError);
+      }
+
+      // Refresh the uploads list
+      await fetchUploads();
+
+      // Show success message
+      alert('All data cleared successfully from both local and server storage!');
+
+    } catch (error) {
+      console.error('Error clearing all data:', error);
+      alert(`Error clearing data: ${error}`);
+    } finally {
+      setClearing(false);
+      setShowClearConfirm(false);
+    }
+  };
+
   // Group files by filename only (versioning independent of storage type)
   const groupFilesByName = (uploads: UploadMetadata[]): GroupedFile[] => {
     const fileGroups = new Map<string, UploadMetadata[]>();
