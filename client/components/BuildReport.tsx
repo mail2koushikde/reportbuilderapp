@@ -1977,7 +1977,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         setCachingStatus('Preparing data for caching...');
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        setCachingStatus('Storing data in IndexedDB...');
+        setCachingStatus('Storing data in Local storage...');
         const source = fileName.startsWith('Snowflake:') ? 'snowflake' : 'file';
         await cacheService.cacheData(
           importedData,
