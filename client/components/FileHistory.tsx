@@ -376,7 +376,7 @@ const FileHistory: React.FC = () => {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="glass-card p-4 rounded-lg">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
@@ -389,23 +389,35 @@ const FileHistory: React.FC = () => {
           </div>
           <div className="glass-card p-4 rounded-lg">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <Database className="w-5 h-5 text-blue-400" />
               <div>
-                <p className="text-sm text-white/70">Successful</p>
+                <p className="text-sm text-white/70">Server Storage</p>
                 <p className="text-xl font-semibold text-white">
-                  {groupedFiles.filter(f => f.latestVersion.upload_status === 'success').length}
+                  {groupedFiles.filter(f => f.latestVersion.storage_type === 'server').length}
                 </p>
-                <p className="text-xs text-white/50">latest versions</p>
+                <p className="text-xs text-white/50">files on server</p>
               </div>
             </div>
           </div>
           <div className="glass-card p-4 rounded-lg">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
+              <HardDrive className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-sm text-white/70">Failed</p>
+                <p className="text-sm text-white/70">Local Storage</p>
                 <p className="text-xl font-semibold text-white">
-                  {groupedFiles.filter(f => f.latestVersion.upload_status === 'failed').length}
+                  {groupedFiles.filter(f => f.latestVersion.storage_type === 'local').length}
+                </p>
+                <p className="text-xs text-white/50">files locally</p>
+              </div>
+            </div>
+          </div>
+          <div className="glass-card p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <div>
+                <p className="text-sm text-white/70">Successful</p>
+                <p className="text-xl font-semibold text-white">
+                  {groupedFiles.filter(f => f.latestVersion.upload_status === 'success').length}
                 </p>
                 <p className="text-xs text-white/50">latest versions</p>
               </div>
