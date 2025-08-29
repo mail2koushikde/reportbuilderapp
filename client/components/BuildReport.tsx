@@ -1829,22 +1829,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     try {
       if (option === 'local') {
         // Check for local file conflicts first
-        console.log('🎯 LOCAL STORAGE SELECTED - Starting conflict check');
-        console.log('📁 File name:', file.name);
-        console.log('👤 User email:', userEmail);
-        console.log('📊 Current modal states:', {
-          showStorageModal,
-          storageConflictData: !!storageConflictData,
-          selectedStorageType
-        });
-
+        console.log('Checking for local file conflicts for:', file.name, 'user:', userEmail);
         try {
           const conflictResult = await duckdbService.checkLocalFileConflict(userEmail, file.name);
-          console.log('🔍 Conflict check result:', conflictResult);
+          console.log('Conflict check result:', conflictResult);
 
           if (conflictResult.exists) {
             // File already exists locally, show conflict options in modal
-            console.log('⚠️  CONFLICT DETECTED! Setting up conflict resolution UI');
+            console.log('File conflict detected, showing conflict resolution');
             const safeConflictResult = {
               conflict: true,
               existing_versions: conflictResult.versions.map(v => ({
@@ -1857,19 +1849,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               original_filename: file.name
             };
 
-            console.log('💾 Setting storageConflictData:', safeConflictResult);
             setStorageConflictData(safeConflictResult);
-            console.log('🎭 Modal should now show conflict resolution UI');
             // Keep modal open to show conflict resolution
           } else {
             // No conflict, proceed with local save
-            console.log('✅ No conflict detected, proceeding with local save');
+            console.log('No conflict, proceeding with local save');
             await saveToLocalStorage(file, headers, data, userEmail, 1);
             setShowStorageModal(false);
             setPendingFileData(null);
           }
         } catch (error) {
-          console.error('❌ Error checking local file conflict:', error);
+          console.error('Error checking local file conflict:', error);
           // Show error to user instead of silent fallback
           alert('Error checking for file conflicts. Please try again.');
           return;
