@@ -1470,23 +1470,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           // Handle specific error types
           if (response.status === 409 && errorResult.constraint_violation) {
             console.error('Constraint violation - file version already exists:', errorDetails);
-            // Instead of just showing error, trigger conflict dialog
-            const conflictData = {
-              conflict: true,
-              existing_versions: errorResult.existing_versions || [],
-              next_version: errorResult.next_version || version + 1,
-              user_name: userEmail,
-              original_filename: file.name
-            };
-
-            setPendingUpload({
-              file,
-              headers,
-              data,
-              conflict: conflictData
-            });
-            setShowVersionDialog(true);
-            return; // Don't throw error, let dialog handle it
+            // Note: Conflicts are now handled before this function is called
+            console.error('Failed to save to database:', errorDetails);
           } else {
             console.error('Failed to save to database:', errorDetails);
           }
