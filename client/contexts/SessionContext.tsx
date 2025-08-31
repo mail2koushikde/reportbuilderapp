@@ -303,7 +303,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   }, [updateSessionState]);
 
   const updateFileName = useCallback((fileName: string, version?: number | null) => {
-    updateSessionState(prev => ({
+    setSessionState(prev => updateSessionState({
       fileName,
       currentFileVersion: version !== undefined ? version : prev.currentFileVersion
     }));
