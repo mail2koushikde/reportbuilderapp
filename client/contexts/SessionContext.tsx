@@ -210,32 +210,32 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
                           sessionState.fileName !== '';
   
   // Update session state with dirty tracking
-  const updateSessionState = (updates: Partial<SessionState>) => {
+  const updateSessionState = useCallback((updates: Partial<SessionState>) => {
     setSessionState(prev => {
-      const newState = { 
-        ...prev, 
-        ...updates, 
+      const newState = {
+        ...prev,
+        ...updates,
         lastSaved: new Date(),
-        isActive: true 
+        isActive: true
       };
-      
+
       // Check if this is a meaningful change (not just UI state)
       const meaningfulChanges = [
         'cards', 'importedData', 'columns', 'fileName', 'currentFileVersion',
         'dimensionSelections', 'selectedValues'
       ];
-      
-      const hasMeaningfulChange = meaningfulChanges.some(key => 
+
+      const hasMeaningfulChange = meaningfulChanges.some(key =>
         updates.hasOwnProperty(key) && updates[key as keyof SessionState] !== prev[key as keyof SessionState]
       );
-      
+
       if (hasMeaningfulChange) {
         setIsSessionDirty(true);
       }
-      
+
       return newState;
     });
-  };
+  }, []);
   
   // Clear session state
   const clearSessionState = () => {
