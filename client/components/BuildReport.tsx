@@ -1039,6 +1039,9 @@ interface BuildReportProps {
 }
 
 const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail = 'mayank.jain@abc.com' }) => {
+  // Session management
+  const { syncCards, syncData, syncFile, hasActiveSession, getInitialStateFromSession } = useBuildReportSession();
+
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
