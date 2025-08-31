@@ -1156,11 +1156,35 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setCards(loadedReportState.cards);
       setHideControls(loadedReportState.hideControls);
       setImportedData(loadedReportState.importedData);
+      setColumns(loadedReportState.columns || []);
+      setFileName(loadedReportState.fileName || '');
+      setCurrentFileVersion(loadedReportState.currentFileVersion || null);
       // Clear any configuration state
       setConfiguringCard(null);
       setCurrentTool('select');
     }
   }, [loadedReportState]);
+
+  // Sync cards to session whenever they change
+  useEffect(() => {
+    if (cards.length > 0) {
+      syncCards(cards);
+    }
+  }, [cards, syncCards]);
+
+  // Sync imported data to session whenever it changes
+  useEffect(() => {
+    if (importedData.length > 0 && columns.length > 0) {
+      syncData(importedData, columns);
+    }
+  }, [importedData, columns, syncData]);
+
+  // Sync file information to session whenever it changes
+  useEffect(() => {
+    if (fileName) {
+      syncFile(fileName, currentFileVersion);
+    }
+  }, [fileName, currentFileVersion, syncFile]);
 
   // Fetch available versions for the current file from both local and server storage
   const fetchFileVersions = useCallback(async (userEmail: string, filename: string) => {
