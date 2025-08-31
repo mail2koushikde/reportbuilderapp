@@ -1186,6 +1186,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [fileName, currentFileVersion, syncFile]);
 
+  // Initialize from session if no loadedReportState is provided
+  useEffect(() => {
+    if (!loadedReportState && hasActiveSession) {
+      const sessionData = getInitialStateFromSession();
+      if (sessionData) {
+        console.log('Restoring work from session:', sessionData);
+        if (sessionData.cards && sessionData.cards.length > 0) {
+          setCards(sessionData.cards);
+        }
+        if (sessionData.importedData && sessionData.importedData.length > 0) {
+          setImportedData(sessionData.importedData);
+          setColumns(sessionData.columns || []);
+        }
+        if (sessionData.fileName) {
+          setFileName(sessionData.fileName);
+          setCurrentFileVersion(sessionData.currentFileVersion || null);
+        }
+        if (sessionData.hideControls !== undefined) {
+          setHideControls(sessionData.hideControls);
+        }
+      }
+    }
+  }, [loadedReportState, hasActiveSession, getInitialStateFromSession]);
+
   // Fetch available versions for the current file from both local and server storage
   const fetchFileVersions = useCallback(async (userEmail: string, filename: string) => {
     if (!userEmail || !filename) {
