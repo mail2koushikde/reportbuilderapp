@@ -4,7 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import Navigation, { NavigationPage } from '../components/Navigation';
 import BuildReportWithSession from '../components/BuildReportWithSession';
 import ViewSavedReports, { SavedReport } from '../components/ViewSavedReports';
-import FileHistory from '../components/FileHistory';
+import FileHistoryWithSession from '../components/FileHistoryWithSession';
 
 const Index: React.FC = () => {
   const { userEmail } = useUser();
