@@ -443,17 +443,24 @@ class DuckDBService {
    * Unload dataset from DuckDB memory to free up resources
    */
   async unloadDataset(datasetId: string): Promise<void> {
-    if (!this.loadedTables.has(datasetId) || !this.conn) {
+    console.log(`Unloading dataset: ${datasetId}`);
+
+    if (!this.conn) {
+      console.log('No DuckDB connection available');
+      this.loadedTables.delete(datasetId); // Clean up tracking anyway
       return;
     }
 
     try {
       const tableName = `data_${datasetId}`;
       await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
-      this.loadedTables.delete(datasetId);
-      console.log(`Dataset ${datasetId} unloaded from memory`);
+      console.log(`Dropped table from memory: ${tableName}`);
     } catch (error) {
-      console.error('Failed to unload dataset from memory:', error);
+      console.warn(`Failed to drop table ${datasetId} from memory:`, error);
+    } finally {
+      // Always remove from tracking, even if drop failed
+      this.loadedTables.delete(datasetId);
+      console.log(`Dataset ${datasetId} removed from memory tracking`);
     }
   }
 
@@ -461,18 +468,30 @@ class DuckDBService {
    * Clean up all loaded datasets from memory
    */
   async clearMemory(): Promise<void> {
-    if (!this.conn) return;
+    console.log('Clearing all datasets from DuckDB memory...');
 
-    try {
-      for (const datasetId of this.loadedTables) {
+    if (!this.conn) {
+      console.log('No DuckDB connection available, clearing tracking only');
+      this.loadedTables.clear();
+      return;
+    }
+
+    const datasetsToUnload = Array.from(this.loadedTables);
+    let successCount = 0;
+
+    for (const datasetId of datasetsToUnload) {
+      try {
         const tableName = `data_${datasetId}`;
         await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+        successCount++;
+      } catch (error) {
+        console.warn(`Failed to drop table for dataset ${datasetId}:`, error);
       }
-      this.loadedTables.clear();
-      console.log('All datasets unloaded from DuckDB memory');
-    } catch (error) {
-      console.error('Failed to clear DuckDB memory:', error);
     }
+
+    // Clear all tracking regardless of individual failures
+    this.loadedTables.clear();
+    console.log(`Memory cleanup completed: ${successCount}/${datasetsToUnload.length} tables dropped successfully`);
   }
 
   // IndexedDB operations (primary storage)
