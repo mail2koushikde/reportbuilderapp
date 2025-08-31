@@ -303,10 +303,10 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   }, [updateSessionState]);
 
   const updateFileName = useCallback((fileName: string, version?: number | null) => {
-    setSessionState(prev => updateSessionState({
+    updateSessionState({
       fileName,
-      currentFileVersion: version !== undefined ? version : prev.currentFileVersion
-    }));
+      ...(version !== undefined && { currentFileVersion: version })
+    });
   }, [updateSessionState]);
 
   const updateFilters = useCallback((filterUpdates: Partial<Pick<SessionState, 'filtersOpen' | 'leftSectionVisible' | 'selectedDimension' | 'dimensionValues' | 'selectedValues' | 'dimensionSelections'>>) => {
