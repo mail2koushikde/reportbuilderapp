@@ -199,27 +199,68 @@ class DuckDBService {
   }
 
   /**
+   * Check if table exists in DuckDB
+   */
+  private async tableExists(tableName: string): Promise<boolean> {
+    if (!this.conn) return false;
+
+    try {
+      await this.conn.query(`SELECT 1 FROM "${tableName}" LIMIT 1;`);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
    * Step 3: Query dataset using DuckDB
    * Flow: DuckDB WASM → SQL query → Results
    */
   async queryDataset(datasetId: string, query: string): Promise<any[]> {
     try {
+      console.log(`Querying dataset: ${datasetId}`);
+
       // Load dataset into memory if not already loaded
       const { dataset, tableName } = await this.loadDatasetIntoMemory(datasetId);
-      
+
       if (!this.conn) {
         throw new Error('DuckDB connection not available');
       }
 
+      // Verify table still exists before querying
+      const exists = await this.tableExists(tableName);
+      if (!exists) {
+        console.warn(`Table ${tableName} not found, attempting to reload dataset`);
+        // Remove from tracking and try loading again
+        this.loadedTables.delete(datasetId);
+        const reloadResult = await this.loadDatasetIntoMemory(datasetId);
+        // Use the reloaded table name
+        const reloadedTableName = reloadResult.tableName;
+
+        // Replace table references with actual table name
+        const processedQuery = query.replace(/\{table\}/g, `"${reloadedTableName}"`);
+
+        console.log(`Executing query on reloaded dataset "${dataset.name}": ${processedQuery}`);
+        const result = await this.conn.query(processedQuery);
+        return result.toArray().map(row => Object.fromEntries(row));
+      }
+
       // Replace table references with actual table name
       const processedQuery = query.replace(/\{table\}/g, `"${tableName}"`);
-      
+
       console.log(`Executing query on dataset "${dataset.name}": ${processedQuery}`);
       const result = await this.conn.query(processedQuery);
       return result.toArray().map(row => Object.fromEntries(row));
-      
+
     } catch (error) {
       console.error('Failed to query dataset:', error);
+
+      // If this was a table-not-found error, clean up tracking
+      if (error.message && error.message.includes('does not exist')) {
+        console.log(`Cleaning up tracking for missing table: ${datasetId}`);
+        this.loadedTables.delete(datasetId);
+      }
+
       throw error;
     }
   }
