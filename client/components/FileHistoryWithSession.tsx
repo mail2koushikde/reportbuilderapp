@@ -37,19 +37,36 @@ const FileHistoryWithSession: React.FC = () => {
         expandedFiles: new Set(sessionState.fileHistoryState.expandedFiles || []),
       });
     }
-  }, []);
+  }, []); // Only run on mount
 
-  // Save state to session when it changes
+  // Save state to session when it changes (with debouncing to prevent loops)
   useEffect(() => {
-    const stateToSave = {
-      ...fileHistoryState,
-      // Convert Set to array for serialization
-      expandedFiles: Array.from(fileHistoryState.expandedFiles),
-    };
-    
-    updateSessionState({
-      fileHistoryState: stateToSave,
-    });
+    // Skip saving state if it's the initial state or hasn't changed meaningfully
+    const isInitialState = fileHistoryState.searchTerm === '' &&
+                          fileHistoryState.statusFilter === 'all' &&
+                          fileHistoryState.storageFilter === 'all' &&
+                          fileHistoryState.sortBy === 'upload_timestamp' &&
+                          fileHistoryState.sortOrder === 'desc' &&
+                          fileHistoryState.expandedFiles.size === 0;
+
+    if (isInitialState) {
+      return;
+    }
+
+    // Debounce the save operation to prevent excessive updates
+    const timeoutId = setTimeout(() => {
+      const stateToSave = {
+        ...fileHistoryState,
+        // Convert Set to array for serialization
+        expandedFiles: Array.from(fileHistoryState.expandedFiles),
+      };
+
+      updateSessionState({
+        fileHistoryState: stateToSave,
+      });
+    }, 500); // Debounce for 500ms
+
+    return () => clearTimeout(timeoutId);
   }, [fileHistoryState, updateSessionState]);
 
   // Note: Since the current FileHistory component doesn't accept props for these states,
