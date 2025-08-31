@@ -49,6 +49,7 @@ import { StorageOptionModal } from './StorageOptionModal';
 import { LocalDatasets } from './LocalDatasets';
 import UserProfile from './UserProfile';
 import { useBuildReportSession } from '../hooks/useBuildReportSession';
+import SessionDebug from './SessionDebug';
 
 interface TextBox {
   id: string;
