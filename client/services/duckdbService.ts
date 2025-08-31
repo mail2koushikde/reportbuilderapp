@@ -387,18 +387,26 @@ class DuckDBService {
    */
   async deleteDataset(datasetId: string): Promise<void> {
     try {
+      console.log(`Deleting dataset: ${datasetId}`);
+
       // Remove from DuckDB memory if loaded
-      if (this.loadedTables.has(datasetId) && this.conn) {
+      if (this.conn) {
         const tableName = `data_${datasetId}`;
-        await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+        try {
+          await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+          console.log(`Dropped table from DuckDB: ${tableName}`);
+        } catch (dropError) {
+          console.warn(`Failed to drop table ${tableName}:`, dropError);
+        }
+
+        // Always remove from tracking, even if drop failed
         this.loadedTables.delete(datasetId);
-        console.log(`Dataset ${datasetId} unloaded from DuckDB memory`);
       }
-      
+
       // Remove from IndexedDB
       await this.removeFromIndexedDB(datasetId);
       console.log(`Dataset ${datasetId} deleted from IndexedDB`);
-      
+
     } catch (error) {
       console.error('Failed to delete dataset:', error);
       throw error;
