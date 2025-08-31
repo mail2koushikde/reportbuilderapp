@@ -121,7 +121,7 @@ class DuckDBService {
     }
 
     await this.initialize();
-    
+
     if (!this.conn) {
       throw new Error('DuckDB connection not available');
     }
@@ -133,16 +133,31 @@ class DuckDBService {
     }
 
     const tableName = `data_${datasetId}`;
-    
+
     try {
       console.log(`Loading dataset "${dataset.name}" from IndexedDB into DuckDB...`);
-      
+
+      // Check if table already exists and drop it first to avoid conflicts
+      try {
+        await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+        console.log(`Cleaned up any existing table: ${tableName}`);
+      } catch (dropError) {
+        // Ignore drop errors - table might not exist
+        console.log(`No existing table to drop: ${tableName}`);
+      }
+
+      // Remove from loaded tables tracking to reset state
+      this.loadedTables.delete(datasetId);
+
       // Create table in DuckDB memory
       const columnDefs = dataset.columns.map(col => `"${col}" VARCHAR`).join(', ');
       await this.conn.query(`CREATE TABLE "${tableName}" (${columnDefs});`);
-      
+      console.log(`Created table: ${tableName} with columns: ${dataset.columns.join(', ')}`);
+
       // Insert data in batches for better performance
       const batchSize = 1000;
+      let insertedRows = 0;
+
       for (let i = 0; i < data.length; i += batchSize) {
         const batch = data.slice(i, i + batchSize);
         const values = batch.map(row => {
@@ -154,26 +169,31 @@ class DuckDBService {
           }).join(', ');
           return `(${rowValues})`;
         }).join(', ');
-        
+
         if (values) {
           await this.conn.query(`INSERT INTO "${tableName}" VALUES ${values};`);
+          insertedRows += batch.length;
         }
       }
-      
+
       // Mark as loaded
       this.loadedTables.add(datasetId);
-      console.log(`Dataset "${dataset.name}" loaded into DuckDB memory for querying`);
-      
+      console.log(`Dataset "${dataset.name}" loaded into DuckDB memory: ${insertedRows}/${data.length} rows`);
+
       return { dataset, tableName };
-      
+
     } catch (error) {
       console.error('Failed to load dataset into DuckDB:', error);
-      // Cleanup on error
+
+      // Comprehensive cleanup on error
       try {
         await this.conn.query(`DROP TABLE IF EXISTS "${tableName}";`);
+        this.loadedTables.delete(datasetId);
+        console.log(`Cleaned up failed table creation: ${tableName}`);
       } catch (cleanupError) {
         console.warn('Failed to cleanup table after error:', cleanupError);
       }
+
       throw error;
     }
   }
