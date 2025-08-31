@@ -1,78 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSession } from '../contexts/SessionContext';
 import FileHistory from './FileHistory';
 
-interface FileHistoryState {
-  searchTerm: string;
-  statusFilter: 'all' | 'success' | 'failed' | 'processing';
-  storageFilter: 'all' | 'server' | 'local';
-  sortBy: 'upload_timestamp' | 'original_filename';
-  sortOrder: 'asc' | 'desc';
-  expandedFiles: Set<string>;
-}
-
 /**
  * FileHistoryWithSession
- * 
- * This component wraps the FileHistory component to provide session persistence
- * for filter and view states when navigating between pages.
+ *
+ * This component wraps the FileHistory component to provide session persistence.
+ * For now, it's a simple wrapper that just ensures session saves when navigating away.
+ * The FileHistory component manages its own state internally.
  */
 const FileHistoryWithSession: React.FC = () => {
-  const { sessionState, updateSessionState } = useSession();
-  const [fileHistoryState, setFileHistoryState] = useState<FileHistoryState>({
-    searchTerm: '',
-    statusFilter: 'all',
-    storageFilter: 'all',
-    sortBy: 'upload_timestamp',
-    sortOrder: 'desc',
-    expandedFiles: new Set<string>(),
-  });
+  const { saveSession } = useSession();
+  const hasInitialized = useRef(false);
 
-  // Restore state from session on mount
+  // Auto-save session when component unmounts (navigating away)
   useEffect(() => {
-    if (sessionState.fileHistoryState) {
-      setFileHistoryState({
-        ...sessionState.fileHistoryState,
-        // Convert array back to Set for expandedFiles
-        expandedFiles: new Set(sessionState.fileHistoryState.expandedFiles || []),
-      });
-    }
-  }, []); // Only run on mount
+    hasInitialized.current = true;
 
-  // Save state to session when it changes (with debouncing to prevent loops)
+    return () => {
+      // Save session when component unmounts (i.e., when navigating away)
+      if (hasInitialized.current) {
+        saveSession();
+      }
+    };
+  }, [saveSession]);
+
+  // Save session periodically while on this page
   useEffect(() => {
-    // Skip saving state if it's the initial state or hasn't changed meaningfully
-    const isInitialState = fileHistoryState.searchTerm === '' &&
-                          fileHistoryState.statusFilter === 'all' &&
-                          fileHistoryState.storageFilter === 'all' &&
-                          fileHistoryState.sortBy === 'upload_timestamp' &&
-                          fileHistoryState.sortOrder === 'desc' &&
-                          fileHistoryState.expandedFiles.size === 0;
+    const saveInterval = setInterval(() => {
+      saveSession();
+    }, 30000); // Save every 30 seconds
 
-    if (isInitialState) {
-      return;
-    }
-
-    // Debounce the save operation to prevent excessive updates
-    const timeoutId = setTimeout(() => {
-      const stateToSave = {
-        ...fileHistoryState,
-        // Convert Set to array for serialization
-        expandedFiles: Array.from(fileHistoryState.expandedFiles),
-      };
-
-      updateSessionState({
-        fileHistoryState: stateToSave,
-      });
-    }, 500); // Debounce for 500ms
-
-    return () => clearTimeout(timeoutId);
-  }, [fileHistoryState, updateSessionState]);
-
-  // Note: Since the current FileHistory component doesn't accept props for these states,
-  // we'll need to modify it to accept them, or create a more sophisticated wrapper.
-  // For now, this establishes the pattern and the FileHistory component can be enhanced
-  // to use these props in the future.
+    return () => clearInterval(saveInterval);
+  }, [saveSession]);
 
   return <FileHistory />;
 };
