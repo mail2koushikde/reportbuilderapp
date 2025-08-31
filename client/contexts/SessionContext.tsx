@@ -238,14 +238,14 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   }, []);
   
   // Clear session state
-  const clearSessionState = () => {
+  const clearSessionState = useCallback(() => {
     setSessionState(getDefaultSessionState());
     setIsSessionDirty(false);
     localStorage.removeItem(SESSION_STORAGE_KEY);
-  };
-  
+  }, []);
+
   // Save session to localStorage
-  const saveSession = () => {
+  const saveSession = useCallback(() => {
     try {
       const sessionData = {
         ...sessionState,
@@ -253,72 +253,72 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
         selectedValues: Array.from(sessionState.selectedValues),
         lastSaved: new Date().toISOString(),
       };
-      
+
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
       setIsSessionDirty(false);
       console.log('Session saved successfully');
     } catch (error) {
       console.error('Failed to save session:', error);
     }
-  };
-  
+  }, [sessionState]);
+
   // Restore session from localStorage
-  const restoreSession = () => {
+  const restoreSession = useCallback(() => {
     try {
       const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
       if (savedSession) {
         const sessionData = JSON.parse(savedSession);
-        
+
         // Convert Array back to Set
         if (sessionData.selectedValues && Array.isArray(sessionData.selectedValues)) {
           sessionData.selectedValues = new Set(sessionData.selectedValues);
         }
-        
+
         // Parse dates
         if (sessionData.lastSaved) {
           sessionData.lastSaved = new Date(sessionData.lastSaved);
         }
-        
+
         setSessionState({
           ...getDefaultSessionState(),
           ...sessionData,
           isActive: sessionData.cards?.length > 0 || sessionData.importedData?.length > 0,
         });
-        
+
         console.log('Session restored successfully');
       }
     } catch (error) {
       console.error('Failed to restore session:', error);
       setSessionState(getDefaultSessionState());
     }
-  };
-  
+  }, []);
+
   // Helper functions for specific state updates
-  const updateCards = (cards: DashboardCard[]) => {
+  const updateCards = useCallback((cards: DashboardCard[]) => {
     updateSessionState({ cards });
-  };
-  
-  const updateImportedData = (data: DataRow[], columns: string[]) => {
+  }, [updateSessionState]);
+
+  const updateImportedData = useCallback((data: DataRow[], columns: string[]) => {
     updateSessionState({ importedData: data, columns });
-  };
-  
-  const updateFileName = (fileName: string, version?: number | null) => {
-    updateSessionState({ 
-      fileName, 
-      currentFileVersion: version !== undefined ? version : sessionState.currentFileVersion 
+  }, [updateSessionState]);
+
+  const updateFileName = useCallback((fileName: string, version?: number | null) => {
+    updateSessionState({
+      fileName,
+      currentFileVersion: version !== undefined ? version : sessionState.currentFileVersion
     });
-  };
-  
-  const updateFilters = (filterUpdates: Partial<Pick<SessionState, 'filtersOpen' | 'leftSectionVisible' | 'selectedDimension' | 'dimensionValues' | 'selectedValues' | 'dimensionSelections'>>) => {
+  }, [updateSessionState, sessionState.currentFileVersion]);
+
+  const updateFilters = useCallback((filterUpdates: Partial<Pick<SessionState, 'filtersOpen' | 'leftSectionVisible' | 'selectedDimension' | 'dimensionValues' | 'selectedValues' | 'dimensionSelections'>>) => {
     updateSessionState(filterUpdates);
-  };
-  
-  const updateTool = (tool: 'select' | 'textbox' | 'arrow' | null, selectedElement?: string | null) => {
-    updateSessionState({ 
-      currentTool: tool, 
-      selectedElement: selectedElement !== undefined ? selectedElement : null 
+  }, [updateSessionState]);
+
+  const updateTool = useCallback((tool: 'select' | 'textbox' | 'arrow' | null, selectedElement?: string | null) => {
+    updateSessionState({
+      currentTool: tool,
+      selectedElement: selectedElement !== undefined ? selectedElement : null
     });
-  };
+  }, [updateSessionState]);
   
   const value: SessionContextType = {
     sessionState,
