@@ -678,22 +678,53 @@ class DuckDBService {
 
   async cleanup(): Promise<void> {
     try {
-      // Clear all loaded datasets from memory
-      await this.clearMemory();
-      
+      console.log('Starting DuckDB service cleanup...');
+
+      // Clear tracking first
+      this.loadedTables.clear();
+
+      // Clear all loaded datasets from memory (if connection exists)
+      if (this.conn) {
+        try {
+          await this.clearMemory();
+        } catch (clearError) {
+          console.warn('Error clearing memory during cleanup:', clearError);
+        }
+      }
+
       // Close DuckDB connection
       if (this.conn) {
-        await this.conn.close();
-        this.conn = null;
+        try {
+          await this.conn.close();
+          console.log('DuckDB connection closed');
+        } catch (closeError) {
+          console.warn('Error closing DuckDB connection:', closeError);
+        } finally {
+          this.conn = null;
+        }
       }
+
+      // Terminate database
       if (this.db) {
-        await this.db.terminate();
-        this.db = null;
+        try {
+          await this.db.terminate();
+          console.log('DuckDB database terminated');
+        } catch (terminateError) {
+          console.warn('Error terminating DuckDB database:', terminateError);
+        } finally {
+          this.db = null;
+        }
       }
+
       this.initialized = false;
       console.log('DuckDB service cleanup completed');
     } catch (error) {
       console.error('Error during DuckDB cleanup:', error);
+      // Force reset state even if cleanup failed
+      this.conn = null;
+      this.db = null;
+      this.initialized = false;
+      this.loadedTables.clear();
     }
   }
 
