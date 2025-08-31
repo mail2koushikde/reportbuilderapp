@@ -7501,6 +7501,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         </div>
       )}
 
+      {/* Session Debug Component (temporary for testing) */}
+      <SessionDebug />
+
       {/* File Upload Success Popup */}
       {showUploadSuccess && (
         <div className="fixed top-0 right-0 left-0 z-50 p-4">
