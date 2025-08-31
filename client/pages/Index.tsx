@@ -18,10 +18,6 @@ const Index: React.FC = () => {
   };
 
   const handlePageChange = (page: NavigationPage) => {
-    // Clear loaded report state when navigating away from build-report
-    if (page !== 'build-report') {
-      setLoadedReportState(undefined);
-    }
     setCurrentPage(page);
     // Auto-close navigation on mobile after selection
     if (window.innerWidth < 1024) {
