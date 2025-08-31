@@ -108,6 +108,9 @@ export interface SessionState {
   // Session metadata
   lastSaved: Date;
   isActive: boolean;
+
+  // Page-specific states (optional)
+  fileHistoryState?: any;
 }
 
 interface SessionContextType {
