@@ -1457,6 +1457,25 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     console.log('Current file version changed to:', currentFileVersion, 'for file:', fileName);
   }, [currentFileVersion, fileName]);
 
+  // Auto-reload data when session is restored with file info but no data
+  useEffect(() => {
+    const shouldAutoReload =
+      fileName &&
+      currentFileVersion &&
+      currentFileVersion > 0 &&
+      importedData.length === 0 &&
+      !loadedReportState; // Only auto-reload for session restore, not saved reports
+
+    if (shouldAutoReload) {
+      console.log('Auto-reloading data for session restore:', fileName, 'v' + currentFileVersion);
+      // Small delay to ensure versions are fetched first
+      const timer = setTimeout(() => {
+        loadFileVersion(userEmail, fileName, currentFileVersion);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [fileName, currentFileVersion, importedData.length, loadedReportState, loadFileVersion, userEmail]);
+
   // Update cache status when data changes
   useEffect(() => {
     const updateCacheStatus = async () => {
