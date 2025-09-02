@@ -1651,8 +1651,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           }
         }
 
-        // Attempt to load the version
-        await loadFileVersion(userEmail, fileName, currentFileVersion);
+        // Attempt to load the version (mark as auto-reload to suppress success popup)
+        await loadFileVersion(userEmail, fileName, currentFileVersion, true);
       } catch (e) {
         console.warn('Auto-reload encountered an error (proceeding without data):', e.message);
       }
@@ -7510,7 +7510,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
                               }`}
                             >
-                              Ascending ��
+                              Ascending ↑
                             </button>
                             <button
                               onClick={() => updateCard(card.id, { sortOrder: 'desc' })}
