@@ -6576,6 +6576,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </button>
 
               <button
+                onClick={() => setShowClearAllDialog(true)}
+                disabled={cards.length === 0}
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium text-xs rounded-lg transition-colors border border-red-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Clear all cards and components from viewport"
+              >
+                <Trash className="w-3 h-3" />
+                Clear All
+              </button>
+
+              <button
                 onClick={() => setFiltersOpen(!filtersOpen)}
                 className="p-2 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 rounded-lg transition-colors border border-gray-400/30"
                 title={filtersOpen ? "Collapse Filters" : "Expand Filters"}
