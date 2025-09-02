@@ -1463,6 +1463,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
   // Guard to ensure we auto-reload only once per session restore
   const hasAutoReloadedRef = React.useRef(false);
+  const hasFetchedVersionsForRestoreRef = React.useRef(false);
 
   // Auto-reload data when session is restored with file info but no data
   useEffect(() => {
@@ -1474,16 +1475,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       !loadedReportState &&
       !hasAutoReloadedRef.current; // Only auto-reload once
 
-    if (shouldAutoReload) {
-      console.log('Auto-reloading data for session restore:', fileName, 'v' + currentFileVersion);
-      // Small delay to ensure versions are fetched first
-      const timer = setTimeout(() => {
+    if (!shouldAutoReload) return;
+
+    const doReload = async () => {
+      try {
+        // If we don't have versions yet, fetch them first
+        if (!availableVersions || availableVersions.length === 0) {
+          if (!hasFetchedVersionsForRestoreRef.current) {
+            hasFetchedVersionsForRestoreRef.current = true;
+            const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
+            await fetchFileVersions(userEmail, searchFilename);
+          }
+        }
+
+        // After ensuring versions, attempt load
         hasAutoReloadedRef.current = true;
         loadFileVersion(userEmail, fileName, currentFileVersion);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [fileName, currentFileVersion, importedData.length, loadedReportState, loadFileVersion, userEmail]);
+      } catch (e) {
+        console.warn('Auto-reload encountered an error (proceeding without data):', e);
+      }
+    };
+
+    const timer = setTimeout(doReload, 100);
+    return () => clearTimeout(timer);
+  }, [fileName, currentFileVersion, importedData.length, loadedReportState, loadFileVersion, userEmail, availableVersions, fetchFileVersions]);
 
   // Update cache status when data changes
   useEffect(() => {
