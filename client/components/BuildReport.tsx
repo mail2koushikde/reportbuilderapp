@@ -1455,9 +1455,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               if (cached.fileName) setFileName(cached.fileName);
               setShowVersionDropdown(false);
               setCacheEnabled(false);
-              setUploadedFileName(cached.fileName || 'Cached dataset');
-              setShowUploadSuccess(true);
-              setTimeout(() => setShowUploadSuccess(false), 3000);
+              if (!isAutoReload) {
+                setUploadedFileName(cached.fileName || 'Cached dataset');
+                setShowUploadSuccess(true);
+                setTimeout(() => setShowUploadSuccess(false), 3000);
+              }
               console.log(`Loaded fallback from cache with ${cached.data.length} rows`);
               return;
             }
