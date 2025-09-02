@@ -2963,6 +2963,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     });
   }, [cards, findAvailablePositionWithAdaptiveSize]);
 
+  // Clear all cards and components from viewport
+  const clearAll = useCallback(() => {
+    console.log('Clearing all cards and components from viewport');
+
+    // Clear all cards (which also clears their associated text boxes and arrows)
+    setCards([]);
+
+    // Clear any selected elements
+    setSelectedElement(null);
+    setConfiguringCard(null);
+
+    // Reset any dragging states
+    setDraggedCard(null);
+    setResizingCard(null);
+    setDraggedTextBox(null);
+    setResizingTextBox(null);
+    setDraggedArrow(null);
+    setDraggedHandle(null);
+
+    // Save to history
+    setTimeout(() => saveToHistory([]), 0);
+
+    // Close the confirmation dialog
+    setShowClearAllDialog(false);
+
+    console.log('Viewport cleared successfully');
+  }, [saveToHistory]);
+
   // Save view functionality
   const saveCurrentView = useCallback(async () => {
     if (!saveReportName.trim()) return;
