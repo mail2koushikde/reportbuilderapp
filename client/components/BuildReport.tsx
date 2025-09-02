@@ -1243,6 +1243,47 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [loadedReportState, hasActiveSession, getInitialStateFromSession]);
 
+  // Validate chart compatibility with current columns
+  const validateChartCompatibility = useCallback(() => {
+    const issues: {[cardId: string]: string[]} = {};
+
+    cards.forEach(card => {
+      const cardIssues: string[] = [];
+
+      // Check if dimension column exists
+      if (card.dimension && !columns.includes(card.dimension)) {
+        cardIssues.push(`Dimension column "${card.dimension}" not found`);
+      }
+
+      // Check if measure column exists
+      if (card.measure && !columns.includes(card.measure)) {
+        cardIssues.push(`Measure column "${card.measure}" not found`);
+      }
+
+      // Check if second measure exists (for charts that support it)
+      if (card.measure2 && !columns.includes(card.measure2)) {
+        cardIssues.push(`Second measure column "${card.measure2}" not found`);
+      }
+
+      // Check if dimension2 exists (for mixbar charts)
+      if (card.dimension2 && !columns.includes(card.dimension2)) {
+        cardIssues.push(`Second dimension column "${card.dimension2}" not found`);
+      }
+
+      // Check if series column exists (for line charts)
+      if (card.seriesColumn && !columns.includes(card.seriesColumn)) {
+        cardIssues.push(`Series column "${card.seriesColumn}" not found`);
+      }
+
+      if (cardIssues.length > 0) {
+        issues[card.id] = cardIssues;
+      }
+    });
+
+    setChartCompatibilityIssues(issues);
+    return Object.keys(issues).length === 0; // Return true if no issues
+  }, [cards, columns]);
+
   // Fetch available versions for the current file from both local and server storage
   const fetchFileVersions = useCallback(async (userEmail: string, filename: string) => {
     if (!userEmail || !filename) {
