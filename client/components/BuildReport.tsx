@@ -1445,7 +1445,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             console.warn('Cache fallback failed:', e);
           }
 
-          console.error('Version data not found and no available versions to fallback to');
+          console.warn('Version data not found and no available versions to fallback to');
+          // Instead of erroring, show a helpful message to the user
+          setUploadedFileName(`${filename} - No versions available`);
+          setImportedData([]);
+          setColumns([]);
           return;
         }
       }
