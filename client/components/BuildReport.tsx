@@ -5021,7 +5021,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           className="absolute bottom-0 border-l border-white/30"
                           style={{
                             height: '6px',
-                            left: `${(barWidth + barSpacing) / 2}px`,
+                            left: `${Math.max(0, (barWidth + barSpacing) / 2)}px`,
                             transform: 'translateX(-50%)'
                           }}
                         />
