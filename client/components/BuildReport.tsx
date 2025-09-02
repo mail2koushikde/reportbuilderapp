@@ -1499,10 +1499,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           setShowVersionDropdown(false);
           setCacheEnabled(false); // Local data doesn't use cache
 
-          // Show success notification
-          setUploadedFileName(`${filename} (v${version}) - Local Storage`);
-          setShowUploadSuccess(true);
-          setTimeout(() => setShowUploadSuccess(false), 3000);
+          // Show success notification (only if not auto-reload)
+          if (!isAutoReload) {
+            setUploadedFileName(`${filename} (v${version}) - Local Storage`);
+            setShowUploadSuccess(true);
+            setTimeout(() => setShowUploadSuccess(false), 3000);
+          }
 
           console.log(`Loaded local version ${version} with ${data.length} rows`);
         } catch (localError) {
