@@ -1548,30 +1548,47 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       currentFileVersion > 0 &&
       importedData.length === 0 &&
       !loadedReportState &&
-      !hasAutoReloadedRef.current; // Only auto-reload once
+      !hasAutoReloadedRef.current && // Only auto-reload once
+      hasRestoredFromSessionRef.current; // Only after session is restored
 
     if (!shouldAutoReload) return;
 
     const doReload = async () => {
       try {
-        // If we don't have versions yet, fetch them first
+        hasAutoReloadedRef.current = true;
+        console.log('Auto-reloading data for session restore:', fileName, 'v' + currentFileVersion);
+
+        // Try to get the versions first, but don't wait too long
         if (!availableVersions || availableVersions.length === 0) {
           if (!hasFetchedVersionsForRestoreRef.current) {
             hasFetchedVersionsForRestoreRef.current = true;
             const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
-            await fetchFileVersions(userEmail, searchFilename);
+
+            // Set a reasonable timeout for version fetching
+            const fetchPromise = fetchFileVersions(userEmail, searchFilename);
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Version fetch timeout')), 3000)
+            );
+
+            try {
+              await Promise.race([fetchPromise, timeoutPromise]);
+              // Small delay to let versions populate
+              await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (e) {
+              console.warn('Version fetch timed out or failed, proceeding with direct load:', e.message);
+            }
           }
         }
 
-        // After ensuring versions, attempt load
-        hasAutoReloadedRef.current = true;
-        loadFileVersion(userEmail, fileName, currentFileVersion);
+        // Attempt to load the version
+        await loadFileVersion(userEmail, fileName, currentFileVersion);
       } catch (e) {
-        console.warn('Auto-reload encountered an error (proceeding without data):', e);
+        console.warn('Auto-reload encountered an error (proceeding without data):', e.message);
       }
     };
 
-    const timer = setTimeout(doReload, 100);
+    // Delay to ensure session restoration is complete
+    const timer = setTimeout(doReload, 500);
     return () => clearTimeout(timer);
   }, [fileName, currentFileVersion, importedData.length, loadedReportState, loadFileVersion, userEmail, availableVersions, fetchFileVersions]);
 
