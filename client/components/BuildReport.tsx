@@ -4965,13 +4965,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       case 'bar':
         // Column Chart with optional second measure support
         const hasSecondMeasure = card.measure2 && card.measure2.trim() !== '';
-        const maxValue = hasSecondMeasure
+        const computedMax = hasSecondMeasure
           ? Math.max(...processedData.flatMap(d => [d.value, d.value2 || 0]))
           : Math.max(...processedData.map(d => d.value));
+        const maxValue = Number.isFinite(computedMax) && computedMax > 0 ? computedMax : 1;
         const chartWidth = card.gridPosition.width * GRID_SIZE - 32; // Account for padding
         const chartHeight = card.gridPosition.height * GRID_SIZE - 100; // Extra space for tilted labels
-        const barWidth = Math.max(20, (chartWidth - 40) / processedData.length - 10);
-        const barSpacing = (chartWidth - 40 - (barWidth * processedData.length)) / (processedData.length - 1);
+        const count = processedData.length;
+        const barWidth = Math.max(20, count > 0 ? (chartWidth - 40) / count - 10 : 20);
+        const barSpacing = count > 1 ? (chartWidth - 40 - (barWidth * count)) / (count - 1) : 0;
 
         // Responsive legend sizing (similar to mixbar chart)
         const isColumnVeryCompact = card.gridPosition.width <= 2 || card.gridPosition.height <= 2;
