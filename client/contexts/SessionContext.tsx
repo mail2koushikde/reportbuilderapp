@@ -322,20 +322,45 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
         // Convert Array back to Set
         if (sessionData.selectedValues && Array.isArray(sessionData.selectedValues)) {
           sessionData.selectedValues = new Set(sessionData.selectedValues);
+        } else {
+          sessionData.selectedValues = new Set();
         }
 
         // Parse dates
         if (sessionData.lastSaved) {
           sessionData.lastSaved = new Date(sessionData.lastSaved);
+        } else {
+          sessionData.lastSaved = new Date();
         }
 
-        setSessionState({
+        // Ensure arrays exist
+        sessionData.cards = sessionData.cards || [];
+        sessionData.importedData = sessionData.importedData || [];
+        sessionData.columns = sessionData.columns || [];
+        sessionData.cardsHistory = sessionData.cardsHistory || [];
+        sessionData.availableVersions = sessionData.availableVersions || [];
+        sessionData.localDatasets = sessionData.localDatasets || [];
+        sessionData.dimensionValues = sessionData.dimensionValues || [];
+
+        const restoredState = {
           ...getDefaultSessionState(),
           ...sessionData,
-          isActive: sessionData.cards?.length > 0 || sessionData.importedData?.length > 0,
-        });
+          isActive: sessionData.cards?.length > 0 || sessionData.fileName || sessionData.importedData?.length > 0,
+        };
 
-        console.log('Session restored successfully');
+        setSessionState(restoredState);
+
+        console.log('Session restored successfully:', {
+          cards: restoredState.cards.length,
+          fileName: restoredState.fileName,
+          version: restoredState.currentFileVersion,
+          dataRows: restoredState.importedData.length,
+          columns: restoredState.columns.length,
+          isActive: restoredState.isActive
+        });
+      } else {
+        console.log('No saved session found, using defaults');
+        setSessionState(getDefaultSessionState());
       }
     } catch (error) {
       console.error('Failed to restore session:', error);
