@@ -7984,7 +7984,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
             <div className="space-y-4">
               <p className="text-white/80 text-sm">
-                Are you sure you want to clear all cards and components from the viewport? This action will remove:
+                Are you sure you want to clear all cards and components from the current view? This action will remove:
               </p>
 
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
