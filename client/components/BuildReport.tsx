@@ -6310,8 +6310,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                 <button
                                   key={`${version.version}-${version.source}`}
                                   onClick={() => {
-                                    // Using userEmail prop from component
-                                    loadFileVersion(userEmail, fileName, version.version);
+                                    // Using userEmail prop from component (user-initiated action)
+                                    loadFileVersion(userEmail, fileName, version.version, false);
                                   }}
                                   className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors ${
                                     version.version === currentFileVersion
