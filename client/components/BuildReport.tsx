@@ -1478,6 +1478,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 setCurrentFileVersion(chosen.version);
                 setShowVersionDropdown(false);
                 setCacheEnabled(false);
+
+                // Validate chart compatibility with new data
+                setTimeout(() => validateChartCompatibility(), 100);
                 if (!isAutoReload && !isVersionSwitch) {
                   setUploadedFileName(`${filename} (v${chosen.version}) - Local Storage`);
                   setShowUploadSuccess(true);
@@ -1502,6 +1505,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               if (cached.fileName) setFileName(cached.fileName);
               setShowVersionDropdown(false);
               setCacheEnabled(false);
+
+              // Validate chart compatibility with new data
+              setTimeout(() => validateChartCompatibility(), 100);
               if (!isAutoReload && !isVersionSwitch) {
                 setUploadedFileName(cached.fileName || 'Cached dataset');
                 setShowUploadSuccess(true);
@@ -1546,6 +1552,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           setShowVersionDropdown(false);
           setCacheEnabled(false); // Local data doesn't use cache
 
+          // Validate chart compatibility with new data
+          setTimeout(() => validateChartCompatibility(), 100);
+
           // Show success notification (only if not auto-reload and not version switch)
           if (!isAutoReload && !isVersionSwitch) {
             setUploadedFileName(`${filename} (v${version}) - Local Storage`);
@@ -1572,6 +1581,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               setCurrentFileVersion(version);
               setShowVersionDropdown(false);
               setCacheEnabled(false); // Fresh data doesn't use cache
+
+              // Validate chart compatibility with new data
+              setTimeout(() => validateChartCompatibility(), 100);
 
               // Show success notification (only if not auto-reload and not version switch)
               if (!isAutoReload && !isVersionSwitch) {
