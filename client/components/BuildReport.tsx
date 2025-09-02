@@ -7972,6 +7972,54 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         </div>
       )}
 
+      {/* Clear All Confirmation Dialog */}
+      {showClearAllDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                <Trash className="w-5 h-5 text-red-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Clear All Objects</h2>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-white/80 text-sm">
+                Are you sure you want to clear all cards and components from the viewport? This action will remove:
+              </p>
+
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <ul className="text-xs text-yellow-300 space-y-1">
+                  <li>• All {cards.length} dashboard card{cards.length !== 1 ? 's' : ''}</li>
+                  <li>• All associated text boxes and annotations</li>
+                  <li>• All arrows and visual elements</li>
+                  <li>• Current chart configurations</li>
+                </ul>
+              </div>
+
+              <p className="text-white/60 text-xs">
+                ⚠️ This action cannot be undone, but you can use the Undo button to restore your work.
+              </p>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowClearAllDialog(false)}
+                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors border border-white/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={clearAll}
+                  className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium text-sm rounded-lg transition-colors border border-red-400/30"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Session Debug Component (temporary for testing) */}
       <SessionDebug />
 
