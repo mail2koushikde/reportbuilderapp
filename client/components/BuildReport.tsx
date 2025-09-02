@@ -1401,7 +1401,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   }, [currentFileVersion]);
 
   // Load data for a specific version from either local or server storage
-  const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number) => {
+  const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number, isAutoReload: boolean = false) => {
     try {
       let versionData = availableVersions.find(v => v.version === version);
 
