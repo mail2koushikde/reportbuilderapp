@@ -1332,13 +1332,62 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       if (!versionData) {
         console.warn(`Requested version v${version} not found in availableVersions (${availableVersions.length}).`);
-        // Fallback: if we have any versions, use the latest/highest one
+
         if (availableVersions.length > 0) {
           const fallback = availableVersions[0];
           console.warn(`Falling back to latest available version v${fallback.version} from ${fallback.sourceLabel}.`);
           versionData = fallback;
           version = fallback.version;
         } else {
+          // No versions in memory. Try reconstructing from local storage (DuckDB)
+          try {
+            const localVersions = await duckdbService.getLocalFileVersions(userEmail, filename);
+            if (localVersions && localVersions.length > 0) {
+              // Prefer exact version; otherwise highest
+              const exact = localVersions.find((v: any) => v.version === version);
+              const chosen = exact || localVersions.reduce((a: any, b: any) => (a.version > b.version ? a : b));
+              const datasetId = chosen.id;
+              const dataset = await duckdbService.getDatasetMetadata(datasetId);
+              if (dataset) {
+                const query = 'SELECT * FROM {table} LIMIT 10000';
+                const data = await duckdbService.queryDataset(datasetId, query);
+                setColumns(dataset.columns || []);
+                setImportedData(data || []);
+                setCurrentFileVersion(chosen.version);
+                setShowVersionDropdown(false);
+                setCacheEnabled(false);
+                setUploadedFileName(`${filename} (v${chosen.version}) - Local Storage`);
+                setShowUploadSuccess(true);
+                setTimeout(() => setShowUploadSuccess(false), 3000);
+                console.log(`Loaded local fallback version ${chosen.version} with ${data.length} rows`);
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn('Local version fallback failed:', e);
+          }
+
+          // Final fallback: load last cached dataset
+          try {
+            await cacheService.init();
+            const cached = await cacheService.getCachedData();
+            if (cached && cached.data && cached.data.length > 0) {
+              setColumns(cached.columns || []);
+              setImportedData(cached.data || []);
+              setCurrentFileVersion(null);
+              if (cached.fileName) setFileName(cached.fileName);
+              setShowVersionDropdown(false);
+              setCacheEnabled(false);
+              setUploadedFileName(cached.fileName || 'Cached dataset');
+              setShowUploadSuccess(true);
+              setTimeout(() => setShowUploadSuccess(false), 3000);
+              console.log(`Loaded fallback from cache with ${cached.data.length} rows`);
+              return;
+            }
+          } catch (e) {
+            console.warn('Cache fallback failed:', e);
+          }
+
           console.error('Version data not found and no available versions to fallback to');
           return;
         }
