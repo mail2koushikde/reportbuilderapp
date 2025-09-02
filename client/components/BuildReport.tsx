@@ -2389,41 +2389,99 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     });
   }, [cards]);
 
+  // Helper function to get visible grid bounds based on current scroll position
+  const getVisibleGridBounds = useCallback(() => {
+    if (!containerRef.current) {
+      return {
+        minX: 0,
+        maxX: gridCols,
+        minY: 0,
+        maxY: gridRows
+      };
+    }
+
+    const container = containerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const scrollTop = container.scrollTop;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // Convert pixel coordinates to grid coordinates
+    const minX = Math.max(0, Math.floor(scrollLeft / GRID_SIZE) - 1); // Add buffer
+    const maxX = Math.min(gridCols, Math.ceil((scrollLeft + containerWidth) / GRID_SIZE) + 1);
+    const minY = Math.max(0, Math.floor(scrollTop / GRID_SIZE) - 1);
+    const maxY = Math.min(gridRows, Math.ceil((scrollTop + containerHeight) / GRID_SIZE) + 1);
+
+    return { minX, maxX, minY, maxY };
+  }, [gridCols, gridRows]);
+
   const findAvailablePosition = useCallback((width: number, height: number) => {
     // Reserve edge space (1/4 grid from edges) - match auto-resize spacing exactly
     const edgeGap = 0.25;
     const cardGap = 0.25;
 
-    // Start from edge spacing and increment by card size + gap
-    let currentY = edgeGap;
-    while (currentY + height <= gridRows - edgeGap) {
-      let currentX = edgeGap;
-      while (currentX + width <= gridCols - edgeGap) {
-        const testCard: DashboardCard = {
-          id: 'test',
-          chartType: 'pie',
-          title: '',
-          gridPosition: { x: currentX, y: currentY, width, height },
-          isConfiguring: false,
-          dimension: '',
-          measure: '',
-          yAxisScale: 'linear',
-        };
+    // Get the currently visible area
+    const visibleBounds = getVisibleGridBounds();
 
-        if (!checkOverlap(testCard)) {
-          return { x: currentX, y: currentY };
+    // Helper function to search for position in a given area
+    const searchInArea = (minX: number, maxX: number, minY: number, maxY: number) => {
+      // Start from edge spacing and increment by card size + gap
+      let currentY = Math.max(edgeGap, minY);
+      while (currentY + height <= Math.min(gridRows - edgeGap, maxY)) {
+        let currentX = Math.max(edgeGap, minX);
+        while (currentX + width <= Math.min(gridCols - edgeGap, maxX)) {
+          const testCard: DashboardCard = {
+            id: 'test',
+            chartType: 'pie',
+            title: '',
+            gridPosition: { x: currentX, y: currentY, width, height },
+            isConfiguring: false,
+            dimension: '',
+            measure: '',
+            yAxisScale: 'linear',
+            sortBy: 'dimension',
+            sortOrder: 'asc',
+            mergedBars: {},
+            customNames: {},
+            textBoxes: [],
+            arrows: [],
+          };
+
+          if (!checkOverlap(testCard)) {
+            return { x: currentX, y: currentY };
+          }
+
+          // Move to next position with proper spacing
+          currentX += width + cardGap;
         }
-
-        // Move to next position with proper spacing
-        currentX += width + cardGap;
+        // Move to next row with proper spacing
+        currentY += height + cardGap;
       }
-      // Move to next row with proper spacing
-      currentY += height + cardGap;
+      return null;
+    };
+
+    // First, try to find a position in the visible area
+    const visiblePosition = searchInArea(
+      visibleBounds.minX,
+      visibleBounds.maxX,
+      visibleBounds.minY,
+      visibleBounds.maxY
+    );
+
+    if (visiblePosition) {
+      return visiblePosition;
     }
-    
-    // Fallback to default position if no space found
+
+    // If no position found in visible area, search the entire grid
+    const globalPosition = searchInArea(0, gridCols, 0, gridRows);
+
+    if (globalPosition) {
+      return globalPosition;
+    }
+
+    // Fallback to default position if no space found anywhere
     return { x: 0, y: 0 };
-  }, [checkOverlap]);
+  }, [checkOverlap, getVisibleGridBounds, gridCols, gridRows]);
 
   // Helper function to get default dimension and measure for new charts
   const getDefaultValues = useCallback(() => {
