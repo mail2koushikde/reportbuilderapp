@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { sessionStore } from '../services/sessionStore';
 
 // Define interfaces for the session state
 export interface DataRow {
