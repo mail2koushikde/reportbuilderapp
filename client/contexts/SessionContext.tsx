@@ -247,14 +247,64 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   // Save session to localStorage
   const saveSession = useCallback(() => {
     try {
-      const sessionData = {
-        ...sessionState,
+      // Build a pruned session object to keep storage small
+      const prunedSession = {
+        cards: sessionState.cards,
+        // Do NOT persist raw importedData to localStorage (can be very large)
+        importedData: [],
+        columns: sessionState.columns,
+        fileName: sessionState.fileName,
+        currentFileVersion: sessionState.currentFileVersion,
+        currentTool: sessionState.currentTool,
+        selectedElement: sessionState.selectedElement,
+        hideControls: sessionState.hideControls,
+        showGrid: sessionState.showGrid,
+        filtersOpen: sessionState.filtersOpen,
+        leftSectionVisible: sessionState.leftSectionVisible,
+        selectedDimension: sessionState.selectedDimension,
+        dimensionValues: sessionState.dimensionValues,
         // Convert Set to Array for JSON serialization
         selectedValues: Array.from(sessionState.selectedValues),
+        dimensionSelections: sessionState.dimensionSelections,
+        cacheEnabled: sessionState.cacheEnabled,
+        hasCachedData: sessionState.hasCachedData,
+        cacheInfo: sessionState.cacheInfo,
+        localDatasets: sessionState.localDatasets,
+        // Do NOT persist history (can grow large quickly)
+        cardsHistory: [],
+        historyIndex: -1,
+        availableVersions: sessionState.availableVersions,
+        gridCols: sessionState.gridCols,
+        gridRows: sessionState.gridRows,
+        containerWidth: sessionState.containerWidth,
         lastSaved: new Date().toISOString(),
-      };
+        isActive: true,
+        fileHistoryState: sessionState.fileHistoryState,
+      } as const;
 
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      // Serialize and check size; progressively strip optional large fields if needed
+      const serialize = (obj: any) => JSON.stringify(obj);
+      let payload = prunedSession as any;
+      let json = serialize(payload);
+      const MAX_CHARS = 4_500_000; // ~4.5MB safety threshold
+
+      if (json.length > MAX_CHARS) {
+        // Remove dimension values and selections first
+        payload = { ...payload, dimensionValues: [], dimensionSelections: {} };
+        json = serialize(payload);
+      }
+      if (json.length > MAX_CHARS) {
+        // Drop availableVersions if still too big
+        payload = { ...payload, availableVersions: [] };
+        json = serialize(payload);
+      }
+      if (json.length > MAX_CHARS) {
+        // As a last resort, strip localDatasets metadata
+        payload = { ...payload, localDatasets: [] };
+        json = serialize(payload);
+      }
+
+      localStorage.setItem(SESSION_STORAGE_KEY, json);
       setIsSessionDirty(false);
       console.log('Session saved successfully');
     } catch (error) {
