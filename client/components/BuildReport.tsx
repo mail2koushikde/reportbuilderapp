@@ -6177,6 +6177,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   };
 
+  // Clear all cards and components from viewport
+  const clearAll = useCallback(() => {
+    console.log('Clearing all cards and components from viewport');
+
+    // Clear all cards (which also clears their associated text boxes and arrows)
+    setCards([]);
+
+    // Clear any selected elements
+    setSelectedElement(null);
+    setConfiguringCard(null);
+
+    // Reset any dragging states
+    setDraggedCard(null);
+    setResizingCard(null);
+    setDraggedTextBox(null);
+    setResizingTextBox(null);
+    setDraggedArrow(null);
+    setDraggedHandle(null);
+
+    // Save to history
+    setTimeout(() => saveToHistory([]), 0);
+
+    // Close the confirmation dialog
+    setShowClearAllDialog(false);
+
+    console.log('Viewport cleared successfully');
+  }, [saveToHistory]);
+
   // PDF-like tool functions
   const createTextBox = useCallback((cardId: string, x: number, y: number) => {
     const newTextBox: TextBox = {
