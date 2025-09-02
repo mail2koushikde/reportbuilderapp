@@ -242,15 +242,23 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
   const clearSessionState = useCallback(() => {
     setSessionState(getDefaultSessionState());
     setIsSessionDirty(false);
-    localStorage.removeItem(SESSION_STORAGE_KEY);
+    try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
+    // Also clear any persisted session in IndexedDB
+    sessionStore.clear().catch(() => {});
   }, []);
 
   // Save session to localStorage
   const saveSession = useCallback(() => {
     try {
+      // Prune heavy fields from cards (e.g., computed chart data)
+      const prunedCards = (sessionState.cards || []).map((card: any) => {
+        const { data, ...rest } = card || {};
+        return rest;
+      });
+
       // Build a pruned session object to keep storage small
       const prunedSession = {
-        cards: sessionState.cards,
+        cards: prunedCards,
         // Do NOT persist raw importedData to localStorage (can be very large)
         importedData: [],
         columns: sessionState.columns,
@@ -283,31 +291,46 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
         fileHistoryState: sessionState.fileHistoryState,
       } as const;
 
-      // Serialize and check size; progressively strip optional large fields if needed
+      // Serialize and decide storage target based on size
       const serialize = (obj: any) => JSON.stringify(obj);
       let payload = prunedSession as any;
       let json = serialize(payload);
-      const MAX_CHARS = 4_500_000; // ~4.5MB safety threshold
 
-      if (json.length > MAX_CHARS) {
-        // Remove dimension values and selections first
-        payload = { ...payload, dimensionValues: [], dimensionSelections: {} };
-        json = serialize(payload);
-      }
-      if (json.length > MAX_CHARS) {
-        // Drop availableVersions if still too big
-        payload = { ...payload, availableVersions: [] };
-        json = serialize(payload);
-      }
-      if (json.length > MAX_CHARS) {
-        // As a last resort, strip localDatasets metadata
-        payload = { ...payload, localDatasets: [] };
+      // Progressive pruning if still very large
+      const HARD_LIMIT_CHARS = 4_500_000; // ~4.5MB guardrail
+      const LOCALSTORAGE_SAFE_LIMIT = 2_000_000; // ~2MB to avoid quota across browsers
+
+      if (json.length > HARD_LIMIT_CHARS) {
+        payload = { ...payload, dimensionValues: [], dimensionSelections: {}, availableVersions: [], localDatasets: [] };
         json = serialize(payload);
       }
 
-      localStorage.setItem(SESSION_STORAGE_KEY, json);
-      setIsSessionDirty(false);
-      console.log('Session saved successfully');
+      // If too large for localStorage, use IndexedDB
+      if (json.length > LOCALSTORAGE_SAFE_LIMIT) {
+        sessionStore.save(json).then(() => {
+          try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
+          setIsSessionDirty(false);
+          console.log('Session saved to IndexedDB (too large for localStorage)');
+        }).catch((e) => {
+          console.error('Failed to save session to IndexedDB:', e);
+        });
+        return;
+      }
+
+      // Try localStorage, fallback to IndexedDB on quota errors
+      try {
+        localStorage.setItem(SESSION_STORAGE_KEY, json);
+        setIsSessionDirty(false);
+        console.log('Session saved to localStorage');
+      } catch (err) {
+        try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
+        sessionStore.save(json).then(() => {
+          setIsSessionDirty(false);
+          console.warn('LocalStorage quota exceeded; session saved to IndexedDB');
+        }).catch((e) => {
+          console.error('Failed to save session after quota error:', e);
+        });
+      }
     } catch (error) {
       console.error('Failed to save session:', error);
     }
@@ -315,58 +338,71 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
 
   // Restore session from localStorage
   const restoreSession = useCallback(() => {
-    try {
-      const savedSession = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (savedSession) {
-        const sessionData = JSON.parse(savedSession);
-
-        // Convert Array back to Set
-        if (sessionData.selectedValues && Array.isArray(sessionData.selectedValues)) {
-          sessionData.selectedValues = new Set(sessionData.selectedValues);
-        } else {
-          sessionData.selectedValues = new Set();
+    (async () => {
+      try {
+        let json: string | null = null;
+        let source: 'indexeddb' | 'localStorage' | 'none' = 'none';
+        try {
+          json = await sessionStore.load();
+          if (json) source = 'indexeddb';
+        } catch {}
+        if (!json) {
+          json = localStorage.getItem(SESSION_STORAGE_KEY);
+          if (json) source = 'localStorage';
         }
 
-        // Parse dates
-        if (sessionData.lastSaved) {
-          sessionData.lastSaved = new Date(sessionData.lastSaved);
+        if (json) {
+          const sessionData = JSON.parse(json);
+
+          // Convert Array back to Set
+          if (sessionData.selectedValues && Array.isArray(sessionData.selectedValues)) {
+            sessionData.selectedValues = new Set(sessionData.selectedValues);
+          } else {
+            sessionData.selectedValues = new Set();
+          }
+
+          // Parse dates
+          if (sessionData.lastSaved) {
+            sessionData.lastSaved = new Date(sessionData.lastSaved);
+          } else {
+            sessionData.lastSaved = new Date();
+          }
+
+          // Ensure arrays exist
+          sessionData.cards = sessionData.cards || [];
+          sessionData.importedData = sessionData.importedData || [];
+          sessionData.columns = sessionData.columns || [];
+          sessionData.cardsHistory = sessionData.cardsHistory || [];
+          sessionData.availableVersions = sessionData.availableVersions || [];
+          sessionData.localDatasets = sessionData.localDatasets || [];
+          sessionData.dimensionValues = sessionData.dimensionValues || [];
+
+          const restoredState = {
+            ...getDefaultSessionState(),
+            ...sessionData,
+            isActive: sessionData.cards?.length > 0 || sessionData.fileName || sessionData.importedData?.length > 0,
+          };
+
+          setSessionState(restoredState);
+
+          console.log('Session restored successfully:', {
+            source,
+            cards: restoredState.cards.length,
+            fileName: restoredState.fileName,
+            version: restoredState.currentFileVersion,
+            dataRows: restoredState.importedData.length,
+            columns: restoredState.columns.length,
+            isActive: restoredState.isActive
+          });
         } else {
-          sessionData.lastSaved = new Date();
+          console.log('No saved session found, using defaults');
+          setSessionState(getDefaultSessionState());
         }
-
-        // Ensure arrays exist
-        sessionData.cards = sessionData.cards || [];
-        sessionData.importedData = sessionData.importedData || [];
-        sessionData.columns = sessionData.columns || [];
-        sessionData.cardsHistory = sessionData.cardsHistory || [];
-        sessionData.availableVersions = sessionData.availableVersions || [];
-        sessionData.localDatasets = sessionData.localDatasets || [];
-        sessionData.dimensionValues = sessionData.dimensionValues || [];
-
-        const restoredState = {
-          ...getDefaultSessionState(),
-          ...sessionData,
-          isActive: sessionData.cards?.length > 0 || sessionData.fileName || sessionData.importedData?.length > 0,
-        };
-
-        setSessionState(restoredState);
-
-        console.log('Session restored successfully:', {
-          cards: restoredState.cards.length,
-          fileName: restoredState.fileName,
-          version: restoredState.currentFileVersion,
-          dataRows: restoredState.importedData.length,
-          columns: restoredState.columns.length,
-          isActive: restoredState.isActive
-        });
-      } else {
-        console.log('No saved session found, using defaults');
+      } catch (error) {
+        console.error('Failed to restore session:', error);
         setSessionState(getDefaultSessionState());
       }
-    } catch (error) {
-      console.error('Failed to restore session:', error);
-      setSessionState(getDefaultSessionState());
-    }
+    })();
   }, []);
 
   // Helper functions for specific state updates
