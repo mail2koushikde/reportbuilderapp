@@ -1196,20 +1196,30 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const sessionData = getInitialStateFromSession();
       if (sessionData) {
         console.log('Restoring work from session:', sessionData);
+
+        // Always restore cards and file info if they exist
         if (sessionData.cards && sessionData.cards.length > 0) {
+          console.log('Restoring cards:', sessionData.cards.length);
           setCards(sessionData.cards);
         }
-        if (sessionData.importedData && sessionData.importedData.length > 0) {
-          setImportedData(sessionData.importedData);
-          setColumns(sessionData.columns || []);
-        }
+
         if (sessionData.fileName) {
+          console.log('Restoring file info:', sessionData.fileName, 'version:', sessionData.currentFileVersion);
           setFileName(sessionData.fileName);
           setCurrentFileVersion(sessionData.currentFileVersion || null);
+          setColumns(sessionData.columns || []);
         }
+
+        // Only restore imported data if it exists and has content
+        if (sessionData.importedData && sessionData.importedData.length > 0) {
+          console.log('Restoring data:', sessionData.importedData.length, 'rows');
+          setImportedData(sessionData.importedData);
+        }
+
         if (sessionData.hideControls !== undefined) {
           setHideControls(sessionData.hideControls);
         }
+
         hasRestoredFromSessionRef.current = true;
       }
     }
