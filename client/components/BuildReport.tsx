@@ -1328,10 +1328,20 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Load data for a specific version from either local or server storage
   const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number) => {
     try {
-      const versionData = availableVersions.find(v => v.version === version);
+      let versionData = availableVersions.find(v => v.version === version);
+
       if (!versionData) {
-        console.error('Version data not found');
-        return;
+        console.warn(`Requested version v${version} not found in availableVersions (${availableVersions.length}).`);
+        // Fallback: if we have any versions, use the latest/highest one
+        if (availableVersions.length > 0) {
+          const fallback = availableVersions[0];
+          console.warn(`Falling back to latest available version v${fallback.version} from ${fallback.sourceLabel}.`);
+          versionData = fallback;
+          version = fallback.version;
+        } else {
+          console.error('Version data not found and no available versions to fallback to');
+          return;
+        }
       }
 
       console.log(`Loading version ${version} from ${versionData.sourceLabel}:`, versionData);
