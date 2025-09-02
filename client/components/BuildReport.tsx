@@ -1150,6 +1150,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Local datasets modal state
   const [showLocalDatasets, setShowLocalDatasets] = useState(false);
 
+  // Chart compatibility state
+  const [chartCompatibilityIssues, setChartCompatibilityIssues] = useState<{[cardId: string]: string[]}>({});
+
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const versionDropdownRef = useRef<HTMLDivElement>(null);
