@@ -2808,8 +2808,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     const cardToDuplicate = cards.find(card => card.id === cardId);
     if (!cardToDuplicate) return;
 
-    // Find available position for the duplicate
-    const position = findAvailablePosition(cardToDuplicate.gridPosition.width, cardToDuplicate.gridPosition.height);
+    console.log('Duplicating card:', cardId, cardToDuplicate.gridPosition);
+
+    // Find available position for the duplicate, passing the source card for smart positioning
+    const position = findAvailablePosition(
+      cardToDuplicate.gridPosition.width,
+      cardToDuplicate.gridPosition.height,
+      cardToDuplicate
+    );
+
+    console.log('New duplicate position:', position);
 
     // Create a new card with copied configuration
     const newCard: DashboardCard = {
