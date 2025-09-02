@@ -1266,12 +1266,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               break;
             }
           } else if (response.status === 404) {
-            console.log(`No server versions found for: ${filenameVariant}`);
+            // 404 is expected when file doesn't exist on server - not an error
+            // Only log for debugging, don't spam console
           } else {
-            console.warn(`Failed to fetch server versions for ${filenameVariant}:`, response.status, response.statusText);
+            console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
           }
         } catch (serverError) {
-          console.error(`Error fetching server versions for ${filenameVariant}:`, serverError);
+          // Network errors should be warnings, not errors (e.g., offline mode)
+          if (serverError instanceof TypeError && serverError.message.includes('fetch')) {
+            // Fetch failed - likely network issue, don't spam console
+          } else {
+            console.warn(`Network issue checking server versions for ${filenameVariant}:`, serverError.message);
+          }
         }
       }
 
