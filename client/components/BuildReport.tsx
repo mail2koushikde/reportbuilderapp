@@ -1097,6 +1097,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
+  // Clear All confirmation dialog state
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
+
   // Storage conflict state
   const [storageConflictData, setStorageConflictData] = useState<any>(null);
   const [selectedStorageType, setSelectedStorageType] = useState<'local' | 'server' | null>(null);
