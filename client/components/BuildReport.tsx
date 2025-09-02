@@ -1377,6 +1377,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } catch (error) {
       console.error('Error fetching file versions:', error);
       setAvailableVersions([]);
+
+      // Show user-friendly error message
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.warn('Network connectivity issue - working in offline mode with local data only');
+      } else {
+        console.error('Unexpected error during version fetching:', error.message);
+      }
     } finally {
       setLoadingVersions(false);
     }
