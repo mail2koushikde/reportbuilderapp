@@ -1260,17 +1260,28 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const fetchWithRetry = async (url: string, retries = 2): Promise<Response | null> => {
         for (let attempt = 0; attempt <= retries; attempt++) {
           try {
+            // Create timeout signal with fallback for older browsers
+            let timeoutSignal;
+            try {
+              timeoutSignal = AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined;
+            } catch {
+              // Fallback for browsers that don't support AbortSignal.timeout
+              const controller = new AbortController();
+              setTimeout(() => controller.abort(), 10000);
+              timeoutSignal = controller.signal;
+            }
+
             const response = await fetch(url, {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
               },
-              // Add a reasonable timeout
-              signal: AbortSignal.timeout(10000) // 10 second timeout
+              ...(timeoutSignal && { signal: timeoutSignal })
             });
             return response;
           } catch (error) {
-            console.warn(`Fetch attempt ${attempt + 1} failed for ${url}:`, error.message);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.warn(`Fetch attempt ${attempt + 1} failed for ${url}:`, errorMessage);
 
             // If this is the last attempt, return null
             if (attempt === retries) {
