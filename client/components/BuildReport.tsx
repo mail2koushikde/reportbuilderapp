@@ -1659,7 +1659,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     };
 
     fetchVersionsForCurrentFile();
-  }, [fileName, currentFileVersion, fetchFileVersions]);
+  }, [fileName, fetchFileVersions]);
 
   // Debug logging for current version changes
   useEffect(() => {
