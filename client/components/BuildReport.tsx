@@ -2913,24 +2913,33 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
     console.log('Duplicating card:', cardId, cardToDuplicate.gridPosition);
 
-    // Find available position for the duplicate, passing the source card for smart positioning
-    const position = findAvailablePosition(
+    // Find available position with adaptive sizing for the duplicate
+    const adaptivePosition = findAvailablePositionWithAdaptiveSize(
       cardToDuplicate.gridPosition.width,
       cardToDuplicate.gridPosition.height,
       cardToDuplicate
     );
 
-    console.log('New duplicate position:', position);
+    console.log('New duplicate position with adaptive sizing:', adaptivePosition);
 
-    // Create a new card with copied configuration
+    // Check if the card was resized
+    const wasResized = adaptivePosition.width !== cardToDuplicate.gridPosition.width ||
+                      adaptivePosition.height !== cardToDuplicate.gridPosition.height;
+
+    if (wasResized) {
+      console.log(`Card resized from ${cardToDuplicate.gridPosition.width}x${cardToDuplicate.gridPosition.height} to ${adaptivePosition.width}x${adaptivePosition.height} to fit available space`);
+    }
+
+    // Create a new card with copied configuration and adaptive positioning/sizing
     const newCard: DashboardCard = {
       ...cardToDuplicate, // Copy all properties
       id: `card-${Date.now()}`, // New unique ID
-      title: `${cardToDuplicate.title} (Copy)`, // Add "(Copy)" to title
+      title: `${cardToDuplicate.title} (Copy)${wasResized ? ' (Resized)' : ''}`, // Add "(Copy)" and "(Resized)" if applicable
       gridPosition: {
-        ...cardToDuplicate.gridPosition,
-        x: position.x,
-        y: position.y,
+        x: adaptivePosition.x,
+        y: adaptivePosition.y,
+        width: adaptivePosition.width,
+        height: adaptivePosition.height,
       },
       textBoxes: [], // Reset text boxes (they're card-specific)
       arrows: [], // Reset arrows (they're card-specific)
@@ -2941,7 +2950,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setTimeout(() => saveToHistory(newCards), 0);
       return newCards;
     });
-  }, [cards, findAvailablePosition]);
+  }, [cards, findAvailablePositionWithAdaptiveSize]);
 
   // Save view functionality
   const saveCurrentView = useCallback(async () => {
