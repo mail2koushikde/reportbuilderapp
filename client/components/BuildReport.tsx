@@ -7973,8 +7973,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       {/* Clear All Confirmation Dialog */}
       {showClearAllDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div className="fixed top-0 right-0 left-0 z-50 p-4">
+          <div className="glass-card rounded-xl p-6 max-w-md mx-auto mt-16">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
                 <Trash className="w-5 h-5 text-red-400" />
