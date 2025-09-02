@@ -1526,10 +1526,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               setShowVersionDropdown(false);
               setCacheEnabled(false); // Fresh data doesn't use cache
 
-              // Show success notification
-              setUploadedFileName(`${filename} (v${version}) - Snowflake`);
-              setShowUploadSuccess(true);
-              setTimeout(() => setShowUploadSuccess(false), 3000);
+              // Show success notification (only if not auto-reload)
+              if (!isAutoReload) {
+                setUploadedFileName(`${filename} (v${version}) - Snowflake`);
+                setShowUploadSuccess(true);
+                setTimeout(() => setShowUploadSuccess(false), 3000);
+              }
 
               console.log(`Loaded server version ${version} with ${result.data.length} rows`);
             } else {
@@ -7508,7 +7510,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
                               }`}
                             >
-                              Ascending ↑
+                              Ascending ��
                             </button>
                             <button
                               onClick={() => updateCard(card.id, { sortOrder: 'desc' })}
