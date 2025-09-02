@@ -3883,6 +3883,38 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       }
     }
 
+    // Check for column compatibility issues
+    const cardIssues = chartCompatibilityIssues[card.id];
+    if (cardIssues && cardIssues.length > 0) {
+      return (
+        <div className="text-white/60 text-center p-4">
+          <div className="mb-3">
+            <div className="text-red-400 font-medium mb-2">⚠️ Chart Configuration Error</div>
+            <div className="text-sm mb-2">This chart cannot be rendered with the current dataset version:</div>
+            <ul className="text-xs text-left space-y-1 mb-3">
+              {cardIssues.map((issue, index) => (
+                <li key={index} className="text-red-300">• {issue}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="space-y-2">
+            <button
+              onClick={() => setConfiguringCard(card.id)}
+              className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-1.5 rounded text-sm border border-blue-400/30 mr-2"
+            >
+              Reconfigure Chart
+            </button>
+            <button
+              onClick={() => setShowVersionDropdown(true)}
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded text-sm border border-amber-400/30"
+            >
+              Switch Version
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // Special validation for mixbar
     if (card.chartType === 'mixbar' && !card.dimension2) {
       return (
