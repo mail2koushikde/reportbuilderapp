@@ -1461,6 +1461,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     console.log('Current file version changed to:', currentFileVersion, 'for file:', fileName);
   }, [currentFileVersion, fileName]);
 
+  // Guard to ensure we auto-reload only once per session restore
+  const hasAutoReloadedRef = React.useRef(false);
+
   // Auto-reload data when session is restored with file info but no data
   useEffect(() => {
     const shouldAutoReload =
@@ -1468,12 +1471,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       currentFileVersion &&
       currentFileVersion > 0 &&
       importedData.length === 0 &&
-      !loadedReportState; // Only auto-reload for session restore, not saved reports
+      !loadedReportState &&
+      !hasAutoReloadedRef.current; // Only auto-reload once
 
     if (shouldAutoReload) {
       console.log('Auto-reloading data for session restore:', fileName, 'v' + currentFileVersion);
       // Small delay to ensure versions are fetched first
       const timer = setTimeout(() => {
+        hasAutoReloadedRef.current = true;
         loadFileVersion(userEmail, fileName, currentFileVersion);
       }, 100);
       return () => clearTimeout(timer);
