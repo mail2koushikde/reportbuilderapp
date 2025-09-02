@@ -1168,22 +1168,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
   // Sync cards to session whenever they change
   useEffect(() => {
-    if (cards.length > 0) {
-      syncCards(cards);
+    try {
+      if (cards.length > 0) {
+        syncCards(cards);
+      }
+    } catch (e) {
+      console.warn('Failed to sync cards to session:', e.message);
     }
   }, [cards, syncCards]);
 
   // Sync imported data to session whenever it changes
   useEffect(() => {
-    if (importedData.length > 0 && columns.length > 0) {
-      syncData(importedData, columns);
+    try {
+      if (importedData.length > 0 && columns.length > 0) {
+        syncData(importedData, columns);
+      }
+    } catch (e) {
+      console.warn('Failed to sync data to session:', e.message);
     }
   }, [importedData, columns, syncData]);
 
   // Sync file information to session whenever it changes
   useEffect(() => {
-    if (fileName) {
-      syncFile(fileName, currentFileVersion);
+    try {
+      if (fileName) {
+        syncFile(fileName, currentFileVersion);
+      }
+    } catch (e) {
+      console.warn('Failed to sync file info to session:', e.message);
     }
   }, [fileName, currentFileVersion, syncFile]);
 
