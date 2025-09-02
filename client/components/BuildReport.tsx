@@ -1434,7 +1434,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 setCurrentFileVersion(chosen.version);
                 setShowVersionDropdown(false);
                 setCacheEnabled(false);
-                if (!isAutoReload) {
+                if (!isAutoReload && !isVersionSwitch) {
                   setUploadedFileName(`${filename} (v${chosen.version}) - Local Storage`);
                   setShowUploadSuccess(true);
                   setTimeout(() => setShowUploadSuccess(false), 3000);
@@ -1458,7 +1458,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               if (cached.fileName) setFileName(cached.fileName);
               setShowVersionDropdown(false);
               setCacheEnabled(false);
-              if (!isAutoReload) {
+              if (!isAutoReload && !isVersionSwitch) {
                 setUploadedFileName(cached.fileName || 'Cached dataset');
                 setShowUploadSuccess(true);
                 setTimeout(() => setShowUploadSuccess(false), 3000);
@@ -1502,8 +1502,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           setShowVersionDropdown(false);
           setCacheEnabled(false); // Local data doesn't use cache
 
-          // Show success notification (only if not auto-reload)
-          if (!isAutoReload) {
+          // Show success notification (only if not auto-reload and not version switch)
+          if (!isAutoReload && !isVersionSwitch) {
             setUploadedFileName(`${filename} (v${version}) - Local Storage`);
             setShowUploadSuccess(true);
             setTimeout(() => setShowUploadSuccess(false), 3000);
@@ -1529,8 +1529,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               setShowVersionDropdown(false);
               setCacheEnabled(false); // Fresh data doesn't use cache
 
-              // Show success notification (only if not auto-reload)
-              if (!isAutoReload) {
+              // Show success notification (only if not auto-reload and not version switch)
+              if (!isAutoReload && !isVersionSwitch) {
                 setUploadedFileName(`${filename} (v${version}) - Snowflake`);
                 setShowUploadSuccess(true);
                 setTimeout(() => setShowUploadSuccess(false), 3000);
