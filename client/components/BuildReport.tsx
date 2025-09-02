@@ -5011,7 +5011,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         key={item.name}
                         className="flex flex-col items-center relative"
                         style={{
-                          width: barWidth + barSpacing,
+                          width: Math.max(0, barWidth + barSpacing),
                           marginRight: index < processedData.length - 1 ? 0 : 0,
                           marginBottom: '40px' // Space for labels below X-axis
                         }}
