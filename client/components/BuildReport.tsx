@@ -1420,9 +1420,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
         setAvailableVersions(sortedVersions);
 
-        // Set current version to the highest version if not already set or if current is lower
+        // Set current version to the highest version only if not already set
         const highestVersion = sortedVersions[0].version;
-        if (!currentFileVersion || currentFileVersion < highestVersion) {
+        if (!currentFileVersion) {
           console.log(`Setting current version to highest available: v${highestVersion} (${sortedVersions[0].sourceLabel})`);
           setCurrentFileVersion(highestVersion);
         }
