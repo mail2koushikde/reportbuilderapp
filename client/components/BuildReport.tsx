@@ -2466,23 +2466,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     return { minX, maxX, minY, maxY };
   }, [gridCols, gridRows]);
 
-  const findAvailablePosition = useCallback((width: number, height: number, sourceCard?: DashboardCard) => {
-    // Reserve edge space (1/4 grid from edges) - match auto-resize spacing exactly
-    const edgeGap = 0.5; // Increased gap for better visibility
-    const cardGap = 0.5; // Increased gap to prevent visual overlap
+  const findAvailablePositionWithAdaptiveSize = useCallback((
+    preferredWidth: number,
+    preferredHeight: number,
+    sourceCard?: DashboardCard
+  ): { x: number; y: number; width: number; height: number } => {
+    // Reserve edge space and define minimum card sizes
+    const edgeGap = 0.5;
+    const cardGap = 0.5;
+    const minWidth = 4; // Minimum card width (4 grid units)
+    const minHeight = 3; // Minimum card height (3 grid units)
 
     // Get the currently visible area
     const visibleBounds = getVisibleGridBounds();
 
-    console.log('Finding position for card:', { width, height, visibleBounds, sourceCard: sourceCard?.id });
+    console.log('Finding adaptive position for card:', {
+      preferredWidth,
+      preferredHeight,
+      visibleBounds,
+      sourceCard: sourceCard?.id
+    });
 
-    // Helper function to test if a position is available
-    const isPositionAvailable = (x: number, y: number) => {
+    // Helper function to test if a position with specific dimensions is available
+    const isPositionAvailable = (x: number, y: number, w: number, h: number) => {
       const testCard: DashboardCard = {
         id: 'test',
         chartType: 'pie',
         title: '',
-        gridPosition: { x, y, width, height },
+        gridPosition: { x, y, width: w, height: h },
         isConfiguring: false,
         dimension: '',
         measure: '',
@@ -2498,6 +2509,84 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       return !checkOverlap(testCard);
     };
 
+    // Helper function to calculate maximum available space at a position
+    const getMaxAvailableSpace = (x: number, y: number) => {
+      let maxWidth = Math.min(gridCols - edgeGap - x, visibleBounds.maxX - x);
+      let maxHeight = Math.min(gridRows - edgeGap - y, visibleBounds.maxY - y);
+
+      // Check constraints from existing cards
+      for (const card of cards) {
+        const cardRight = card.gridPosition.x + card.gridPosition.width;
+        const cardBottom = card.gridPosition.y + card.gridPosition.height;
+
+        // If card is to the right and on same or overlapping Y
+        if (card.gridPosition.x > x &&
+            card.gridPosition.y < y + maxHeight &&
+            cardBottom > y) {
+          maxWidth = Math.min(maxWidth, card.gridPosition.x - x - cardGap);
+        }
+
+        // If card is below and on same or overlapping X
+        if (card.gridPosition.y > y &&
+            card.gridPosition.x < x + maxWidth &&
+            cardRight > x) {
+          maxHeight = Math.min(maxHeight, card.gridPosition.y - y - cardGap);
+        }
+      }
+
+      return {
+        width: Math.max(minWidth, maxWidth),
+        height: Math.max(minHeight, maxHeight)
+      };
+    };
+
+    // Helper function to try placing a card with adaptive sizing
+    const tryPlaceWithAdaptiveSize = (x: number, y: number, maxW?: number, maxH?: number) => {
+      // Determine available space constraints
+      const space = maxW && maxH ?
+        { width: maxW, height: maxH } :
+        getMaxAvailableSpace(x, y);
+
+      // Try preferred size first
+      if (preferredWidth <= space.width && preferredHeight <= space.height &&
+          isPositionAvailable(x, y, preferredWidth, preferredHeight)) {
+        return { x, y, width: preferredWidth, height: preferredHeight };
+      }
+
+      // Try different size combinations that fit the available space
+      const sizesToTry = [
+        // Preserve aspect ratio first
+        {
+          width: Math.min(preferredWidth, space.width),
+          height: Math.min(preferredHeight, space.height)
+        },
+        // Try square proportions
+        {
+          width: Math.min(space.width, 6),
+          height: Math.min(space.height, 6)
+        },
+        // Try compact sizes
+        {
+          width: Math.min(space.width, 5),
+          height: Math.min(space.height, 4)
+        },
+        {
+          width: Math.min(space.width, 4),
+          height: Math.min(space.height, 3)
+        },
+      ];
+
+      for (const size of sizesToTry) {
+        if (size.width >= minWidth && size.height >= minHeight &&
+            isPositionAvailable(x, y, size.width, size.height)) {
+          console.log('Found adaptive size:', { x, y, ...size });
+          return { x, y, width: size.width, height: size.height };
+        }
+      }
+
+      return null;
+    };
+
     // Strategy 1: If we have a source card (duplication), try to place nearby
     if (sourceCard) {
       const sourceX = sourceCard.gridPosition.x;
@@ -2505,80 +2594,94 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const sourceWidth = sourceCard.gridPosition.width;
       const sourceHeight = sourceCard.gridPosition.height;
 
-      console.log('Trying positions near source card:', { sourceX, sourceY, sourceWidth, sourceHeight });
+      console.log('Trying adaptive positions near source card:', { sourceX, sourceY, sourceWidth, sourceHeight });
 
       // Try to the right of the source card first
       const rightX = sourceX + sourceWidth + cardGap;
-      if (rightX + width <= gridCols - edgeGap &&
-          rightX >= visibleBounds.minX && rightX + width <= visibleBounds.maxX &&
-          isPositionAvailable(rightX, sourceY)) {
-        console.log('Found position to the right:', { x: rightX, y: sourceY });
-        return { x: rightX, y: sourceY };
+      const rightMaxWidth = Math.min(gridCols - edgeGap - rightX, visibleBounds.maxX - rightX);
+      if (rightX + minWidth <= gridCols - edgeGap && rightMaxWidth >= minWidth) {
+        const result = tryPlaceWithAdaptiveSize(rightX, sourceY, rightMaxWidth, sourceHeight);
+        if (result) {
+          console.log('Found adaptive position to the right:', result);
+          return result;
+        }
       }
 
       // Try below the source card
       const belowY = sourceY + sourceHeight + cardGap;
-      if (belowY + height <= gridRows - edgeGap &&
-          belowY >= visibleBounds.minY && belowY + height <= visibleBounds.maxY &&
-          isPositionAvailable(sourceX, belowY)) {
-        console.log('Found position below:', { x: sourceX, y: belowY });
-        return { x: sourceX, y: belowY };
+      const belowMaxHeight = Math.min(gridRows - edgeGap - belowY, visibleBounds.maxY - belowY);
+      if (belowY + minHeight <= gridRows - edgeGap && belowMaxHeight >= minHeight) {
+        const result = tryPlaceWithAdaptiveSize(sourceX, belowY, sourceWidth, belowMaxHeight);
+        if (result) {
+          console.log('Found adaptive position below:', result);
+          return result;
+        }
       }
 
       // Try to the left of the source card
-      const leftX = sourceX - width - cardGap;
-      if (leftX >= edgeGap &&
-          leftX >= visibleBounds.minX && leftX + width <= visibleBounds.maxX &&
-          isPositionAvailable(leftX, sourceY)) {
-        console.log('Found position to the left:', { x: leftX, y: sourceY });
-        return { x: leftX, y: sourceY };
+      const leftX = sourceX - minWidth - cardGap;
+      if (leftX >= edgeGap) {
+        const leftMaxWidth = sourceX - edgeGap - cardGap;
+        const result = tryPlaceWithAdaptiveSize(leftX, sourceY, leftMaxWidth, sourceHeight);
+        if (result) {
+          console.log('Found adaptive position to the left:', result);
+          return result;
+        }
       }
 
       // Try above the source card
-      const aboveY = sourceY - height - cardGap;
-      if (aboveY >= edgeGap &&
-          aboveY >= visibleBounds.minY && aboveY + height <= visibleBounds.maxY &&
-          isPositionAvailable(sourceX, aboveY)) {
-        console.log('Found position above:', { x: sourceX, y: aboveY });
-        return { x: sourceX, y: aboveY };
+      const aboveY = sourceY - minHeight - cardGap;
+      if (aboveY >= edgeGap) {
+        const aboveMaxHeight = sourceY - edgeGap - cardGap;
+        const result = tryPlaceWithAdaptiveSize(sourceX, aboveY, sourceWidth, aboveMaxHeight);
+        if (result) {
+          console.log('Found adaptive position above:', result);
+          return result;
+        }
       }
     }
 
-    // Strategy 2: Search systematically in the visible area (horizontal first, then vertical)
-    console.log('Searching systematically in visible area');
+    // Strategy 2: Search systematically in the visible area with adaptive sizing
+    console.log('Searching systematically with adaptive sizing');
 
-    // For each row in visible area
     for (let currentY = Math.max(edgeGap, visibleBounds.minY);
-         currentY + height <= Math.min(gridRows - edgeGap, visibleBounds.maxY);
+         currentY + minHeight <= Math.min(gridRows - edgeGap, visibleBounds.maxY);
          currentY += cardGap) {
 
-      // For each column in that row
       for (let currentX = Math.max(edgeGap, visibleBounds.minX);
-           currentX + width <= Math.min(gridCols - edgeGap, visibleBounds.maxX);
+           currentX + minWidth <= Math.min(gridCols - edgeGap, visibleBounds.maxX);
            currentX += cardGap) {
 
-        if (isPositionAvailable(currentX, currentY)) {
-          console.log('Found systematic position:', { x: currentX, y: currentY });
-          return { x: currentX, y: currentY };
+        const result = tryPlaceWithAdaptiveSize(currentX, currentY);
+        if (result) {
+          console.log('Found systematic adaptive position:', result);
+          return result;
         }
       }
     }
 
-    // Strategy 3: Search the entire grid if nothing found in viewport
-    console.log('Searching entire grid');
-    for (let currentY = edgeGap; currentY + height <= gridRows - edgeGap; currentY += cardGap) {
-      for (let currentX = edgeGap; currentX + width <= gridCols - edgeGap; currentX += cardGap) {
-        if (isPositionAvailable(currentX, currentY)) {
-          console.log('Found global position:', { x: currentX, y: currentY });
-          return { x: currentX, y: currentY };
+    // Strategy 3: Search the entire grid with adaptive sizing
+    console.log('Searching entire grid with adaptive sizing');
+    for (let currentY = edgeGap; currentY + minHeight <= gridRows - edgeGap; currentY += cardGap) {
+      for (let currentX = edgeGap; currentX + minWidth <= gridCols - edgeGap; currentX += cardGap) {
+        const result = tryPlaceWithAdaptiveSize(currentX, currentY);
+        if (result) {
+          console.log('Found global adaptive position:', result);
+          return result;
         }
       }
     }
 
-    // Fallback to default position if no space found anywhere
-    console.warn('No available position found, using fallback');
-    return { x: edgeGap, y: edgeGap };
-  }, [checkOverlap, getVisibleGridBounds, gridCols, gridRows]);
+    // Fallback to minimum size at default position
+    console.warn('No available adaptive position found, using minimum size fallback');
+    return { x: edgeGap, y: edgeGap, width: minWidth, height: minHeight };
+  }, [checkOverlap, getVisibleGridBounds, gridCols, gridRows, cards]);
+
+  // Keep the old function for backward compatibility
+  const findAvailablePosition = useCallback((width: number, height: number, sourceCard?: DashboardCard) => {
+    const result = findAvailablePositionWithAdaptiveSize(width, height, sourceCard);
+    return { x: result.x, y: result.y };
+  }, [findAvailablePositionWithAdaptiveSize]);
 
   // Helper function to get default dimension and measure for new charts
   const getDefaultValues = useCallback(() => {
