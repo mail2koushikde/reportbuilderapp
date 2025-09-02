@@ -3049,6 +3049,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         cards: optimizedCards,
         hideControls: hideControls,
         importedData: optimizedImportedData,
+        columns: columns,
+        fileName: fileName,
+        currentFileVersion: currentFileVersion,
         cacheInfo: hasCachedData ? {
           sessionId: cacheService.getSessionId(),
           fileName,
