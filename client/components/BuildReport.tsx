@@ -1431,9 +1431,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 setCurrentFileVersion(chosen.version);
                 setShowVersionDropdown(false);
                 setCacheEnabled(false);
-                setUploadedFileName(`${filename} (v${chosen.version}) - Local Storage`);
-                setShowUploadSuccess(true);
-                setTimeout(() => setShowUploadSuccess(false), 3000);
+                if (!isAutoReload) {
+                  setUploadedFileName(`${filename} (v${chosen.version}) - Local Storage`);
+                  setShowUploadSuccess(true);
+                  setTimeout(() => setShowUploadSuccess(false), 3000);
+                }
                 console.log(`Loaded local fallback version ${chosen.version} with ${data.length} rows`);
                 return;
               }
