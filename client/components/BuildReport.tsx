@@ -1256,11 +1256,45 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         filename.endsWith('.csv') ? filename.slice(0, -4) : `${filename}.csv`
       ];
 
+      // Helper function to retry fetch requests
+      const fetchWithRetry = async (url: string, retries = 2): Promise<Response | null> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              // Add a reasonable timeout
+              signal: AbortSignal.timeout(10000) // 10 second timeout
+            });
+            return response;
+          } catch (error) {
+            console.warn(`Fetch attempt ${attempt + 1} failed for ${url}:`, error.message);
+
+            // If this is the last attempt, return null
+            if (attempt === retries) {
+              return null;
+            }
+
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          }
+        }
+        return null;
+      };
+
       let foundServerVersions = false;
       for (const filenameVariant of filenameVariants) {
         try {
           const encodedFilename = encodeURIComponent(filenameVariant);
-          const response = await fetch(`/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`);
+          const url = `/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`;
+          const response = await fetchWithRetry(url);
+
+          if (!response) {
+            console.warn(`Failed to fetch server versions for ${filenameVariant} after retries - continuing with local versions only`);
+            continue;
+          }
 
           if (response.ok) {
             const result = await response.json();
@@ -1279,17 +1313,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             }
           } else if (response.status === 404) {
             // 404 is expected when file doesn't exist on server - not an error
-            // Only log for debugging, don't spam console
+            console.log(`No server versions found for: ${filenameVariant} (404)`);
           } else {
             console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
           }
         } catch (serverError) {
-          // Network errors should be warnings, not errors (e.g., offline mode)
-          if (serverError instanceof TypeError && serverError.message.includes('fetch')) {
-            // Fetch failed - likely network issue, don't spam console
-          } else {
-            console.warn(`Network issue checking server versions for ${filenameVariant}:`, serverError.message);
-          }
+          console.warn(`Unexpected error checking server versions for ${filenameVariant}:`, serverError.message);
         }
       }
 
