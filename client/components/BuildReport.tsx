@@ -3259,6 +3259,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [filteredData]);
 
+  // Validate chart compatibility when columns or cards change
+  useEffect(() => {
+    if (columns.length > 0 && cards.length > 0) {
+      validateChartCompatibility();
+    } else {
+      setChartCompatibilityIssues({});
+    }
+  }, [columns, cards, validateChartCompatibility]);
+
   const openSaveDialog = useCallback(async () => {
     if (cards.length === 0) {
       console.log('No charts to save');
