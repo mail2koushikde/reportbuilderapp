@@ -1187,9 +1187,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [fileName, currentFileVersion, syncFile]);
 
+  // Guard to avoid multiple session restores
+  const hasRestoredFromSessionRef = React.useRef(false);
+
   // Initialize from session if no loadedReportState is provided
   useEffect(() => {
-    if (!loadedReportState && hasActiveSession) {
+    if (!loadedReportState && hasActiveSession && !hasRestoredFromSessionRef.current) {
       const sessionData = getInitialStateFromSession();
       if (sessionData) {
         console.log('Restoring work from session:', sessionData);
@@ -1207,6 +1210,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         if (sessionData.hideControls !== undefined) {
           setHideControls(sessionData.hideControls);
         }
+        hasRestoredFromSessionRef.current = true;
       }
     }
   }, [loadedReportState, hasActiveSession, getInitialStateFromSession]);
