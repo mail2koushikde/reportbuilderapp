@@ -2466,72 +2466,118 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     return { minX, maxX, minY, maxY };
   }, [gridCols, gridRows]);
 
-  const findAvailablePosition = useCallback((width: number, height: number) => {
+  const findAvailablePosition = useCallback((width: number, height: number, sourceCard?: DashboardCard) => {
     // Reserve edge space (1/4 grid from edges) - match auto-resize spacing exactly
-    const edgeGap = 0.25;
-    const cardGap = 0.25;
+    const edgeGap = 0.5; // Increased gap for better visibility
+    const cardGap = 0.5; // Increased gap to prevent visual overlap
 
     // Get the currently visible area
     const visibleBounds = getVisibleGridBounds();
 
-    // Helper function to search for position in a given area
-    const searchInArea = (minX: number, maxX: number, minY: number, maxY: number) => {
-      // Start from edge spacing and increment by card size + gap
-      let currentY = Math.max(edgeGap, minY);
-      while (currentY + height <= Math.min(gridRows - edgeGap, maxY)) {
-        let currentX = Math.max(edgeGap, minX);
-        while (currentX + width <= Math.min(gridCols - edgeGap, maxX)) {
-          const testCard: DashboardCard = {
-            id: 'test',
-            chartType: 'pie',
-            title: '',
-            gridPosition: { x: currentX, y: currentY, width, height },
-            isConfiguring: false,
-            dimension: '',
-            measure: '',
-            yAxisScale: 'linear',
-            sortBy: 'dimension',
-            sortOrder: 'asc',
-            mergedBars: {},
-            customNames: {},
-            textBoxes: [],
-            arrows: [],
-          };
+    console.log('Finding position for card:', { width, height, visibleBounds, sourceCard: sourceCard?.id });
 
-          if (!checkOverlap(testCard)) {
-            return { x: currentX, y: currentY };
-          }
+    // Helper function to test if a position is available
+    const isPositionAvailable = (x: number, y: number) => {
+      const testCard: DashboardCard = {
+        id: 'test',
+        chartType: 'pie',
+        title: '',
+        gridPosition: { x, y, width, height },
+        isConfiguring: false,
+        dimension: '',
+        measure: '',
+        yAxisScale: 'linear',
+        sortBy: 'dimension',
+        sortOrder: 'asc',
+        mergedBars: {},
+        customNames: {},
+        textBoxes: [],
+        arrows: [],
+      };
 
-          // Move to next position with proper spacing
-          currentX += width + cardGap;
-        }
-        // Move to next row with proper spacing
-        currentY += height + cardGap;
-      }
-      return null;
+      return !checkOverlap(testCard);
     };
 
-    // First, try to find a position in the visible area
-    const visiblePosition = searchInArea(
-      visibleBounds.minX,
-      visibleBounds.maxX,
-      visibleBounds.minY,
-      visibleBounds.maxY
-    );
+    // Strategy 1: If we have a source card (duplication), try to place nearby
+    if (sourceCard) {
+      const sourceX = sourceCard.gridPosition.x;
+      const sourceY = sourceCard.gridPosition.y;
+      const sourceWidth = sourceCard.gridPosition.width;
+      const sourceHeight = sourceCard.gridPosition.height;
 
-    if (visiblePosition) {
-      return visiblePosition;
+      console.log('Trying positions near source card:', { sourceX, sourceY, sourceWidth, sourceHeight });
+
+      // Try to the right of the source card first
+      const rightX = sourceX + sourceWidth + cardGap;
+      if (rightX + width <= gridCols - edgeGap &&
+          rightX >= visibleBounds.minX && rightX + width <= visibleBounds.maxX &&
+          isPositionAvailable(rightX, sourceY)) {
+        console.log('Found position to the right:', { x: rightX, y: sourceY });
+        return { x: rightX, y: sourceY };
+      }
+
+      // Try below the source card
+      const belowY = sourceY + sourceHeight + cardGap;
+      if (belowY + height <= gridRows - edgeGap &&
+          belowY >= visibleBounds.minY && belowY + height <= visibleBounds.maxY &&
+          isPositionAvailable(sourceX, belowY)) {
+        console.log('Found position below:', { x: sourceX, y: belowY });
+        return { x: sourceX, y: belowY };
+      }
+
+      // Try to the left of the source card
+      const leftX = sourceX - width - cardGap;
+      if (leftX >= edgeGap &&
+          leftX >= visibleBounds.minX && leftX + width <= visibleBounds.maxX &&
+          isPositionAvailable(leftX, sourceY)) {
+        console.log('Found position to the left:', { x: leftX, y: sourceY });
+        return { x: leftX, y: sourceY };
+      }
+
+      // Try above the source card
+      const aboveY = sourceY - height - cardGap;
+      if (aboveY >= edgeGap &&
+          aboveY >= visibleBounds.minY && aboveY + height <= visibleBounds.maxY &&
+          isPositionAvailable(sourceX, aboveY)) {
+        console.log('Found position above:', { x: sourceX, y: aboveY });
+        return { x: sourceX, y: aboveY };
+      }
     }
 
-    // If no position found in visible area, search the entire grid
-    const globalPosition = searchInArea(0, gridCols, 0, gridRows);
+    // Strategy 2: Search systematically in the visible area (horizontal first, then vertical)
+    console.log('Searching systematically in visible area');
 
-    if (globalPosition) {
-      return globalPosition;
+    // For each row in visible area
+    for (let currentY = Math.max(edgeGap, visibleBounds.minY);
+         currentY + height <= Math.min(gridRows - edgeGap, visibleBounds.maxY);
+         currentY += cardGap) {
+
+      // For each column in that row
+      for (let currentX = Math.max(edgeGap, visibleBounds.minX);
+           currentX + width <= Math.min(gridCols - edgeGap, visibleBounds.maxX);
+           currentX += cardGap) {
+
+        if (isPositionAvailable(currentX, currentY)) {
+          console.log('Found systematic position:', { x: currentX, y: currentY });
+          return { x: currentX, y: currentY };
+        }
+      }
+    }
+
+    // Strategy 3: Search the entire grid if nothing found in viewport
+    console.log('Searching entire grid');
+    for (let currentY = edgeGap; currentY + height <= gridRows - edgeGap; currentY += cardGap) {
+      for (let currentX = edgeGap; currentX + width <= gridCols - edgeGap; currentX += cardGap) {
+        if (isPositionAvailable(currentX, currentY)) {
+          console.log('Found global position:', { x: currentX, y: currentY });
+          return { x: currentX, y: currentY };
+        }
+      }
     }
 
     // Fallback to default position if no space found anywhere
-    return { x: 0, y: 0 };
+    console.warn('No available position found, using fallback');
+    return { x: edgeGap, y: edgeGap };
   }, [checkOverlap, getVisibleGridBounds, gridCols, gridRows]);
 
   // Helper function to get default dimension and measure for new charts
