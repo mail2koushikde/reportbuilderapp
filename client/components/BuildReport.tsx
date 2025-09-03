@@ -6521,7 +6521,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <button
                 onClick={() => setShowSnowflakeModal(true)}
                 className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition-colors border border-blue-400/30"
-                title="Connect to Snowflake table"
+                title="Connect to Snowflake Dataset"
               >
                 <Database className="w-3 h-3" />
               </button>
@@ -7832,7 +7832,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           <div className="glass-card rounded-xl p-6 w-full max-w-md">
             <div className="flex items-center gap-3 mb-4">
               <Database className="w-5 h-5 text-blue-400" />
-              <h2 className="text-lg font-semibold text-white">Connect to Snowflake table</h2>
+              <h2 className="text-lg font-semibold text-white">Connect to Snowflake Dataset</h2>
             </div>
 
             <div className="space-y-4">
