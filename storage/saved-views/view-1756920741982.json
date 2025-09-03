@@ -1,18 +1,18 @@
 {
-  "id": "1756919306727",
-  "name": "Dashboard 9/3/2025 - 5 charts",
-  "savedAt": "2025-09-03T17:08:26.727Z",
+  "id": "1756920741982",
+  "name": "Dashboard 9/3/2025 - 2 charts",
+  "savedAt": "2025-09-03T17:32:21.982Z",
   "dashboardState": {
     "cards": [
       {
-        "id": "card-1756839935873",
-        "chartType": "bar",
+        "id": "card-1756920723433",
+        "chartType": "pie",
         "title": "Chart 1",
         "gridPosition": {
           "x": 0.5,
           "y": 0.5,
-          "width": 17,
-          "height": 13
+          "width": 15,
+          "height": 12
         },
         "isConfiguring": false,
         "dimension": "FISCAL_STATE",
@@ -30,89 +30,14 @@
         "dimension2": ""
       },
       {
-        "id": "card-1756839943336",
+        "id": "card-1756920731296",
         "chartType": "bar",
         "title": "Chart 1 (Copy)",
         "gridPosition": {
-          "x": 18,
+          "x": 16,
           "y": 0.5,
-          "width": 21,
-          "height": 15
-        },
-        "isConfiguring": false,
-        "dimension": "FISCAL_STATE",
-        "measure": "FYQTR",
-        "measure2": "",
-        "seriesColumn": "",
-        "yAxisScale": "linear",
-        "yAxisFormat": "default",
-        "sortBy": "measure",
-        "sortOrder": "desc",
-        "mergedBars": {},
-        "customNames": {},
-        "textBoxes": [],
-        "arrows": [],
-        "dimension2": ""
-      },
-      {
-        "id": "card-1756851171595",
-        "chartType": "bar",
-        "title": "Chart 1 (Copy)",
-        "gridPosition": {
-          "x": 0.5,
-          "y": 14,
-          "width": 17,
-          "height": 13
-        },
-        "isConfiguring": false,
-        "dimension": "FISCAL_STATE",
-        "measure": "FYQTR",
-        "measure2": "",
-        "seriesColumn": "",
-        "yAxisScale": "linear",
-        "yAxisFormat": "default",
-        "sortBy": "measure",
-        "sortOrder": "desc",
-        "mergedBars": {},
-        "customNames": {},
-        "textBoxes": [],
-        "arrows": [],
-        "dimension2": ""
-      },
-      {
-        "id": "card-1756851172356",
-        "chartType": "bar",
-        "title": "Chart 1 (Copy) (Resized)",
-        "gridPosition": {
-          "x": 39.5,
-          "y": 0.5,
-          "width": 9,
-          "height": 13
-        },
-        "isConfiguring": false,
-        "dimension": "FISCAL_STATE",
-        "measure": "FYQTR",
-        "measure2": "",
-        "seriesColumn": "",
-        "yAxisScale": "linear",
-        "yAxisFormat": "default",
-        "sortBy": "measure",
-        "sortOrder": "desc",
-        "mergedBars": {},
-        "customNames": {},
-        "textBoxes": [],
-        "arrows": [],
-        "dimension2": ""
-      },
-      {
-        "id": "card-1756851173256",
-        "chartType": "bar",
-        "title": "Chart 1 (Copy) (Resized)",
-        "gridPosition": {
-          "x": 39.5,
-          "y": 14,
-          "width": 9,
-          "height": 13
+          "width": 18,
+          "height": 16
         },
         "isConfiguring": false,
         "dimension": "FISCAL_STATE",
@@ -133,7 +58,7 @@
     "hideControls": false,
     "importedData": [
       {
-        "FYQTR": "202403",
+        "FYQTR": 202403,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (WW)",
@@ -144,13 +69,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202403",
+        "FYQTR": 202403,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (WW)",
@@ -161,13 +86,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "15.57",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "15.57"
+        "TOTAL_SPEND": 15.57,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 15.57
       },
       {
-        "FYQTR": "202403",
+        "FYQTR": 202403,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -178,13 +103,13 @@
         "GEO_LEVEL_4_NAME": "Australia",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "ANZ",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -195,13 +120,13 @@
         "GEO_LEVEL_4_NAME": "US",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "US",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -212,13 +137,13 @@
         "GEO_LEVEL_4_NAME": "Singapore",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "SEA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202403",
+        "FYQTR": 202403,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -229,13 +154,13 @@
         "GEO_LEVEL_4_NAME": "New Zealand",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "ANZ",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -246,13 +171,13 @@
         "GEO_LEVEL_4_NAME": "Chile",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "LATAM",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202402",
+        "FYQTR": 202402,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -263,13 +188,13 @@
         "GEO_LEVEL_4_NAME": "UK",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -280,13 +205,13 @@
         "GEO_LEVEL_4_NAME": "US",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "US",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -297,13 +222,13 @@
         "GEO_LEVEL_4_NAME": "Russia",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202502",
+        "FYQTR": 202502,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -314,13 +239,13 @@
         "GEO_LEVEL_4_NAME": "Brazil",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "BR",
-        "TOTAL_SPEND": "0.87972722",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0.87972722",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0.87972722,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0.87972722,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202502",
+        "FYQTR": 202502,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -331,13 +256,13 @@
         "GEO_LEVEL_4_NAME": "Chile",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "LATAM",
-        "TOTAL_SPEND": "-0.00177462",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "-0.00177462",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": -0.00177462,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": -0.00177462,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -348,13 +273,13 @@
         "GEO_LEVEL_4_NAME": "Vietnam",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "SEA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202502",
+        "FYQTR": 202502,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (WW)",
@@ -365,13 +290,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "-1.34045522",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "-1.34045522"
+        "TOTAL_SPEND": -1.34045522,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": -1.34045522
       },
       {
-        "FYQTR": "202402",
+        "FYQTR": 202402,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -382,13 +307,13 @@
         "GEO_LEVEL_4_NAME": "KSA",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202402",
+        "FYQTR": 202402,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -399,13 +324,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202501",
+        "FYQTR": 202501,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -416,13 +341,13 @@
         "GEO_LEVEL_4_NAME": "Korea",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "KR",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -433,13 +358,13 @@
         "GEO_LEVEL_4_NAME": "Switzerland",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -450,13 +375,13 @@
         "GEO_LEVEL_4_NAME": "Singapore",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "SEA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202502",
+        "FYQTR": 202502,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -467,13 +392,13 @@
         "GEO_LEVEL_4_NAME": "Germany",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "-0.02037246",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "-0.02037246",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": -0.02037246,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": -0.02037246,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -484,13 +409,13 @@
         "GEO_LEVEL_4_NAME": "Malaysia",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "SEA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (WW)",
@@ -501,13 +426,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "17.641997",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "17.641997"
+        "TOTAL_SPEND": 17.641997,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 17.641997
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -518,13 +443,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202501",
+        "FYQTR": 202501,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -535,13 +460,13 @@
         "GEO_LEVEL_4_NAME": "UK",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -552,13 +477,13 @@
         "GEO_LEVEL_4_NAME": "Vietnam",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "SEA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202501",
+        "FYQTR": 202501,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -569,13 +494,13 @@
         "GEO_LEVEL_4_NAME": "Russia",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202501",
+        "FYQTR": 202501,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -586,13 +511,13 @@
         "GEO_LEVEL_4_NAME": "Thailand",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "SEA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202501",
+        "FYQTR": 202501,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -603,13 +528,13 @@
         "GEO_LEVEL_4_NAME": "Brazil",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "BR",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202504",
+        "FYQTR": 202504,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -620,13 +545,13 @@
         "GEO_LEVEL_4_NAME": "Australia",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "ANZ",
-        "TOTAL_SPEND": "0.030741",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0.030741",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0.030741,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0.030741,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202402",
+        "FYQTR": 202402,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -637,13 +562,13 @@
         "GEO_LEVEL_4_NAME": "Switzerland",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202402",
+        "FYQTR": 202402,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -654,13 +579,13 @@
         "GEO_LEVEL_4_NAME": "Japan",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "JP",
-        "TOTAL_SPEND": "-0.43189085",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "-0.43189085",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": -0.43189085,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": -0.43189085,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202403",
+        "FYQTR": 202403,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (WW)",
@@ -671,13 +596,13 @@
         "GEO_LEVEL_4_NAME": "",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202401",
+        "FYQTR": 202401,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -688,13 +613,13 @@
         "GEO_LEVEL_4_NAME": "Canada",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "CA",
-        "TOTAL_SPEND": "2.10099515",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "2.10099515",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 2.10099515,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 2.10099515,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -705,13 +630,13 @@
         "GEO_LEVEL_4_NAME": "Canada",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "CA",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202501",
+        "FYQTR": 202501,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -722,13 +647,13 @@
         "GEO_LEVEL_4_NAME": "France",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "-0.00162952",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "-0.00162952",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": -0.00162952,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": -0.00162952,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -739,13 +664,13 @@
         "GEO_LEVEL_4_NAME": "France",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "EU/MERT",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       },
       {
-        "FYQTR": "202404",
+        "FYQTR": 202404,
         "FISCAL_STATE": "Forecast",
         "ADV_PROD_BUDGET_OWNER": "",
         "FUNCTIONAL_GRP": "Ad Production (GEO)",
@@ -756,18 +681,35 @@
         "GEO_LEVEL_4_NAME": "Chile",
         "COST_TYPE": "Production",
         "ADV_MARKETING_REGION": "LATAM",
-        "TOTAL_SPEND": "0",
-        "MEDIA_SPEND": "0",
-        "PRODUCTION_GEO_SPEND": "0",
-        "PRODUCTION_WW_SPEND": "0"
+        "TOTAL_SPEND": 0,
+        "MEDIA_SPEND": 0,
+        "PRODUCTION_GEO_SPEND": 0,
+        "PRODUCTION_WW_SPEND": 0
       }
     ],
-    "columns": [],
-    "fileName": "",
-    "currentFileVersion": null
+    "columns": [
+      "FYQTR",
+      "FISCAL_STATE",
+      "ADV_PROD_BUDGET_OWNER",
+      "FUNCTIONAL_GRP",
+      "BUDGET_TYPE",
+      "BUDGET_SUBTYPE",
+      "ADV_PILLAR",
+      "PILLAR_GROUP",
+      "GEO_LEVEL_4_NAME",
+      "COST_TYPE",
+      "ADV_MARKETING_REGION",
+      "TOTAL_SPEND",
+      "MEDIA_SPEND",
+      "PRODUCTION_GEO_SPEND",
+      "PRODUCTION_WW_SPEND"
+    ],
+    "fileName": "marcom-27",
+    "currentFileVersion": 6
   },
-  "chartCount": 5,
+  "chartCount": 2,
   "chartTypes": [
+    "pie",
     "bar"
   ]
 }
