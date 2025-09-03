@@ -150,7 +150,7 @@ export function StorageOptionModal({
 
   return (
     <div className="fixed top-0 right-0 left-0 bottom-0 z-50 p-4 bg-black/80 backdrop-blur-sm">
-      <div className="glass-card rounded-2xl p-6 max-w-3xl mx-auto mt-16 relative text-white">
+      <div className="success-dialog-card rounded-2xl p-6 max-w-3xl mx-auto mt-16 relative text-white">
         {/* Close Button */}
         <button
           onClick={onClose}
