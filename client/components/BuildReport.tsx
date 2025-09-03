@@ -8004,6 +8004,88 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         onLoadDataset={handleLoadLocalDataset}
       />
 
+      {/* Existing Files Modal */}
+      {showExistingFilesModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div className="flex items-center gap-3 mb-4">
+              <Files className="w-5 h-5 text-orange-400" />
+              <h2 className="text-lg font-semibold text-white">Select from Existing Files</h2>
+              <button
+                onClick={() => setShowExistingFilesModal(false)}
+                className="ml-auto p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4 text-white/70" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-white/70 text-sm">
+                Choose from previously uploaded files to build charts and visualizations.
+              </p>
+
+              {/* File list container */}
+              <div className="bg-white/5 rounded-lg p-4 min-h-[300px] max-h-[400px] overflow-y-auto">
+                {localDatasets.length > 0 ? (
+                  <div className="space-y-2">
+                    {localDatasets.map((dataset) => (
+                      <div
+                        key={dataset.id}
+                        className="flex items-center justify-between p-3 bg-white/10 hover:bg-white/15 rounded-lg border border-white/20 transition-colors cursor-pointer group"
+                        onClick={() => {
+                          handleLoadLocalDataset(dataset);
+                          setShowExistingFilesModal(false);
+                        }}
+                      >
+                        <div className="flex-1">
+                          <h3 className="text-white font-medium text-sm">{dataset.name}</h3>
+                          <p className="text-white/60 text-xs mt-1">
+                            {dataset.rowCount.toLocaleString()} rows • {dataset.columns.length} columns
+                          </p>
+                          <p className="text-white/50 text-xs">
+                            Created: {new Date(dataset.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-white/50">
+                            {(dataset.size / 1024).toFixed(1)} KB
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white/70" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <Files className="w-12 h-12 text-white/30 mb-4" />
+                    <h3 className="text-white/70 font-medium mb-2">No Files Found</h3>
+                    <p className="text-white/50 text-sm mb-4">
+                      Upload some files first to see them here.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowExistingFilesModal(false);
+                        handleFileImport();
+                      }}
+                      className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+                    >
+                      Upload File
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {localDatasets.length > 0 && (
+                <div className="flex justify-between items-center text-xs text-white/50 pt-2 border-t border-white/10">
+                  <span>{localDatasets.length} file{localDatasets.length !== 1 ? 's' : ''} available</span>
+                  <span>Click to load and start building charts</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Caching Progress Dialog */}
       {showCachingDialog && (
