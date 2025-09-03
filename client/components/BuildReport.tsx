@@ -6516,6 +6516,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <button
+                onClick={() => setShowExistingFilesModal(true)}
+                className="p-1.5 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded-lg transition-colors border border-orange-400/30"
+                title="Select from Existing Files"
+              >
+                <Files className="w-3 h-3" />
+              </button>
+              <button
                 onClick={handleFileImport}
                 className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
                 title="Upload Data"
