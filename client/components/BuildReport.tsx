@@ -2380,7 +2380,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Handler for loading a dataset from local storage
   const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
     try {
-      console.log(`Loading local dataset: ${dataset.name} (Flow: Local storage → DuckDB → App)`);
+      console.log(`Loading local dataset: ${dataset.name} (Flow: Local storage �� DuckDB → App)`);
 
       // Load dataset data into the app
       setColumns(dataset.columns);
@@ -8126,8 +8126,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       {/* File Upload Success Popup */}
       {showUploadSuccess && (
-        <div className="fixed top-0 right-0 left-0 z-50 p-4">
-          <div className="success-dialog-card rounded-2xl p-6 max-w-md mx-auto mt-16">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-md">
             <div className="text-center">
               {/* Success Icon */}
               <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
