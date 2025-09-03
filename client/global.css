@@ -118,26 +118,6 @@
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
   }
 
-  /* Ensure success dialogs have consistent background */
-  div.success-dialog-card {
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(25px) !important;
-    -webkit-backdrop-filter: blur(25px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
-  }
-
-  /* Force consistent styling for any glass card used in success contexts - v2.1 */
-  .fixed .success-dialog-card.rounded-2xl {
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(25px) !important;
-    -webkit-backdrop-filter: blur(25px) !important;
-  }
-
-  /* Additional fallback for success dialogs */
-  [class*="success-dialog"] {
-    background: rgba(255, 255, 255, 0.08) !important;
-  }
 
   .dropdown-panel {
     background: rgba(30, 41, 59, 0.75);
