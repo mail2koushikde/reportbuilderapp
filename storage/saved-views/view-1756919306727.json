@@ -1,7 +1,7 @@
 {
-  "id": "1756853514558",
-  "name": "Dashboard 9/2/2025 - 5 charts",
-  "savedAt": "2025-09-02T22:51:54.558Z",
+  "id": "1756919306727",
+  "name": "Dashboard 9/3/2025 - 5 charts",
+  "savedAt": "2025-09-03T17:08:26.727Z",
   "dashboardState": {
     "cards": [
       {
@@ -761,7 +761,10 @@
         "PRODUCTION_GEO_SPEND": "0",
         "PRODUCTION_WW_SPEND": "0"
       }
-    ]
+    ],
+    "columns": [],
+    "fileName": "",
+    "currentFileVersion": null
   },
   "chartCount": 5,
   "chartTypes": [
