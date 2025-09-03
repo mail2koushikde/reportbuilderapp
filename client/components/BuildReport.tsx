@@ -25,6 +25,7 @@ import {
   Database,
   HardDrive,
   Trash,
+  Files,
 } from 'lucide-react';
 import {
   PieChart,
