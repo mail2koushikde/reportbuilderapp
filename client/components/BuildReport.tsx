@@ -2377,6 +2377,23 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       try {
         const datasets = await duckdbService.listDatasets();
         setLocalDatasets(datasets);
+
+        // Group datasets by original filename for the existing files modal
+        const grouped: {[filename: string]: LocalDataset[]} = {};
+        datasets.forEach(dataset => {
+          const filename = dataset.originalFileName;
+          if (!grouped[filename]) {
+            grouped[filename] = [];
+          }
+          grouped[filename].push(dataset);
+        });
+
+        // Sort versions within each group (newest first)
+        Object.keys(grouped).forEach(filename => {
+          grouped[filename].sort((a, b) => b.version - a.version);
+        });
+
+        setGroupedLocalFiles(grouped);
       } catch (error) {
         console.error('Error loading local datasets:', error);
       }
