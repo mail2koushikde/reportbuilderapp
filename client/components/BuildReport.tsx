@@ -26,6 +26,9 @@ import {
   HardDrive,
   Trash,
   Files,
+  CheckCircle,
+  FileText,
+  Calendar,
 } from 'lucide-react';
 import {
   PieChart,
