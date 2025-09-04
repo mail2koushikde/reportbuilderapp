@@ -8112,9 +8112,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       paddingRight: '2.5rem'
                     }}
                   >
-                    <option value="">Choose a version...</option>
+                    <option value="" style={{background: '#374151', color: 'white'}}>Choose a version...</option>
                     {groupedLocalFiles[selectedFileName].map((version) => (
-                      <option key={version.id} value={version.id}>
+                      <option key={version.id} value={version.id} style={{background: '#374151', color: 'white'}}>
                         v{version.version} - {version.rowCount.toLocaleString()} rows, {(version.columns?.length ?? 0)} cols - {new Date(version.createdAt).toLocaleDateString()}
                       </option>
                     ))}
