@@ -2429,7 +2429,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const sampleQuery = 'SELECT * FROM {table} LIMIT 1000';
       const data = await duckdbService.queryDataset(dataset.id, sampleQuery);
       await handleLoadLocalDataset(dataset, data);
+
+      // Close modal and reset state
       setShowExistingFilesModal(false);
+      setSelectedFileName('');
+      setSelectedFileVersion(null);
     } catch (error) {
       console.error('Error loading existing file:', error);
       alert('Failed to load file');
