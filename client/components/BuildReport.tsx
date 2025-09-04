@@ -8081,9 +8081,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     paddingRight: '2.5rem'
                   }}
                 >
-                  <option value="">Choose a file...</option>
+                  <option value="" style={{background: '#374151', color: 'white'}}>Choose a file...</option>
                   {Object.keys(groupedLocalFiles).map((filename) => (
-                    <option key={filename} value={filename}>
+                    <option key={filename} value={filename} style={{background: '#374151', color: 'white'}}>
                       {filename}
                     </option>
                   ))}
