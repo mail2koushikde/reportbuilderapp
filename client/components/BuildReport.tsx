@@ -8101,7 +8101,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             const isExpanded = expandedFiles.has(filename);
 
                             return (
-                              <React.Fragment key={filename}>
+                              <Fragment key={filename}>
                                 {/* Main row - Shows latest version */}
                                 <tr className="hover:bg-white/5 transition-colors">
                                   <td className="px-4 py-3">
@@ -8237,7 +8237,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                     </td>
                                   </tr>
                                 )}
-                              </React.Fragment>
+                              </Fragment>
                             );
                           })}
                         </tbody>
