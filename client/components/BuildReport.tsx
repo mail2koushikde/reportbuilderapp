@@ -8054,63 +8054,155 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
             <div className="space-y-4">
               <p className="text-white/70 text-sm">
-                Choose from previously uploaded files to build charts and visualizations.
+                Select a file and version to load data for chart building.
               </p>
 
-              {/* File list container */}
-              <div className="bg-white/5 rounded-lg p-4 min-h-[300px] max-h-[400px] overflow-y-auto">
-                {localDatasets.length > 0 ? (
-                  <div className="space-y-2">
-                    {localDatasets.map((dataset) => (
-                      <div
-                        key={dataset.id}
-                        className="flex items-center justify-between p-3 bg-white/10 hover:bg-white/15 rounded-lg border border-white/20 transition-colors cursor-pointer group"
-                        onClick={() => handleSelectExistingFile(dataset)}
-                      >
-                        <div className="flex-1">
-                          <h3 className="text-white font-medium text-sm">{dataset.name}</h3>
-                          <p className="text-white/60 text-xs mt-1">
-                            {dataset.rowCount.toLocaleString()} rows • {(dataset.columns?.length ?? 0)} columns
-                          </p>
-                          <p className="text-white/50 text-xs">
-                            Created: {new Date(dataset.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs text-white/50">
-                            {(dataset.fileSize / 1024).toFixed(1)} KB
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white/70" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <Files className="w-12 h-12 text-white/30 mb-4" />
-                    <h3 className="text-white/70 font-medium mb-2">No Files Found</h3>
-                    <p className="text-white/50 text-sm mb-4">
-                      Upload some files first to see them here.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setShowExistingFilesModal(false);
-                        handleFileImport();
-                      }}
-                      className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
-                    >
-                      Upload File
-                    </button>
-                  </div>
-                )}
+              {/* File selection */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-white/80">
+                  Select File
+                </label>
+                <select
+                  value={selectedFileName}
+                  onChange={(e) => {
+                    setSelectedFileName(e.target.value);
+                    setSelectedFileVersion(null); // Reset version when file changes
+                  }}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                >
+                  <option value="">Choose a file...</option>
+                  {Object.keys(groupedLocalFiles).map((filename) => (
+                    <option key={filename} value={filename}>
+                      {filename}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {localDatasets.length > 0 && (
-                <div className="flex justify-between items-center text-xs text-white/50 pt-2 border-t border-white/10">
-                  <span>{localDatasets.length} file{localDatasets.length !== 1 ? 's' : ''} available</span>
-                  <span>Click to load and start building charts</span>
+              {/* Version selection */}
+              {selectedFileName && groupedLocalFiles[selectedFileName] && (
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-white/80">
+                    Select Version
+                  </label>
+                  <select
+                    value={selectedFileVersion?.id || ''}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const version = groupedLocalFiles[selectedFileName].find(v => v.id === selectedId);
+                      setSelectedFileVersion(version || null);
+                    }}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+                  >
+                    <option value="">Choose a version...</option>
+                    {groupedLocalFiles[selectedFileName].map((version) => (
+                      <option key={version.id} value={version.id}>
+                        v{version.version} - {version.rowCount.toLocaleString()} rows, {(version.columns?.length ?? 0)} cols - {new Date(version.createdAt).toLocaleDateString()}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
+
+              {/* File details preview */}
+              {selectedFileVersion && (
+                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <h4 className="text-white font-medium text-sm mb-2">File Details</h4>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-white/50">Filename:</span>
+                      <div className="text-white">{selectedFileVersion.originalFileName}</div>
+                    </div>
+                    <div>
+                      <span className="text-white/50">Version:</span>
+                      <div className="text-white">v{selectedFileVersion.version}</div>
+                    </div>
+                    <div>
+                      <span className="text-white/50">Rows:</span>
+                      <div className="text-white">{selectedFileVersion.rowCount.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <span className="text-white/50">Columns:</span>
+                      <div className="text-white">{(selectedFileVersion.columns?.length ?? 0)}</div>
+                    </div>
+                    <div>
+                      <span className="text-white/50">Size:</span>
+                      <div className="text-white">{(selectedFileVersion.fileSize / 1024).toFixed(1)} KB</div>
+                    </div>
+                    <div>
+                      <span className="text-white/50">Created:</span>
+                      <div className="text-white">{new Date(selectedFileVersion.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+
+                  {/* Column preview */}
+                  <div className="mt-3">
+                    <span className="text-white/50 text-xs">Columns:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedFileVersion.columns?.slice(0, 8).map((col) => (
+                        <span
+                          key={col}
+                          className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded border border-blue-400/30"
+                        >
+                          {col}
+                        </span>
+                      ))}
+                      {(selectedFileVersion.columns?.length ?? 0) > 8 && (
+                        <span className="px-2 py-1 bg-white/10 text-white/50 text-xs rounded">
+                          +{(selectedFileVersion.columns?.length ?? 0) - 8} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {Object.keys(groupedLocalFiles).length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Files className="w-12 h-12 text-white/30 mb-4" />
+                  <h3 className="text-white/70 font-medium mb-2">No Files Found</h3>
+                  <p className="text-white/50 text-sm mb-4">
+                    Upload some files first to see them here.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowExistingFilesModal(false);
+                      handleFileImport();
+                    }}
+                    className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+                  >
+                    Upload File
+                  </button>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-4 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    setShowExistingFilesModal(false);
+                    setSelectedFileName('');
+                    setSelectedFileVersion(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedFileVersion) {
+                      handleSelectExistingFile(selectedFileVersion);
+                      setSelectedFileName('');
+                      setSelectedFileVersion(null);
+                    }
+                  }}
+                  disabled={!selectedFileVersion}
+                  className="flex-1 px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 disabled:bg-orange-500/10 text-orange-300 disabled:text-orange-300/50 font-medium text-sm rounded-lg transition-colors disabled:cursor-not-allowed"
+                >
+                  Load Selected File
+                </button>
+              </div>
             </div>
           </div>
         </div>
