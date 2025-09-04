@@ -1156,6 +1156,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [selectedFileName, setSelectedFileName] = useState<string>('');
   const [selectedFileVersion, setSelectedFileVersion] = useState<LocalDataset | null>(null);
   const [groupedLocalFiles, setGroupedLocalFiles] = useState<{[filename: string]: LocalDataset[]}>({});
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
   // Chart compatibility state
   const [chartCompatibilityIssues, setChartCompatibilityIssues] = useState<{[cardId: string]: string[]}>({});
