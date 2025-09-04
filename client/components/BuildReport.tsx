@@ -2403,6 +2403,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, []);
 
+  // Select an existing local file and load sample data via DuckDB, then inject into app
+  const handleSelectExistingFile = useCallback(async (dataset: LocalDataset) => {
+    try {
+      const sampleQuery = 'SELECT * FROM {table} LIMIT 1000';
+      const data = await duckdbService.queryDataset(dataset.id, sampleQuery);
+      await handleLoadLocalDataset(dataset, data);
+      setShowExistingFilesModal(false);
+    } catch (error) {
+      console.error('Error loading existing file:', error);
+      alert('Failed to load file');
+    }
+  }, [handleLoadLocalDataset]);
+
   // Cache management functions
   const toggleCache = useCallback(async () => {
     const newCacheEnabled = !cacheEnabled;
@@ -8032,15 +8045,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <div
                         key={dataset.id}
                         className="flex items-center justify-between p-3 bg-white/10 hover:bg-white/15 rounded-lg border border-white/20 transition-colors cursor-pointer group"
-                        onClick={() => {
-                          handleLoadLocalDataset(dataset);
-                          setShowExistingFilesModal(false);
-                        }}
+                        onClick={() => handleSelectExistingFile(dataset)}
                       >
                         <div className="flex-1">
                           <h3 className="text-white font-medium text-sm">{dataset.name}</h3>
                           <p className="text-white/60 text-xs mt-1">
-                            {dataset.rowCount.toLocaleString()} rows • {dataset.columns.length} columns
+                            {dataset.rowCount.toLocaleString()} rows • {(dataset.columns?.length ?? 0)} columns
                           </p>
                           <p className="text-white/50 text-xs">
                             Created: {new Date(dataset.createdAt).toLocaleDateString()}
@@ -8048,7 +8058,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-xs text-white/50">
-                            {(dataset.size / 1024).toFixed(1)} KB
+                            {(dataset.fileSize / 1024).toFixed(1)} KB
                           </div>
                           <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white/70" />
                         </div>
