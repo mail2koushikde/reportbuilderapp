@@ -2435,11 +2435,25 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setShowExistingFilesModal(false);
       setSelectedFileName('');
       setSelectedFileVersion(null);
+      setExpandedFiles(new Set());
     } catch (error) {
       console.error('Error loading existing file:', error);
       alert('Failed to load file');
     }
   }, [handleLoadLocalDataset]);
+
+  // Toggle expansion of a file's versions in existing files modal
+  const toggleFileExpansion = useCallback((filename: string) => {
+    setExpandedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(filename)) {
+        newSet.delete(filename);
+      } else {
+        newSet.add(filename);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Cache management functions
   const toggleCache = useCallback(async () => {
