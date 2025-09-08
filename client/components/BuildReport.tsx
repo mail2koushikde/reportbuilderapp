@@ -2087,6 +2087,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setColumns(headers);
       setImportedData(data);
       setCacheEnabled(false); // Disable regular cache when using local storage
+      setDataSource('local');
 
       const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
       setFileName(fileNameWithoutExt);
@@ -7774,7 +7775,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
                               }`}
                             >
-                              Descending ��
+                              Descending ↓
                             </button>
                           </div>
                         </div>
