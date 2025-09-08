@@ -1968,6 +1968,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
         setFileName(fileNameWithoutExt);
         setCurrentFileVersion(version);
+        setDataSource('server');
 
         // Fetch available versions for this file using the original filename as stored in metadata
         // Using userEmail prop from component
