@@ -50,7 +50,7 @@ import { storageService } from '../services/storageService';
 import { cacheService, CachedData } from '../services/cacheService';
 import { duckdbService, LocalDataset } from '../services/duckdbService';
 import { StorageOptionModal } from './StorageOptionModal';
-import { LocalDatasets } from './LocalDatasets';
+import FileHistory from './FileHistory';
 import UserProfile from './UserProfile';
 import { useBuildReportSession } from '../hooks/useBuildReportSession';
 import SessionDebug from './SessionDebug';
@@ -1155,8 +1155,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   } | null>(null);
   const [localDatasets, setLocalDatasets] = useState<LocalDataset[]>([]);
 
-  // Local datasets modal state
-  const [showLocalDatasets, setShowLocalDatasets] = useState(false);
+  // File history modal state
+  const [showFileHistoryModal, setShowFileHistoryModal] = useState(false);
 
   // Existing files modal state
   const [showExistingFilesModal, setShowExistingFilesModal] = useState(false);
@@ -6642,9 +6642,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <Database className="w-3 h-3" />
               </button>
               <button
-                onClick={() => setShowLocalDatasets(true)}
+                onClick={() => setShowFileHistoryModal(true)}
                 className="p-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition-colors border border-purple-400/30"
-                title={`View Local Datasets (${localDatasets.length} stored)`}
+                title={`View File History`}
               >
                 <HardDrive className="w-3 h-3" />
               </button>
@@ -8102,12 +8102,26 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         selectedStorage={selectedStorageType}
       />
 
-      {/* Local Datasets Modal */}
-      <LocalDatasets
-        isOpen={showLocalDatasets}
-        onClose={() => setShowLocalDatasets(false)}
-        onLoadDataset={handleLoadLocalDataset}
-      />
+      {/* File History Modal */}
+      {showFileHistoryModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-0 w-full max-w-5xl max-h-[85vh] overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <h2 className="text-white text-lg font-semibold">File History</h2>
+              <button
+                onClick={() => setShowFileHistoryModal(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4 text-white/70" />
+              </button>
+            </div>
+            <div className="overflow-auto max-h-[80vh]">
+              <FileHistory />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Existing Files Modal */}
       {showExistingFilesModal && (
