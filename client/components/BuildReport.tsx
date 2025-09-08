@@ -1561,6 +1561,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           setCurrentFileVersion(version);
           setShowVersionDropdown(false);
           setCacheEnabled(false); // Local data doesn't use cache
+          setDataSource('local');
 
           // Validate chart compatibility with new data
           setTimeout(() => validateChartCompatibility(), 100);
