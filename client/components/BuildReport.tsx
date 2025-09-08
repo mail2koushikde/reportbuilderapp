@@ -175,6 +175,7 @@ const SAMPLE_DATA = [
 const GRID_SIZE = 25; // Grid cell size in pixels
 const DEFAULT_GRID_COLS = 40; // Default grid columns
 const DEFAULT_GRID_ROWS = 30; // Default grid rows
+const Y_AXIS_GUTTER_LEFT = 40; // Consistent left gutter for Y-axis alignment across charts
 
 // Custom label renderer for pie chart
 const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, labelFontSize = 10) => {
@@ -5107,7 +5108,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             {/* Custom Bar Chart with Drag & Drop */}
             <div className="flex flex-col h-full">
               <div className="flex-1 relative" style={{ height: '80%' }}>
-                <div className="flex items-end justify-center h-full px-4 pt-4 relative">
+                <div className="flex items-end justify-start h-full pt-4 relative" style={{ paddingLeft: Y_AXIS_GUTTER_LEFT, paddingRight: 16 }}>
                   {/* X-axis line positioned at true baseline (Y=0) */}
                   <div
                     className="absolute bottom-10 left-4 right-4 border-b border-white/30"
@@ -5614,7 +5615,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         // Dynamic margins that shrink intelligently
         const marginTop = isVeryCompact ? 15 : (isCompact ? 18 : 20);
         const marginBottom = isVeryCompact ? 75 : (isCompact ? 85 : 95); // Space for X-axis labels + legend
-        const marginLeft = Math.max(10, svgWidth * 0.02);
+        const marginLeft = isVeryCompact ? Math.min(32, Y_AXIS_GUTTER_LEFT) : Y_AXIS_GUTTER_LEFT;
         const marginRight = Math.max(10, svgWidth * 0.02);
 
         // Dynamic font sizes based on available space - increased for better readability
@@ -6234,7 +6235,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         return (
           <div className="h-full w-full p-4">
             <ResponsiveContainer width="100%" height="100%">
-              <RechartsLineChart data={lineChartData}>
+              <RechartsLineChart data={lineChartData} margin={{ left: Y_AXIS_GUTTER_LEFT, right: 16, top: 8, bottom: 24 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                 <XAxis
                   dataKey="name"
@@ -6252,6 +6253,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   tick={{ fill: 'rgba(255,255,255,0.7)' }}
                   axisLine={true}
                   tickLine={true}
+                  width={Math.max(32, Y_AXIS_GUTTER_LEFT - 8)}
                   orientation="left"
                   type="number"
                   tickFormatter={(value) => {
