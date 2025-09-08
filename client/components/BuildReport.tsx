@@ -198,20 +198,20 @@ const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, l
   let fontSizeMultiplier;
 
   if (percentValue >= 30) {
-    // Very large segments (30%+) - largest font
-    fontSizeMultiplier = 1.4;
-  } else if (percentValue >= 20) {
-    // Large segments (20-30%) - large font
-    fontSizeMultiplier = 1.2;
-  } else if (percentValue >= 15) {
-    // Medium-large segments (15-20%) - medium-large font
+    // Very large segments (30%+) - reduce size to keep consistency
     fontSizeMultiplier = 1.1;
+  } else if (percentValue >= 20) {
+    // Large segments (20-30%) - slightly larger
+    fontSizeMultiplier = 1.05;
+  } else if (percentValue >= 15) {
+    // Medium-large segments (15-20%) - standard size
+    fontSizeMultiplier = 1.0;
   } else if (percentValue >= 10) {
-    // Medium segments (10-15%) - standard font
+    // Medium segments (10-15%) - standard size
     fontSizeMultiplier = 1.0;
   } else {
     // Small segments (8-10%) - smaller font to fit
-    fontSizeMultiplier = 0.85;
+    fontSizeMultiplier = 0.9;
   }
 
   // Apply intelligent sizing with larger base size
