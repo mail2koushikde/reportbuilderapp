@@ -1135,6 +1135,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [availableVersions, setAvailableVersions] = useState<any[]>([]);
   const [showVersionDropdown, setShowVersionDropdown] = useState(false);
   const [loadingVersions, setLoadingVersions] = useState(false);
+  const [dataSource, setDataSource] = useState<'local' | 'server' | 'unknown'>('unknown');
 
   // Responsive grid dimensions
   const [gridCols, setGridCols] = useState(DEFAULT_GRID_COLS);
