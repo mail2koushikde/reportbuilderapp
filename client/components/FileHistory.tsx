@@ -763,7 +763,7 @@ const FileHistory: React.FC = () => {
                                         <div style={{ width: '32px' }} className="flex-shrink-0"></div>
 
                                         {/* Status column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
+                                        <div className="px-4 py-0 flex items-center gap-2 w-[220px] shrink-0">
                                           {getStatusIcon(version.upload_status)}
                                           <span className="text-sm text-white capitalize">
                                             {version.upload_status}
@@ -782,7 +782,7 @@ const FileHistory: React.FC = () => {
                                         </div>
 
                                         {/* File Name column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '200px', maxWidth: '250px' }}>
+                                        <div className="px-4 py-0 flex items-center gap-2 w-[260px] shrink-0">
                                           <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                           <span className="text-white text-sm truncate">
                                             {version.original_filename}
@@ -790,7 +790,7 @@ const FileHistory: React.FC = () => {
                                         </div>
 
                                         {/* Version column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-1" style={{ minWidth: '100px' }}>
+                                        <div className="px-4 py-0 flex items-center gap-1 w-[100px] shrink-0">
                                           <span className={`px-2 py-1 text-xs rounded-full ${
                                             index === 0
                                               ? 'bg-green-600/40 text-green-200 border border-green-400/50'
@@ -801,23 +801,23 @@ const FileHistory: React.FC = () => {
                                         </div>
 
                                         {/* Upload Date column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '160px' }}>
+                                        <div className="px-4 py-0 flex items-center gap-2 w-[180px] shrink-0">
                                           <Calendar className="w-4 h-4 text-green-500" />
                                           <span className="text-white text-sm">{formatTimestamp(version.upload_timestamp)}</span>
                                         </div>
 
                                         {/* Rows column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center" style={{ minWidth: '80px' }}>
+                                        <div className="px-4 py-0 flex items-center w-[90px] shrink-0">
                                           <span className="text-white text-sm">{version.row_count.toLocaleString()}</span>
                                         </div>
 
                                         {/* Columns column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center" style={{ minWidth: '80px' }}>
+                                        <div className="px-4 py-0 flex items-center w-[90px] shrink-0">
                                           <span className="text-white text-sm">{version.column_count}</span>
                                         </div>
 
                                         {/* Size column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center" style={{ minWidth: '80px' }}>
+                                        <div className="px-4 py-0 flex items-center w-[100px] shrink-0">
                                           <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
                                         </div>
 
