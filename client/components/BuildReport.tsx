@@ -1356,38 +1356,51 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       let foundServerVersions = false;
       if (isOnline) {
-        for (const filenameVariant of filenameVariants) {
-          try {
-            const encodedFilename = encodeURIComponent(filenameVariant);
-            const url = `/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`;
-            const response = await fetchWithRetry(url);
+        // Quick health check to avoid noisy fetch errors when API is down
+        let apiHealthy = false;
+        try {
+          const healthResp = await fetchWithRetry('/api/database/health', 0);
+          apiHealthy = !!healthResp && healthResp.ok;
+        } catch {
+          apiHealthy = false;
+        }
 
-            if (!response) {
-              console.warn(`Failed to fetch server versions for ${filenameVariant} after retries - continuing with local versions only`);
-              continue;
-            }
+        if (!apiHealthy) {
+          console.log('Database API not reachable - skipping server version fetch');
+        } else {
+          for (const filenameVariant of filenameVariants) {
+            try {
+              const encodedFilename = encodeURIComponent(filenameVariant);
+              const url = `/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`;
+              const response = await fetchWithRetry(url);
 
-            if (response.ok) {
-              const result = await response.json();
-              if (result.success && result.versions && result.versions.length > 0) {
-                const serverVersions = result.versions.map((v: any) => ({
-                  ...v,
-                  source: 'server',
-                  sourceLabel: 'Snowflake',
-                  sourceColor: 'text-blue-400'
-                }));
-                allVersions.push(...serverVersions);
-                foundServerVersions = true;
-                console.log(`Found ${serverVersions.length} server versions for: ${filenameVariant}`);
-                break;
+              if (!response) {
+                console.warn(`Failed to fetch server versions for ${filenameVariant} after retries - continuing with local versions only`);
+                continue;
               }
-            } else if (response.status === 404) {
-              console.log(`No server versions found for: ${filenameVariant} (404)`);
-            } else {
-              console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
+
+              if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.versions && result.versions.length > 0) {
+                  const serverVersions = result.versions.map((v: any) => ({
+                    ...v,
+                    source: 'server',
+                    sourceLabel: 'Snowflake',
+                    sourceColor: 'text-blue-400'
+                  }));
+                  allVersions.push(...serverVersions);
+                  foundServerVersions = true;
+                  console.log(`Found ${serverVersions.length} server versions for: ${filenameVariant}`);
+                  break;
+                }
+              } else if (response.status === 404) {
+                console.log(`No server versions found for: ${filenameVariant} (404)`);
+              } else {
+                console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
+              }
+            } catch (serverError) {
+              console.warn(`Unexpected error checking server versions for ${filenameVariant}:`, (serverError as any)?.message || serverError);
             }
-          } catch (serverError) {
-            console.warn(`Unexpected error checking server versions for ${filenameVariant}:`, (serverError as any)?.message || serverError);
           }
         }
       } else {
