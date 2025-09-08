@@ -5667,7 +5667,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 const isDropTarget = draggedOverBar === `${card.id}-${item.name}` && draggedBar && draggedBar !== `${card.id}-${item.name}`;
 
                 return (
-                  <g key={item.name} style={{ opacity: isDragging ? 0.5 : 1 }}>
+                  <g key={`${item.name}-${barIndex}`} style={{ opacity: isDragging ? 0.5 : 1 }}>
                     {/* Stacked segments */}
                     {allSegments.map((segment, segmentIndex) => {
                       const segmentValue = card.yAxisScale === 'percentage'
