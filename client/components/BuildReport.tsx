@@ -8105,7 +8105,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       {/* File History Modal */}
       <Dialog open={showFileHistoryModal} onOpenChange={setShowFileHistoryModal}>
-        <DialogContent className="max-w-5xl w-full glass-card border-white/20 p-0 max-h-[85vh] overflow-hidden">
+        <DialogContent
+          className="max-w-5xl w-full p-0 max-h-[85vh] overflow-hidden border border-white/20 bg-transparent"
+          style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
+        >
           <DialogHeader className="px-4 py-3 border-b border-white/10">
             <DialogTitle className="text-white">File History</DialogTitle>
             <button
