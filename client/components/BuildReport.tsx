@@ -4497,7 +4497,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
                     return (
                       <div
-                        key={entry?.name || `item-${index}`}
+                        key={`${entry?.name ?? 'item'}-${index}`}
                         className={`flex items-center cursor-grab transition-all duration-200 rounded ${
                           isDragging ? 'opacity-50 scale-105' : ''
                         } ${
@@ -4865,7 +4865,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
                           return (
                             <div
-                              key={entry?.name || `item-${index}`}
+                              key={`${entry?.name ?? 'item'}-${index}`}
                               className={`flex items-center min-w-0 cursor-grab transition-all duration-200 rounded ${
                                 isDragging ? 'opacity-50 scale-105' : ''
                               } ${
