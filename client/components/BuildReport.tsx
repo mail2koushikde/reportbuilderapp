@@ -1308,7 +1308,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       const allVersions: any[] = [];
 
-      // 1. Fetch SERVER versions (Snowflake database)
+      // 1. Fetch SERVER versions (Snowflake database) only if online
+      const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       const filenameVariants = [
         filename,
         filename.endsWith('.csv') ? filename.slice(0, -4) : `${filename}.csv`
@@ -1319,34 +1320,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         for (let attempt = 0; attempt <= retries; attempt++) {
           try {
             // Create timeout signal with fallback for older browsers
-            let timeoutSignal;
+            let timeoutSignal: AbortSignal | undefined;
             try {
-              timeoutSignal = AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined;
+              // Some environments may not support AbortSignal.timeout
+              timeoutSignal = (AbortSignal as any)?.timeout ? (AbortSignal as any).timeout(10000) : undefined;
             } catch {
-              // Fallback for browsers that don't support AbortSignal.timeout
+              // Fallback
               const controller = new AbortController();
               setTimeout(() => controller.abort(), 10000);
               timeoutSignal = controller.signal;
             }
 
-            const response = await fetch(url, {
+            const opts: RequestInit = {
               method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              ...(timeoutSignal && { signal: timeoutSignal })
-            });
+              headers: { 'Content-Type': 'application/json' }
+            };
+            if (timeoutSignal) {
+              (opts as any).signal = timeoutSignal;
+            }
+
+            const response = await fetch(url, opts);
             return response;
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.warn(`Fetch attempt ${attempt + 1} failed for ${url}:`, errorMessage);
 
-            // If this is the last attempt, return null
             if (attempt === retries) {
               return null;
             }
-
-            // Wait before retrying (exponential backoff)
             await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
           }
         }
@@ -1354,58 +1355,59 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       };
 
       let foundServerVersions = false;
-      for (const filenameVariant of filenameVariants) {
-        try {
-          const encodedFilename = encodeURIComponent(filenameVariant);
-          const url = `/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`;
-          const response = await fetchWithRetry(url);
+      if (isOnline) {
+        for (const filenameVariant of filenameVariants) {
+          try {
+            const encodedFilename = encodeURIComponent(filenameVariant);
+            const url = `/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`;
+            const response = await fetchWithRetry(url);
 
-          if (!response) {
-            console.warn(`Failed to fetch server versions for ${filenameVariant} after retries - continuing with local versions only`);
-            continue;
-          }
-
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.versions && result.versions.length > 0) {
-              // Add server versions with source tag
-              const serverVersions = result.versions.map((v: any) => ({
-                ...v,
-                source: 'server',
-                sourceLabel: 'Snowflake',
-                sourceColor: 'text-blue-400'
-              }));
-              allVersions.push(...serverVersions);
-              foundServerVersions = true;
-              console.log(`Found ${serverVersions.length} server versions for: ${filenameVariant}`);
-              break;
+            if (!response) {
+              console.warn(`Failed to fetch server versions for ${filenameVariant} after retries - continuing with local versions only`);
+              continue;
             }
-          } else if (response.status === 404) {
-            // 404 is expected when file doesn't exist on server - not an error
-            console.log(`No server versions found for: ${filenameVariant} (404)`);
-          } else {
-            console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
+
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success && result.versions && result.versions.length > 0) {
+                const serverVersions = result.versions.map((v: any) => ({
+                  ...v,
+                  source: 'server',
+                  sourceLabel: 'Snowflake',
+                  sourceColor: 'text-blue-400'
+                }));
+                allVersions.push(...serverVersions);
+                foundServerVersions = true;
+                console.log(`Found ${serverVersions.length} server versions for: ${filenameVariant}`);
+                break;
+              }
+            } else if (response.status === 404) {
+              console.log(`No server versions found for: ${filenameVariant} (404)`);
+            } else {
+              console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
+            }
+          } catch (serverError) {
+            console.warn(`Unexpected error checking server versions for ${filenameVariant}:`, (serverError as any)?.message || serverError);
           }
-        } catch (serverError) {
-          console.warn(`Unexpected error checking server versions for ${filenameVariant}:`, serverError.message);
         }
+      } else {
+        console.log('Offline detected - skipping server version fetch');
       }
 
       // 2. Fetch LOCAL versions (IndexedDB via DuckDB service)
       try {
         const localVersions = await duckdbService.getLocalFileVersions(userEmail, filename);
         if (localVersions && localVersions.length > 0) {
-          // Add local versions with source tag
           const localVersionsWithSource = localVersions.map((dataset: LocalDataset) => ({
             version: dataset.version,
             upload_timestamp: dataset.createdAt.toISOString(),
-            table_name: dataset.id, // Use dataset ID as table name for local versions
+            table_name: dataset.id,
             file_size_bytes: dataset.fileSize,
             original_filename: dataset.originalFileName,
             source: 'local',
             sourceLabel: 'Local',
             sourceColor: 'text-purple-400',
-            dataset_id: dataset.id // Store dataset ID for local loading
+            dataset_id: dataset.id
           }));
           allVersions.push(...localVersionsWithSource);
           console.log(`Found ${localVersionsWithSource.length} local versions for: ${filename}`);
@@ -1418,41 +1420,24 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       // 3. Combine and sort all versions
       if (allVersions.length > 0) {
-        // Sort by version number descending (newest first), then by source priority (server first)
         const sortedVersions = allVersions.sort((a, b) => {
-          if (a.version !== b.version) {
-            return b.version - a.version; // Higher version first
-          }
-          // If same version, prefer server over local
+          if (a.version !== b.version) return b.version - a.version;
           if (a.source === 'server' && b.source === 'local') return -1;
           if (a.source === 'local' && b.source === 'server') return 1;
           return 0;
         });
 
         setAvailableVersions(sortedVersions);
-
-        // Set current version to the highest version only if not already set
         const highestVersion = sortedVersions[0].version;
-        if (!currentFileVersion) {
-          console.log(`Setting current version to highest available: v${highestVersion} (${sortedVersions[0].sourceLabel})`);
-          setCurrentFileVersion(highestVersion);
-        }
+        if (!currentFileVersion) setCurrentFileVersion(highestVersion);
 
         console.log(`Total versions found: ${sortedVersions.length} (${foundServerVersions ? 'server + ' : ''}local)`);
       } else {
-        console.log(`No versions found for file: ${filename} (tried server + local)`);
         setAvailableVersions([]);
       }
     } catch (error) {
-      console.error('Error fetching file versions:', error);
+      console.warn('Version fetch failed (handled gracefully):', (error as any)?.message || error);
       setAvailableVersions([]);
-
-      // Show user-friendly error message
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.warn('Network connectivity issue - working in offline mode with local data only');
-      } else {
-        console.error('Unexpected error during version fetching:', error.message);
-      }
     } finally {
       setLoadingVersions(false);
     }
@@ -1658,10 +1643,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Fetch versions when fileName is available (even if version is unknown)
   useEffect(() => {
     const fetchVersionsForCurrentFile = async () => {
-      if (fileName) {
+      if (!fileName) return;
+      try {
         console.log('Fetching versions for file:', fileName);
         const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
         await fetchFileVersions(userEmail, searchFilename);
+      } catch (e) {
+        console.warn('Fetch versions effect suppressed error:', (e as any)?.message || e);
       }
     };
 
