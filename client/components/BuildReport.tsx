@@ -2408,15 +2408,24 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Handler for loading a dataset from local storage
   const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
     try {
-      console.log(`Loading local dataset: ${dataset.name} (Flow: Local storage �� DuckDB → App)`);
+      console.log(`Loading local dataset: ${dataset.name} (Flow: Local storage → DuckDB → App)`);
 
       // Load dataset data into the app
       setColumns(dataset.columns);
       setImportedData(data);
       setCacheEnabled(false); // Using local DuckDB storage
 
-      setFileName(dataset.name);
-      setCurrentFileVersion(null);
+      // Use original filename (without extension) for consistent version lookups
+      const baseName = dataset.originalFileName.replace(/\.csv$/i, '');
+      setFileName(baseName);
+      setCurrentFileVersion(dataset.version);
+
+      // Proactively fetch versions (local + server) for header dropdown
+      try {
+        await fetchFileVersions(userEmail, dataset.originalFileName);
+      } catch (e) {
+        console.warn('Version fetch after local load failed (non-blocking):', (e as any)?.message || e);
+      }
 
       setUploadedFileName(`${dataset.originalFileName} (Loaded from Local storage - ${data.length.toLocaleString()} rows via DuckDB query)`);
       setShowUploadSuccess(true);
@@ -2425,7 +2434,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       console.error('Error loading local dataset into app:', error);
       alert('Failed to load dataset');
     }
-  }, []);
+  }, [fetchFileVersions, userEmail]);
 
   // Select an existing local file and load sample data via DuckDB, then inject into app
   const handleSelectExistingFile = useCallback(async (dataset: LocalDataset) => {
