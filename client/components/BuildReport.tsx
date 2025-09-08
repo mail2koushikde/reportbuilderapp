@@ -1615,6 +1615,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           }
         } catch (serverError) {
           console.error('Error loading server version:', serverError);
+          setDataSource('server');
           alert('Failed to load server version. Please check your connection.');
         }
       }
