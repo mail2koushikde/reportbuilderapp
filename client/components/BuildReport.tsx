@@ -1356,7 +1356,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       };
 
       let foundServerVersions = false;
-      if (isOnline) {
+      if (isOnline && dataSource === 'server') {
         // Quick health check to avoid noisy fetch errors when API is down
         let apiHealthy = false;
         try {
@@ -7786,7 +7786,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   {(card.chartType === 'bar' || card.chartType === 'mixbar' || card.chartType === 'pie') && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
                       <div className="text-[10px] text-blue-300 font-medium mb-0.5">
-                        ������ Tip: Merge Columns
+                        ���� Tip: Merge Columns
                       </div>
                       <div className="text-[10px] text-white/70">
                         {card.chartType === 'bar'
@@ -8451,7 +8451,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <ul className="text-xs text-yellow-300 space-y-1">
                   <li>• All {cards.length} dashboard card{cards.length !== 1 ? 's' : ''}</li>
                   <li>• All associated text boxes and annotations</li>
-                  <li>• All arrows and visual elements</li>
+                  <li>�� All arrows and visual elements</li>
                   <li>• Current chart configurations</li>
                 </ul>
               </div>
