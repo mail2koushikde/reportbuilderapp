@@ -4856,7 +4856,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         style={{
                           gap: `${legendItemSpacing}px`,
                           maxHeight: isExpanded ? 'none' : 'auto',
-                          paddingTop: isExpanded ? '0px' : `${Math.max(0, (availableHeight - (visibleItemCount * itemHeight)) / 2)}px`
+                          paddingTop: '0px'
                         }}
                       >
                         {sortedData.slice(0, visibleItemCount).map((entry, index) => {
