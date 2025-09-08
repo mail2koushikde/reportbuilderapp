@@ -3112,7 +3112,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     const newCard: DashboardCard = {
       ...cardToDuplicate, // Copy all properties
       id: `card-${Date.now()}`, // New unique ID
-      title: `${cardToDuplicate.title} (Copy)${wasResized ? ' (Resized)' : ''}`, // Add "(Copy)" and "(Resized)" if applicable
+      title: `${cardToDuplicate.title} (Copy)`,
       gridPosition: {
         x: adaptivePosition.x,
         y: adaptivePosition.y,
