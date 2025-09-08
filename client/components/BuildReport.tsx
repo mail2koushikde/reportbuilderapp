@@ -3947,7 +3947,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           </div>
           <div className="space-y-1">
             {payload.map((entry: any, index: number) => (
-              <div key={index} className="flex items-center gap-2">
+              <div key={`${entry?.name ?? 'item'}-${index}`} className="flex items-center gap-2">
                 <div
                   className="w-2 h-[2px] rounded-full"
                   style={{ backgroundColor: entry.color }}
@@ -6129,7 +6129,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </thead>
               <tbody>
                 {processedData.map((row, idx) => (
-                  <tr key={idx} className="border-b border-white/10">
+                  <tr key={`${row?.name ?? 'row'}-${idx}`} className="border-b border-white/10">
                     <td className="p-2">{row.name}</td>
                     <td className="p-2">{row.value.toLocaleString()}</td>
                   </tr>
@@ -7192,7 +7192,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           {/* Render All TextBoxes at Dashboard Level (excluding scorecard text boxes) */}
           {cards.flatMap(card => card.textBoxes || []).filter(tb => !tb.id.startsWith('scorecard-')).map(textBox => (
             <TextBoxComponent
-              key={textBox.id}
+              key={`${textBox.cardId}-${textBox.id}`}
               textBox={textBox}
               onUpdate={(updates) => updateTextBox(textBox.cardId, textBox.id, updates)}
               onDelete={() => deleteTextBox(textBox.cardId, textBox.id)}
@@ -7208,7 +7208,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           {/* Render All Arrows at Dashboard Level */}
           {cards.flatMap(card => card.arrows || []).map(arrow => (
             <ArrowComponent
-              key={arrow.id}
+              key={`${arrow.cardId}-${arrow.id}`}
               arrow={arrow}
               onDelete={() => deleteArrow(arrow.cardId, arrow.id)}
               onUpdate={(updates) => updateArrow(arrow.cardId, arrow.id, updates)}
