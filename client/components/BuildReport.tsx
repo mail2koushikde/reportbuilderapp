@@ -1101,6 +1101,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
+  // Generic success dialog state (e.g., report saved)
+  const [showSuccessDialog, setShowSuccessDialog] = useState<{ title: string; message?: string } | null>(null);
+
   // Clear All confirmation dialog state
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
 
@@ -3176,9 +3179,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setSaveReportDescription('');
       setShowSaveDialog(false);
 
-      // Show success feedback
+      // Show success feedback (custom dialog)
       console.log('View saved successfully:', savedReport.name);
-      alert('View saved successfully!');
+      setShowSuccessDialog({ title: 'Report Saved Successfully' });
 
     } catch (error) {
       console.error('Error saving view:', error);
@@ -8494,14 +8497,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4">
           <div className="glass-card rounded-xl p-6 w-full max-w-md">
             <div className="text-center">
-              {/* Success Icon */}
               <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
 
-              {/* Success Message */}
               <h3 className="text-lg font-semibold text-white mb-2">
                 {uploadedFileName.startsWith('Snowflake:') ? 'Data Imported Successfully!' : 'File Uploaded Successfully!'}
               </h3>
@@ -8509,14 +8510,40 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 "{uploadedFileName}" has been imported and is ready to use.
                 {importedData.length > 0 && columns.length > 0 && (
                   <span className="block text-white/50 text-xs mt-1">
-                    • {importedData.length} rows �� {columns.length} columns
+                    • {importedData.length} rows • {columns.length} columns
                   </span>
                 )}
               </p>
 
-              {/* OK Button */}
               <button
                 onClick={() => setShowUploadSuccess(false)}
+                className="w-full px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generic Success Dialog (e.g., Report Saved) */}
+      {showSuccessDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+
+              <h3 className="text-lg font-semibold text-white mb-2">{showSuccessDialog.title}</h3>
+              {showSuccessDialog.message && (
+                <p className="text-white/70 text-sm mb-6">{showSuccessDialog.message}</p>
+              )}
+
+              <button
+                onClick={() => setShowSuccessDialog(null)}
                 className="w-full px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
               >
                 OK
