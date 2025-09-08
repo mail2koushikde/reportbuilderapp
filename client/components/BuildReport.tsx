@@ -1929,6 +1929,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         setColumns(headers);
         setImportedData(data);
         setCacheEnabled(false);
+        setDataSource('local');
 
         // Update filename and version in header even for fallback
         const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
