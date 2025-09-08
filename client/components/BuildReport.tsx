@@ -8113,13 +8113,6 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         >
           <DialogHeader className="px-4 py-3 border-b border-white/10">
             <DialogTitle className="text-white">File History</DialogTitle>
-            <button
-              onClick={() => setShowFileHistoryModal(false)}
-              className="absolute right-3 top-3 p-1 hover:bg-white/10 rounded-lg transition-colors"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4 text-white/70" />
-            </button>
           </DialogHeader>
           <div className="overflow-auto max-h-[75vh]">
             <FileHistory />
