@@ -1455,7 +1455,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } finally {
       setLoadingVersions(false);
     }
-  }, [currentFileVersion]);
+  }, [currentFileVersion, dataSource]);
 
   // Load data for a specific version from either local or server storage
   const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number, isAutoReload: boolean = false, isVersionSwitch: boolean = false) => {
@@ -8451,7 +8451,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <ul className="text-xs text-yellow-300 space-y-1">
                   <li>• All {cards.length} dashboard card{cards.length !== 1 ? 's' : ''}</li>
                   <li>• All associated text boxes and annotations</li>
-                  <li>�� All arrows and visual elements</li>
+                  <li>• All arrows and visual elements</li>
                   <li>• Current chart configurations</li>
                 </ul>
               </div>
