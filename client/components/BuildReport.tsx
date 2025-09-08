@@ -1996,6 +1996,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       setColumns(headers);
       setImportedData(data);
       setCacheEnabled(false);
+      setDataSource('local');
 
       // Update filename and version in header even for fallback
       const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
@@ -7773,7 +7774,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
                               }`}
                             >
-                              Descending ↓
+                              Descending ��
                             </button>
                           </div>
                         </div>
