@@ -52,6 +52,7 @@ import { duckdbService, LocalDataset } from '../services/duckdbService';
 import { StorageOptionModal } from './StorageOptionModal';
 import FileHistory from './FileHistory';
 import UserProfile from './UserProfile';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useBuildReportSession } from '../hooks/useBuildReportSession';
 import SessionDebug from './SessionDebug';
 
@@ -8103,25 +8104,23 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       />
 
       {/* File History Modal */}
-      {showFileHistoryModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl p-0 w-full max-w-5xl max-h-[85vh] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <h2 className="text-white text-lg font-semibold">File History</h2>
-              <button
-                onClick={() => setShowFileHistoryModal(false)}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4 text-white/70" />
-              </button>
-            </div>
-            <div className="overflow-auto max-h-[80vh]">
-              <FileHistory />
-            </div>
+      <Dialog open={showFileHistoryModal} onOpenChange={setShowFileHistoryModal}>
+        <DialogContent className="max-w-5xl w-full glass-card border-white/20 p-0 max-h-[85vh] overflow-hidden">
+          <DialogHeader className="px-4 py-3 border-b border-white/10">
+            <DialogTitle className="text-white">File History</DialogTitle>
+            <button
+              onClick={() => setShowFileHistoryModal(false)}
+              className="absolute right-3 top-3 p-1 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4 text-white/70" />
+            </button>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[75vh]">
+            <FileHistory />
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Existing Files Modal */}
       {showExistingFilesModal && (
