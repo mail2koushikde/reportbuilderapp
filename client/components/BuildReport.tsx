@@ -2458,6 +2458,38 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     });
   }, []);
 
+  // Existing files selection handlers
+  const handleExistingFileNameChange = useCallback((name: string) => {
+    setSelectedFileName(name);
+    const versions = groupedLocalFiles[name] || [];
+    setSelectedFileVersion(versions.length > 0 ? versions[0] : null);
+  }, [groupedLocalFiles]);
+
+  const handleExistingFileVersionChange = useCallback((version: number) => {
+    if (!selectedFileName) return;
+    const ds = (groupedLocalFiles[selectedFileName] || []).find(v => v.version === version) || null;
+    setSelectedFileVersion(ds);
+  }, [groupedLocalFiles, selectedFileName]);
+
+  useEffect(() => {
+    if (showExistingFilesModal) {
+      const names = Object.keys(groupedLocalFiles);
+      if (names.length > 0) {
+        if (!selectedFileName || !groupedLocalFiles[selectedFileName]) {
+          const defaultName = names[0];
+          setSelectedFileName(defaultName);
+          const versions = groupedLocalFiles[defaultName] || [];
+          setSelectedFileVersion(versions.length > 0 ? versions[0] : null);
+        } else if (!selectedFileVersion && groupedLocalFiles[selectedFileName]?.length > 0) {
+          setSelectedFileVersion(groupedLocalFiles[selectedFileName][0]);
+        }
+      } else {
+        setSelectedFileName('');
+        setSelectedFileVersion(null);
+      }
+    }
+  }, [showExistingFilesModal, groupedLocalFiles, selectedFileName, selectedFileVersion]);
+
   // Cache management functions
   const toggleCache = useCallback(async () => {
     const newCacheEnabled = !cacheEnabled;
@@ -8078,6 +8110,46 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <p className="text-white/70 text-sm">
                 Select a file and version to load data for chart building.
               </p>
+
+              {/* Quick selectors */}
+              {Object.keys(groupedLocalFiles).length > 0 && (
+                <div className="flex flex-col md:flex-row md:items-end gap-3 bg-white/5 border border-white/10 rounded-lg p-4">
+                  <div className="flex-1">
+                    <label className="block text-xs text-white/60 mb-1">File</label>
+                    <select
+                      className="w-full px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={selectedFileName}
+                      onChange={(e) => handleExistingFileNameChange(e.target.value)}
+                    >
+                      {Object.keys(groupedLocalFiles).map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-white/60 mb-1">Version</label>
+                    <select
+                      className="w-full px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      value={selectedFileVersion?.version ?? ''}
+                      onChange={(e) => handleExistingFileVersionChange(Number(e.target.value))}
+                      disabled={!selectedFileName || !(groupedLocalFiles[selectedFileName]?.length)}
+                    >
+                      {(groupedLocalFiles[selectedFileName] || []).map(v => (
+                        <option key={v.id} value={v.version}>v{v.version}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="md:ml-auto">
+                    <button
+                      onClick={() => selectedFileVersion && handleSelectExistingFile(selectedFileVersion)}
+                      disabled={!selectedFileVersion}
+                      className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 disabled:opacity-50 text-orange-300 font-medium text-sm rounded-lg transition-colors border border-orange-400/30"
+                    >
+                      Load Selected
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* File table */}
               <div className="bg-white/5 rounded-lg p-4 max-h-[400px] overflow-y-auto">
