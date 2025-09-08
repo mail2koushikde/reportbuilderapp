@@ -1610,6 +1610,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             }
           } else {
             console.error('Failed to fetch version data:', response.statusText);
+            setDataSource('server');
             alert(`Failed to fetch server version: ${response.status} ${response.statusText}`);
           }
         } catch (serverError) {
