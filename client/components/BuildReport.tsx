@@ -5122,7 +5122,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
                     return (
                       <div
-                        key={item.name}
+                          key={`${item.name}-${index}`}
                         className="flex flex-col items-center relative"
                         style={{
                           width: Math.max(0, barWidth + barSpacing),
