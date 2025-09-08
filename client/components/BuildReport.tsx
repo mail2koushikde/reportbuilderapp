@@ -1655,22 +1655,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     initCache();
   }, []);
 
-  // Fetch versions when fileName and currentFileVersion are available
+  // Fetch versions when fileName is available (even if version is unknown)
   useEffect(() => {
     const fetchVersionsForCurrentFile = async () => {
-      if (fileName && currentFileVersion && currentFileVersion > 0) {
-        // Using userEmail prop from component
-        console.log('Fetching versions for existing file:', fileName, 'version:', currentFileVersion);
-
-        // Try to determine the original filename with extension for database lookup
-        // If fileName doesn't end with .csv, add it since database stores original filename
+      if (fileName) {
+        console.log('Fetching versions for file:', fileName);
         const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
         await fetchFileVersions(userEmail, searchFilename);
       }
     };
 
     fetchVersionsForCurrentFile();
-  }, [fileName, fetchFileVersions]);
+  }, [fileName, fetchFileVersions, userEmail]);
 
   // Debug logging for current version changes
   useEffect(() => {
