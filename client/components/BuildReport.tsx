@@ -4016,7 +4016,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             <div className="text-sm mb-2">This chart cannot be rendered with the current dataset version:</div>
             <ul className="text-xs text-left space-y-1 mb-3">
               {cardIssues.map((issue, index) => (
-                <li key={index} className="text-red-300">• {issue}</li>
+                <li key={`${issue}-${index}`} className="text-red-300">• {issue}</li>
               ))}
             </ul>
           </div>
