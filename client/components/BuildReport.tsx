@@ -2417,6 +2417,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const baseName = dataset.originalFileName.replace(/\.csv$/i, '');
       setFileName(baseName);
       setCurrentFileVersion(dataset.version);
+      setDataSource('local');
 
       // Proactively fetch versions (local + server) for header dropdown
       try {
@@ -7785,7 +7786,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   {(card.chartType === 'bar' || card.chartType === 'mixbar' || card.chartType === 'pie') && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
                       <div className="text-[10px] text-blue-300 font-medium mb-0.5">
-                        ���� Tip: Merge Columns
+                        ������ Tip: Merge Columns
                       </div>
                       <div className="text-[10px] text-white/70">
                         {card.chartType === 'bar'
