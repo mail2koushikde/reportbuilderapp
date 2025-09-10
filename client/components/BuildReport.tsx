@@ -829,7 +829,7 @@ const TextBoxComponent: React.FC<{
         ) : (
           <div
             onClick={startEditing}
-            className="w-full h-full cursor-text overflow-hidden"
+            className={`w-full h-full cursor-text ${textBox.id.startsWith('scorecard-') ? 'overflow-visible' : 'overflow-hidden'}`}
             style={{
               fontSize: textBox.fontSize,
               color: textBox.color || '#ffffff',
