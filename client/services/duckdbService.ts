@@ -196,6 +196,20 @@ class DuckDBService {
     if (!this.conn) throw new Error('DuckDB connection not available');
   }
 
+  private async queryWithParams(sql: string, params?: any[]): Promise<duckdb.Table> {
+    await this.ensureInitialized();
+    if (!params || params.length === 0) {
+      return this.conn!.query(sql);
+    }
+    const stmt = await this.conn!.prepare(sql);
+    try {
+      const res = await stmt.query(...params);
+      return res;
+    } finally {
+      try { await stmt.close(); } catch {}
+    }
+  }
+
   private async getMetaById(datasetId: string): Promise<{
     id: string;
     name: string;
