@@ -67,8 +67,8 @@ class DuckDBService {
           }
         } else {
           // For other errors, try a fresh file directly
-          this.DB_FILE_NAME = `/fusion_local_${Date.now()}.duckdb`;
-          await this.db.open({ path: this.DB_FILE_NAME });
+          this.DB_FILE_NAME = `opfs://fusion_local_${Date.now()}.duckdb`;
+          await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
         }
       }
 
