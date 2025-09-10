@@ -149,28 +149,26 @@ class DuckDBService {
     }
 
     const nowIso = new Date().toISOString();
-    await this.conn.query(
-      `INSERT OR REPLACE INTO ${this.META_TABLE} (
+    const insertSql = `INSERT OR REPLACE INTO ${this.META_TABLE} (
         id, name, original_file_name, user_email, version, row_count, columns, file_size, created_at, updated_at, table_name
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-      );`,
-      {
-        args: [
-          datasetId,
-          cleanFileName,
-          fileName,
-          userEmail,
-          finalVersion,
-          data.length,
-          JSON.stringify(columns),
-          estimatedSize,
-          nowIso,
-          nowIso,
-          tableName,
-        ],
-      }
+      );`;
+    const insertStmt = await this.conn.prepare(insertSql);
+    await insertStmt.query(
+      datasetId,
+      cleanFileName,
+      fileName,
+      userEmail,
+      finalVersion,
+      data.length,
+      JSON.stringify(columns),
+      estimatedSize,
+      nowIso,
+      nowIso,
+      tableName
     );
+    try { await insertStmt.close(); } catch {}
 
     // Ensure on-disk persistence of recent changes
     await this.conn.query('CHECKPOINT;');
