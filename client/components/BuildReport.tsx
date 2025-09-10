@@ -2160,7 +2160,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const requestData = {
         queryType: queryType,
         query: snowflakeQuery.trim(),
-        limit: 1000
+        limit: 1000000
       };
 
       // Choose endpoint based on test mode
@@ -2451,7 +2451,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Select an existing local file and load sample data via DuckDB, then inject into app
   const handleSelectExistingFile = useCallback(async (dataset: LocalDataset) => {
     try {
-      const sampleQuery = 'SELECT * FROM {table} LIMIT 1000';
+      const sampleQuery = 'SELECT * FROM {table} LIMIT 1000000';
       const data = await duckdbService.queryDataset(dataset.id, sampleQuery);
       await handleLoadLocalDataset(dataset, data);
 
@@ -8046,7 +8046,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     onChange={(e) => setSnowflakeQuery(e.target.value)}
                     placeholder={testMode
                       ? "Try: SELECT * FROM products WHERE category = 'Electronics'"
-                      : "SELECT * FROM DATABASE.SCHEMA.TABLE_NAME WHERE condition LIMIT 1000"
+                      : "SELECT * FROM DATABASE.SCHEMA.TABLE_NAME WHERE condition LIMIT 1000000"
                     }
                     rows={4}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"

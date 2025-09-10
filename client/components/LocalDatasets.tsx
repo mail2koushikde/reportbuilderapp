@@ -94,7 +94,7 @@ export function LocalDatasets({ isOpen, onClose, onLoadDataset }: LocalDatasetsP
       
       // This demonstrates the flow: IndexedDB → DuckDB WASM → Query
       // First, we query the dataset to load it into DuckDB memory
-      const sampleQuery = 'SELECT * FROM {table} LIMIT 1000';
+      const sampleQuery = 'SELECT * FROM {table} LIMIT 1000000';
       const data = await duckdbService.queryDataset(dataset.id, sampleQuery);
       
       console.log(`Dataset loaded: ${data.length} rows retrieved via DuckDB query`);
