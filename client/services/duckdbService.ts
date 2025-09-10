@@ -148,6 +148,9 @@ class DuckDBService {
       }
     );
 
+    // Ensure on-disk persistence of recent changes
+    await this.conn.query('CHECKPOINT;');
+
     const dataset: LocalDataset = {
       id: datasetId,
       name: cleanFileName,
