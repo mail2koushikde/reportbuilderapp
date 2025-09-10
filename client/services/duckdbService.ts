@@ -52,7 +52,7 @@ class DuckDBService {
 
       // Open a persistent database file stored in OPFS/IDBFS
       try {
-        await this.db.open({ path: this.DB_FILE_NAME });
+        await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
       } catch (e: any) {
         const msg = (e && (e.message || e.toString?.())) || String(e);
         const isInvalid = typeof msg === 'string' && msg.includes('not a valid DuckDB database file');
