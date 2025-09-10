@@ -23,6 +23,19 @@ class DuckDBService {
   private DB_FILE_NAME = '/fusion_local.duckdb';
   private readonly META_TABLE = 'datasets_meta';
 
+  private async removePersistentFileIfExists(path: string): Promise<void> {
+    try {
+      const fileName = path.replace(/^\/+/, '');
+      const anyNav: any = navigator as any;
+      if (anyNav?.storage?.getDirectory) {
+        const root = await anyNav.storage.getDirectory();
+        try {
+          await root.removeEntry(fileName, { recursive: true } as any);
+        } catch {}
+      }
+    } catch {}
+  }
+
   private async initialize(): Promise<void> {
     if (this.initialized && this.db && this.conn) return;
 
@@ -37,15 +50,26 @@ class DuckDBService {
       this.db = new duckdb.AsyncDuckDB(logger, worker);
       await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
-      // Open a persistent database file stored in IndexedDB/OPFS
+      // Open a persistent database file stored in OPFS/IDBFS
       try {
         await this.db.open({ path: this.DB_FILE_NAME });
       } catch (e: any) {
-        const msg = String((e && (e.message || e.toString && e.toString())) || e);
-        console.warn('Primary DuckDB open failed, attempting fallback path...', msg);
-        // Fallback to a fresh DB path if the existing file is corrupted or invalid
-        this.DB_FILE_NAME = '/fusion_local_v2.duckdb';
-        await this.db.open({ path: this.DB_FILE_NAME });
+        const msg = (e && (e.message || e.toString?.())) || String(e);
+        const isInvalid = typeof msg === 'string' && msg.includes('not a valid DuckDB database file');
+        if (isInvalid) {
+          await this.removePersistentFileIfExists(this.DB_FILE_NAME);
+          try {
+            await this.db.open({ path: this.DB_FILE_NAME });
+          } catch {
+            // Try a fresh unique file
+            this.DB_FILE_NAME = `/fusion_local_${Date.now()}.duckdb`;
+            await this.db.open({ path: this.DB_FILE_NAME });
+          }
+        } else {
+          // For other errors, try a fresh file directly
+          this.DB_FILE_NAME = `/fusion_local_${Date.now()}.duckdb`;
+          await this.db.open({ path: this.DB_FILE_NAME });
+        }
       }
 
       this.conn = await this.db.connect();
