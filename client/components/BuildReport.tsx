@@ -6174,6 +6174,20 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const lengthAdjustedFontSize = Math.max(20, scorecardBaseFontSize - (textLength > 8 ? (textLength - 8) * 3 : 0)); // Reduce for longer numbers
         const finalFontSize = Math.round(lengthAdjustedFontSize);
 
+        // Measure text to size the scorecard box
+        const measureCanvas = document.createElement('canvas');
+        const measureCtx = measureCanvas.getContext('2d');
+        let measuredWidth = 0;
+        if (measureCtx) {
+          measureCtx.font = `${finalFontSize}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+          measuredWidth = Math.ceil(measureCtx.measureText(formattedScoreValue).width);
+        }
+        const horizontalPadding = 24;
+        const verticalPadding = 16;
+        const maxBoxWidth = Math.max(0, scorecardWidth - 24);
+        const boxWidth = Math.min(maxBoxWidth, Math.max(200, measuredWidth + horizontalPadding));
+        const boxHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+
         // Get or create scorecard text box
         const scorecardTextBoxId = `scorecard-${card.id}`;
         let scorecardTextBox = card.textBoxes?.find(tb => tb.id === scorecardTextBoxId);
@@ -8495,7 +8509,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ���️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
