@@ -59,7 +59,7 @@ class DuckDBService {
         if (isInvalid) {
           await this.removePersistentFileIfExists(this.DB_FILE_NAME);
           try {
-            await this.db.open({ path: this.DB_FILE_NAME });
+            await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
           } catch {
             // Try a fresh unique file
             this.DB_FILE_NAME = `/fusion_local_${Date.now()}.duckdb`;
