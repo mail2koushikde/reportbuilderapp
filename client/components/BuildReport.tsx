@@ -6202,12 +6202,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             cardId: card.id,
             content: formattedScoreValue,
             position: {
-              x: cardPixelWidth / 2 - 100, // Center horizontally (approximate)
-              y: cardPixelHeight / 2 - 25  // Center vertically (approximate)
+              x: Math.max(0, (cardPixelWidth - boxWidth) / 2),
+              y: Math.max(0, (cardPixelHeight - boxHeight) / 2)
             },
             size: {
-              width: 200,
-              height: 50
+              width: boxWidth,
+              height: boxHeight
             },
             fontSize: finalFontSize,
             color: '#ffffff',
@@ -8509,7 +8509,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ���️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
