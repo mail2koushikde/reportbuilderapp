@@ -20,7 +20,7 @@ class DuckDBService {
   private conn: duckdb.AsyncDuckDBConnection | null = null;
   private initialized = false;
 
-  private readonly DB_FILE_NAME = 'fusion_local.duckdb';
+  private DB_FILE_NAME = '/fusion_local.duckdb';
   private readonly META_TABLE = 'datasets_meta';
 
   private async initialize(): Promise<void> {
@@ -37,8 +37,16 @@ class DuckDBService {
       this.db = new duckdb.AsyncDuckDB(logger, worker);
       await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
-      // Open a persistent database file stored in IndexedDB
-      await this.db.open({ path: this.DB_FILE_NAME });
+      // Open a persistent database file stored in IndexedDB/OPFS
+      try {
+        await this.db.open({ path: this.DB_FILE_NAME });
+      } catch (e: any) {
+        const msg = String((e && (e.message || e.toString && e.toString())) || e);
+        console.warn('Primary DuckDB open failed, attempting fallback path...', msg);
+        // Fallback to a fresh DB path if the existing file is corrupted or invalid
+        this.DB_FILE_NAME = '/fusion_local_v2.duckdb';
+        await this.db.open({ path: this.DB_FILE_NAME });
+      }
 
       this.conn = await this.db.connect();
 
