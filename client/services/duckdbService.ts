@@ -20,7 +20,7 @@ class DuckDBService {
   private conn: duckdb.AsyncDuckDBConnection | null = null;
   private initialized = false;
 
-  private DB_FILE_NAME = '/fusion_local.duckdb';
+  private DB_FILE_NAME = 'opfs://fusion_local.duckdb';
   private readonly META_TABLE = 'datasets_meta';
 
   private async removePersistentFileIfExists(path: string): Promise<void> {
