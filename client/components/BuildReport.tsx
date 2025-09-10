@@ -52,6 +52,7 @@ import { duckdbService, LocalDataset } from '../services/duckdbService';
 import { StorageOptionModal } from './StorageOptionModal';
 import FileHistory from './FileHistory';
 import UserProfile from './UserProfile';
+import MemoryIndicator from './MemoryIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useBuildReportSession } from '../hooks/useBuildReportSession';
 import SessionDebug from './SessionDebug';
@@ -6829,6 +6830,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </button>
             </div>
 
+            <MemoryIndicator />
             {/* User Profile */}
             <UserProfile />
           </div>
