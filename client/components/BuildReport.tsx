@@ -633,7 +633,7 @@ const TextBoxComponent: React.FC<{
 
   return (
     <div
-      className={`absolute overflow-hidden ${
+      className={`absolute ${textBox.id.startsWith('scorecard-') ? 'overflow-visible' : 'overflow-hidden'} ${
         hideControls ? 'border-0' : 'border rounded-lg'
       } ${
         hideControls ? '' : 'glass-card'
