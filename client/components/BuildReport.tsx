@@ -2936,6 +2936,21 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     });
   }, [historyIndex]);
 
+  // Sanitize chart titles to remove any automatically appended markers like "(Resized)"
+  const sanitizeTitle = useCallback((title: string) => title.replace(/\s*\(Resized\)/g, ''), []);
+
+  // One-time cleanup for existing cards that may contain "(Resized)" in the title
+  useEffect(() => {
+    if (cards.length === 0) return;
+    const hasResized = cards.some(c => c.title && c.title.includes('(Resized)'));
+    if (!hasResized) return;
+    setCards(prev => {
+      const cleaned = prev.map(c => c.title && c.title.includes('(Resized)') ? { ...c, title: sanitizeTitle(c.title) } : c);
+      setTimeout(() => saveToHistory(cleaned), 0);
+      return cleaned;
+    });
+  }, [cards, sanitizeTitle]);
+
   // Auto-resize all charts to fill screen optimally
   const autoResizeCharts = useCallback(() => {
     if (cards.length === 0) return;
@@ -7063,13 +7078,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <Move className="w-4 h-4 text-white/70" />
                     </div>
                     <EditableLabel
-                      value={card.title}
+                      value={sanitizeTitle(card.title)}
                       isEditing={editingLabel === `title-${card.id}`}
                       onEdit={(editing: boolean) => {
                         setEditingLabel(editing ? `title-${card.id}` : null);
                       }}
                       onChange={(newValue: string) => {
-                        updateCard(card.id, { title: newValue });
+                        updateCard(card.id, { title: sanitizeTitle(newValue) });
                       }}
                       maxWidth={200}
                       fontSize={14}
@@ -7116,18 +7131,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   <div className="mb-2 px-1">
                     <div className="text-center">
                       <EditableLabel
-                        value={card.title}
-                        isEditing={editingLabel === `title-${card.id}`}
-                        onEdit={(editing: boolean) => {
-                          setEditingLabel(editing ? `title-${card.id}` : null);
-                        }}
-                        onChange={(newValue: string) => {
-                          updateCard(card.id, { title: newValue });
-                        }}
-                        maxWidth={200}
-                        fontSize={14}
-                        useTiltedText={false}
-                      />
+                      value={sanitizeTitle(card.title)}
+                      isEditing={editingLabel === `title-${card.id}`}
+                      onEdit={(editing: boolean) => {
+                        setEditingLabel(editing ? `title-${card.id}` : null);
+                      }}
+                      onChange={(newValue: string) => {
+                        updateCard(card.id, { title: sanitizeTitle(newValue) });
+                      }}
+                      maxWidth={200}
+                      fontSize={14}
+                      useTiltedText={false}
+                    />
                     </div>
                   </div>
                 )}
@@ -7322,8 +7337,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     </label>
                     <input
                       type="text"
-                      value={card.title}
-                      onChange={(e) => updateCard(card.id, { title: e.target.value })}
+                      value={sanitizeTitle(card.title)}
+                      onChange={(e) => updateCard(card.id, { title: sanitizeTitle(e.target.value) })}
                       className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
                       placeholder="Enter chart title..."
                     />
@@ -8478,7 +8493,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ⚠️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
