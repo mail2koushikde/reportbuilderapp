@@ -224,7 +224,7 @@ class DuckDBService {
     table_name: string;
   } | null> {
     await this.ensureInitialized();
-    const result = await this.conn!.query(`SELECT * FROM ${this.META_TABLE} WHERE id = ?`, { args: [datasetId] });
+    const result = await this.queryWithParams(`SELECT * FROM ${this.META_TABLE} WHERE id = ?`, [datasetId]);
     const rows = result.toArray().map((r) => Object.fromEntries(r)) as any[];
     return rows[0] || null;
   }
@@ -300,9 +300,9 @@ class DuckDBService {
     nextVersion: number;
   }> {
     await this.ensureInitialized();
-    const result = await this.conn!.query(
+    const result = await this.queryWithParams(
       `SELECT id, version, created_at FROM ${this.META_TABLE} WHERE user_email = ? AND original_file_name = ? ORDER BY version DESC`,
-      { args: [userEmail, originalFileName] }
+      [userEmail, originalFileName]
     );
     const rows = result.toArray().map((r) => Object.fromEntries(r)) as any[];
     const versions = rows.map((r) => ({ version: Number(r.version), id: r.id, createdAt: new Date(r.created_at).toISOString() }));
@@ -318,9 +318,9 @@ class DuckDBService {
 
   async getLocalFileVersions(userEmail: string, originalFileName: string): Promise<LocalDataset[]> {
     await this.ensureInitialized();
-    const result = await this.conn!.query(
+    const result = await this.queryWithParams(
       `SELECT * FROM ${this.META_TABLE} WHERE user_email = ? AND original_file_name = ? ORDER BY version DESC`,
-      { args: [userEmail, originalFileName] }
+      [userEmail, originalFileName]
     );
     const rows = result.toArray().map((r) => Object.fromEntries(r)) as any[];
     return rows.map((meta) => ({
@@ -339,9 +339,9 @@ class DuckDBService {
 
   async getLocalUserUploads(userEmail: string): Promise<LocalDataset[]> {
     await this.ensureInitialized();
-    const result = await this.conn!.query(
+    const result = await this.queryWithParams(
       `SELECT * FROM ${this.META_TABLE} WHERE user_email = ? ORDER BY updated_at DESC`,
-      { args: [userEmail] }
+      [userEmail]
     );
     const rows = result.toArray().map((r) => Object.fromEntries(r)) as any[];
     return rows.map((meta) => ({
@@ -385,7 +385,7 @@ class DuckDBService {
       await this.conn!.query(`DROP TABLE IF EXISTS "${tableName}"`);
     } catch {}
 
-    await this.conn!.query(`DELETE FROM ${this.META_TABLE} WHERE id = ?`, { args: [datasetId] });
+    await this.queryWithParams(`DELETE FROM ${this.META_TABLE} WHERE id = ?`, [datasetId]);
   }
 
   async getStorageInfo(): Promise<{
@@ -425,9 +425,9 @@ class DuckDBService {
   ): Promise<LocalDataset> {
     // Delete any existing dataset with the same user/file/version, then save
     await this.ensureInitialized();
-    const existing = await this.conn!.query(
+    const existing = await this.queryWithParams(
       `SELECT id FROM ${this.META_TABLE} WHERE user_email = ? AND original_file_name = ? AND version = ?`,
-      { args: [userEmail, fileName, version] }
+      [userEmail, fileName, version]
     );
     const rows = existing.toArray().map((r) => Object.fromEntries(r)) as any[];
     for (const r of rows) {
@@ -442,9 +442,9 @@ class DuckDBService {
     version: number
   ): Promise<void> {
     await this.ensureInitialized();
-    const res = await this.conn!.query(
+    const res = await this.queryWithParams(
       `SELECT id FROM ${this.META_TABLE} WHERE user_email = ? AND original_file_name = ? AND version = ?`,
-      { args: [userEmail, originalFileName, version] }
+      [userEmail, originalFileName, version]
     );
     const rows = res.toArray().map((r) => Object.fromEntries(r)) as any[];
     for (const r of rows) {
@@ -454,9 +454,9 @@ class DuckDBService {
 
   async clearAllUserData(userEmail: string): Promise<void> {
     await this.ensureInitialized();
-    const res = await this.conn!.query(
+    const res = await this.queryWithParams(
       `SELECT id FROM ${this.META_TABLE} WHERE user_email = ?`,
-      { args: [userEmail] }
+      [userEmail]
     );
     const rows = res.toArray().map((r) => Object.fromEntries(r)) as any[];
     for (const r of rows) {
