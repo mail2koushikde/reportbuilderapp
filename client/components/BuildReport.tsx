@@ -1487,7 +1487,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               const datasetId = chosen.id;
               const dataset = await duckdbService.getDatasetMetadata(datasetId);
               if (dataset) {
-                const query = 'SELECT * FROM {table} LIMIT 10000';
+                const query = 'SELECT * FROM {table} LIMIT 1000000';
                 const data = await duckdbService.queryDataset(datasetId, query);
                 setColumns(dataset.columns || []);
                 setImportedData(data || []);
@@ -1559,7 +1559,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           }
 
           // Load the dataset data from IndexedDB
-          const query = 'SELECT * FROM {table} LIMIT 10000'; // Limit for performance
+          const query = 'SELECT * FROM {table} LIMIT 1000000'; // Limit for performance
           const data = await duckdbService.queryDataset(datasetId, query);
 
           setColumns(dataset.columns || []);
