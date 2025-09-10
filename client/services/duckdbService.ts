@@ -25,7 +25,7 @@ class DuckDBService {
 
   private async removePersistentFileIfExists(path: string): Promise<void> {
     try {
-      const fileName = path.replace(/^\/+/, '');
+      const fileName = path.replace(/^opfs:\/\//, '').replace(/^\/+/, '');
       const anyNav: any = navigator as any;
       if (anyNav?.storage?.getDirectory) {
         const root = await anyNav.storage.getDirectory();
