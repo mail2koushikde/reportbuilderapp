@@ -1587,7 +1587,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         // Load from server storage (Snowflake)
         try {
           const tableName = versionData.table_name;
-          const response = await fetch(`/api/database/tables/${tableName}/data`);
+          const response = await fetch(`/api/database/tables/${tableName}/data?limit=1000000`);
 
           if (response.ok) {
             const result = await response.json();
