@@ -105,7 +105,7 @@
   body {
     font-family: "Inter", sans-serif;
     background: linear-gradient(to bottom right, #0c0a09, #1e3a8a);
-    background-attachment: fixed;
+    background-attachment: scroll;
     color-scheme: dark;
     @apply text-white;
   }
@@ -114,17 +114,17 @@
 @layer components {
   .glass-card {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
   }
 
 
   .dropdown-panel {
     background: rgba(30, 41, 59, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
