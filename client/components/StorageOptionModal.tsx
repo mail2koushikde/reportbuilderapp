@@ -99,7 +99,8 @@ export function StorageOptionModal({
     description: '',
     features: [
       'Perfect for sensitive information',
-      'Smaller data < 1M rows'
+      'Smaller data < 1M rows',
+      'No data leaves this system, everything remains local.'
     ],
     recommended: !isLargeFile || isSensitiveData,
     icon: <HardDrive className="w-6 h-6" />
