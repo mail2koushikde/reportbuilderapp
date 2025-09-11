@@ -2162,6 +2162,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           columns: result.columns,
           version: version
         });
+        stopSaving();
       } else {
         // Handle unexpected response format
         console.error('Unexpected response format:', result);
