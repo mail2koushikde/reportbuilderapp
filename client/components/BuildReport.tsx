@@ -6761,7 +6761,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     if (historyIndex < cardsHistory.length - 1) {
       const nextIndex = historyIndex + 1;
       setHistoryIndex(nextIndex);
-      setCards(JSON.parse(JSON.stringify(cardsHistory[nextIndex])));
+      const snapshot = cardsHistory[nextIndex];
+      setCards(snapshot.map(c => ({
+        ...c,
+        data: filteredData.length > 0 ? filteredData : SAMPLE_DATA,
+      })));
     }
   };
 
