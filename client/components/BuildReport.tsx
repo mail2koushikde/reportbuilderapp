@@ -4154,7 +4154,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       return (
         <div className="text-white/60 text-center p-4">
           <div className="mb-3">
-            <div className="text-red-400 font-medium mb-2">⚠️ Chart Configuration Error</div>
+            <div className="text-red-400 font-medium mb-2">���️ Chart Configuration Error</div>
             <div className="text-sm mb-2">This chart cannot be rendered with the current dataset version:</div>
             <ul className="text-xs text-left space-y-1 mb-3">
               {cardIssues.map((issue, index) => (
@@ -6797,7 +6797,6 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <button
                 onClick={handleFileImport}
                 className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
-                title="Upload Data"
               >
                 <Upload className="w-3 h-3" />
               </button>
