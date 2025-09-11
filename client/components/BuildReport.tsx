@@ -3893,6 +3893,39 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [canUndo, canRedo, configuringCard]);
 
+  // Global Escape key closes open overlays/dialogs
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      let closed = false;
+      if (showSaveDialog) { setShowSaveDialog(false); closed = true; }
+      if (showSnowflakeModal) { setShowSnowflakeModal(false); setSnowflakeQuery(''); closed = true; }
+      if (showExistingFilesModal) { setShowExistingFilesModal(false); closed = true; }
+      if (showUploadSuccess) { setShowUploadSuccess(false); closed = true; }
+      if (showSuccessDialog) { setShowSuccessDialog(null); closed = true; }
+      if (showClearAllDialog) { setShowClearAllDialog(false); closed = true; }
+      if (showCachingDialog) { setShowCachingDialog(false); closed = true; }
+      if (showClearingDialog) { setShowClearingDialog(false); closed = true; }
+      if (showFileHistoryModal) { setShowFileHistoryModal(false); closed = true; }
+      if (showStorageModal) { handleStorageModalClose(); closed = true; }
+      if (closed) e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [
+    showSaveDialog,
+    showSnowflakeModal,
+    showExistingFilesModal,
+    showUploadSuccess,
+    showSuccessDialog,
+    showClearAllDialog,
+    showCachingDialog,
+    showClearingDialog,
+    showFileHistoryModal,
+    showStorageModal,
+    handleStorageModalClose,
+  ]);
+
   // Mix bar chart container dimensions tracking
   const updateDimensions = useCallback((cardId: string) => {
     const containerElement = chartContainerRefs.current.get(cardId);

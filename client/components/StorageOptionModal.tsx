@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Database, HardDrive, Shield, Zap, X, AlertTriangle, FileText, Calendar } from "lucide-react";
@@ -74,6 +74,19 @@ export function StorageOptionModal({
       existingVersionsCount: conflictData?.existing_versions?.length || 0
     });
   }, [isOpen, conflictData, selectedStorage]);
+
+  // Close on Escape when open
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
   // Determine recommendations based on file characteristics
   const isLargeFile = rowCount > 1000000; // > 1M rows
   const isSensitiveData = fileName.toLowerCase().includes('personal') || 
