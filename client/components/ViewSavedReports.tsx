@@ -15,6 +15,7 @@ import {
   SortDesc,
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
 interface TextBox {
   id: string;
