@@ -2552,6 +2552,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         newSet.delete(filename);
       } else {
         newSet.add(filename);
+        setExpandLimits(limits => ({ ...limits, [filename]: limits[filename] ?? 25 }));
       }
       return newSet;
     });
