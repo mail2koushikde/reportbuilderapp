@@ -8415,7 +8415,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                       <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg">
                                         <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
                                           <div className="space-y-1">
-                                            {versions.map((version, index) => (
+                                            {(versions.slice(0, (expandLimits[filename] ?? 25))).map((version, index) => (
                                               <div key={version.id} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
                                                 <div style={{ width: '32px' }} className="flex-shrink-0"></div>
                                                 <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
@@ -8471,6 +8471,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                                 </div>
                                               </div>
                                             ))}
+                                            {versions.length > (expandLimits[filename] ?? 25) && (
+                                              <div className="px-4 py-2">
+                                                <button
+                                                  onClick={() => setExpandLimits(l => ({ ...l, [filename]: (l[filename] ?? 25) + 25 }))}
+                                                  className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white/80 text-xs rounded-lg border border-white/20"
+                                                >
+                                                  Show more ({versions.length - (expandLimits[filename] ?? 25)} more)
+                                                </button>
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
                                       </div>
