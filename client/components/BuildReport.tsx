@@ -293,14 +293,15 @@ const renderCustomLabel = (
     );
   }
 
-  // Inside label (fallback)
+  // Inside label (percent only, fit within slice thickness)
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
+  const thickness = outerRadius - innerRadius;
+  const allowedHeight = Math.max(8, thickness * 0.8);
   const percentageText = `${(percent * 100).toFixed(0)}%`;
-  const percentageFontSize = Math.round(baseSize * 0.9);
-  const lineSpacing = Math.round(baseSize * 1.2);
+  const size = Math.min(baseSize, Math.floor(allowedHeight));
 
   return (
     <text
@@ -309,12 +310,11 @@ const renderCustomLabel = (
       fill="white"
       textAnchor="middle"
       dominantBaseline="central"
-      fontSize={baseSize}
-      fontWeight={600}
+      fontSize={size}
+      fontWeight={700}
       style={{ pointerEvents: 'none' }}
     >
-      <tspan x={x} dy="0">{name}</tspan>
-      <tspan x={x} dy={lineSpacing} fontSize={percentageFontSize}>{percentageText}</tspan>
+      {percentageText}
     </text>
   );
 };
