@@ -179,50 +179,77 @@ const DEFAULT_GRID_COLS = 40; // Default grid columns
 const DEFAULT_GRID_ROWS = 30; // Default grid rows
 const Y_AXIS_GUTTER_LEFT = 40; // Consistent left gutter for Y-axis alignment across charts
 
-// Custom label renderer for pie chart
-const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, labelFontSize = 10) => {
+// Custom label renderer for pie chart (outside label style with leader lines)
+const renderCustomLabel = (
+  props: any,
+  pieRadius: number,
+  showLabels: boolean,
+  labelFontSize = 10,
+  mode: 'outside' | 'inside' = 'outside'
+) => {
   if (!showLabels) return null;
 
   const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
 
-  // Only show labels for segments >= 8% (slightly lower threshold for better coverage)
-  if (percent < 0.08) return null;
-
   const RADIAN = Math.PI / 180;
-  // Position label in the center of the segment (middle between inner and outer radius)
+  const minPct = mode === 'outside' ? 0.02 : 0.08; // Show more labels when outside
+  if (percent < minPct) return null;
+
+  // Intelligent sizing
+  const percentValue = percent * 100;
+  const fontSizeMultiplier = percentValue >= 30 ? 1.1 : percentValue >= 20 ? 1.05 : percentValue >= 10 ? 1.0 : 0.95;
+  const baseSize = Math.round(labelFontSize * fontSizeMultiplier);
+
+  if (mode === 'outside') {
+    const sin = Math.sin(-RADIAN * midAngle);
+    const cos = Math.cos(-RADIAN * midAngle);
+
+    const r0 = outerRadius + Math.max(6, Math.round(pieRadius * 0.06));
+    const r1 = outerRadius + Math.max(18, Math.round(pieRadius * 0.12));
+
+    const sx = cx + r0 * cos;
+    const sy = cy + r0 * sin;
+    const mx = cx + r1 * cos;
+    const my = cy + r1 * sin;
+    const isRight = cos >= 0;
+    const ex = mx + (isRight ? 16 : -16);
+    const ey = my;
+
+    const textX = ex + (isRight ? 6 : -6);
+    const textAnchor = isRight ? 'start' : 'end';
+    const label = `${name} — ${(percent * 100).toFixed(2)}%`;
+
+    return (
+      <g style={{ pointerEvents: 'none' }}>
+        <polyline
+          points={`${sx},${sy} ${mx},${my} ${ex},${ey}`}
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth={1}
+          fill="none"
+        />
+        <line
+          x1={mx}
+          y1={my}
+          x2={ex}
+          y2={ey}
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth={1}
+        />
+        <text x={textX} y={ey} fill="#e5e7eb" fontSize={baseSize} fontWeight={600} textAnchor={textAnchor} dominantBaseline="middle">
+          {label}
+        </text>
+      </g>
+    );
+  }
+
+  // Inside label (fallback)
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
   const percentageText = `${(percent * 100).toFixed(0)}%`;
-
-  // Intelligent font sizing based on segment size
-  const percentValue = percent * 100;
-  let fontSizeMultiplier;
-
-  if (percentValue >= 30) {
-    // Very large segments (30%+) - reduce size to keep consistency
-    fontSizeMultiplier = 1.1;
-  } else if (percentValue >= 20) {
-    // Large segments (20-30%) - slightly larger
-    fontSizeMultiplier = 1.05;
-  } else if (percentValue >= 15) {
-    // Medium-large segments (15-20%) - standard size
-    fontSizeMultiplier = 1.0;
-  } else if (percentValue >= 10) {
-    // Medium segments (10-15%) - standard size
-    fontSizeMultiplier = 1.0;
-  } else {
-    // Small segments (8-10%) - smaller font to fit
-    fontSizeMultiplier = 0.9;
-  }
-
-  // Apply intelligent sizing with larger base size
-  const intelligentFontSize = Math.round(labelFontSize * fontSizeMultiplier);
-  const percentageFontSize = Math.round(intelligentFontSize * 0.9); // Slightly smaller for percentage
-
-  // Dynamic line spacing based on font size
-  const lineSpacing = Math.round(intelligentFontSize * 1.2);
+  const percentageFontSize = Math.round(baseSize * 0.9);
+  const lineSpacing = Math.round(baseSize * 1.2);
 
   return (
     <text
@@ -231,11 +258,9 @@ const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, l
       fill="white"
       textAnchor="middle"
       dominantBaseline="central"
-      fontSize={intelligentFontSize}
-      fontWeight="600"
-      style={{
-        pointerEvents: 'none'
-      }}
+      fontSize={baseSize}
+      fontWeight={600}
+      style={{ pointerEvents: 'none' }}
     >
       <tspan x={x} dy="0">{name}</tspan>
       <tspan x={x} dy={lineSpacing} fontSize={percentageFontSize}>{percentageText}</tspan>
