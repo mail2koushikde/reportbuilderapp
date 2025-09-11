@@ -591,7 +591,7 @@ const FileHistory: React.FC = () => {
           <div className="glass-card rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-white/5">
+                <thead ref={theadRef} className="bg-white/5">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70 w-8"></th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
