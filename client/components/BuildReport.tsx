@@ -1121,6 +1121,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Generic success dialog state (e.g., report saved)
   const [showSuccessDialog, setShowSuccessDialog] = useState<{ title: string; message?: string } | null>(null);
 
+  // Upload button tooltip visibility
+  const [showUploadTooltip, setShowUploadTooltip] = useState(true);
+
   // Clear All confirmation dialog state
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
 
@@ -6795,8 +6798,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <Files className="w-3 h-3" />
               </button>
               <button
-                onClick={handleFileImport}
+                onClick={(e) => { setShowUploadTooltip(false); handleFileImport(); e.currentTarget.blur(); }}
                 className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
+                title={showUploadTooltip ? 'Upload Data' : undefined}
               >
                 <Upload className="w-3 h-3" />
               </button>
