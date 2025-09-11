@@ -135,7 +135,8 @@ class DuckDBService {
     fileName: string,
     columns: string[],
     userEmail: string,
-    version?: number
+    version?: number,
+    onProgress?: (inserted: number, total: number) => void
   ): Promise<LocalDataset> {
     await this.initialize();
     if (!this.conn) throw new Error('DuckDB connection not available');
@@ -179,6 +180,7 @@ class DuckDBService {
       if (values) {
         await this.conn.query(`INSERT INTO "${tableName}" VALUES ${values};`);
         insertedRows += batch.length;
+        try { onProgress?.(insertedRows, data.length); } catch {}
       }
     }
 
@@ -453,7 +455,8 @@ class DuckDBService {
     fileName: string,
     columns: string[],
     userEmail: string,
-    version: number
+    version: number,
+    onProgress?: (inserted: number, total: number) => void
   ): Promise<LocalDataset> {
     // Delete any existing dataset with the same user/file/version, then save
     await this.ensureInitialized();
@@ -465,7 +468,7 @@ class DuckDBService {
     for (const r of rows) {
       await this.deleteDataset(r.id);
     }
-    return this.saveDataset(data, fileName, columns, userEmail, version);
+    return this.saveDataset(data, fileName, columns, userEmail, version, onProgress);
   }
 
   async deleteLocalFileVersion(
