@@ -2293,8 +2293,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } catch (error) {
       console.error('Error saving to local storage:', error);
       throw error;
+    } finally {
+      stopSaving();
     }
-  }, []);
+  }, [startSaving, stopSaving]);
 
   // Handle new version choice from version dialog
   const handleStorageNewVersion = useCallback(async (storageType: 'local' | 'server') => {
