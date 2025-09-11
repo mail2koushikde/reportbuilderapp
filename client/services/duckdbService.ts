@@ -154,7 +154,7 @@ class DuckDBService {
     await this.conn.query(`CREATE TABLE "${tableName}" (${columnDefs});`);
 
     // Insert data in batches
-    const batchSize = 1000;
+    const batchSize = 50000;
     let insertedRows = 0;
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
