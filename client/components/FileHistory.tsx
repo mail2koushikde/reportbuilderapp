@@ -23,6 +23,7 @@ import {
   HardDrive,
   Trash2
 } from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
 interface UploadMetadata {
   user_name: string;
@@ -495,41 +496,44 @@ const FileHistory: React.FC = () => {
           </div>
           
           <div className="flex gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Status</option>
-              <option value="success">Success</option>
-              <option value="failed">Failed</option>
-              <option value="processing">Processing</option>
-            </select>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+              <SelectTrigger className="px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/90 text-white border-white/20">
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+              </SelectContent>
+            </Select>
 
-            <select
-              value={storageFilter}
-              onChange={(e) => setStorageFilter(e.target.value as any)}
-              className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Storage</option>
-              <option value="server">Snowflake Only</option>
-              <option value="local">Local Only</option>
-            </select>
+            <Select value={storageFilter} onValueChange={(v) => setStorageFilter(v as any)}>
+              <SelectTrigger className="px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white">
+                <SelectValue placeholder="All Storage" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/90 text-white border-white/20">
+                <SelectItem value="all">All Storage</SelectItem>
+                <SelectItem value="server">Snowflake Only</SelectItem>
+                <SelectItem value="local">Local Only</SelectItem>
+              </SelectContent>
+            </Select>
 
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
+            <Select value={`${sortBy}-${sortOrder}`} onValueChange={(v) => {
+                const [field, order] = v.split('-');
                 setSortBy(field as any);
                 setSortOrder(order as any);
-              }}
-              className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="upload_timestamp-desc">Latest First</option>
-              <option value="upload_timestamp-asc">Oldest First</option>
-              <option value="original_filename-asc">File Name A-Z</option>
-              <option value="original_filename-desc">File Name Z-A</option>
-            </select>
+              }}>
+              <SelectTrigger className="px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/90 text-white border-white/20">
+                <SelectItem value="upload_timestamp-desc">Latest First</SelectItem>
+                <SelectItem value="upload_timestamp-asc">Oldest First</SelectItem>
+                <SelectItem value="original_filename-asc">File Name A-Z</SelectItem>
+                <SelectItem value="original_filename-desc">File Name Z-A</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
