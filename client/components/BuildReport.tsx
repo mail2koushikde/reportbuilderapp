@@ -3833,8 +3833,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       const gridY = Math.round(newY / GRID_SIZE);
 
       // Apply minimal constraints - allow movement beyond grid but prevent negative positions
-      const constrainedX = Math.max(0, gridX); // Don't restrict right boundary
-      const constrainedY = Math.max(0, gridY); // Don't restrict bottom boundary
+      let constrainedX = Math.max(0, gridX); // Don't restrict right boundary
+      let constrainedY = Math.max(0, gridY); // Don't restrict bottom boundary
+
+      // Clamp and ensure finite
+      if (!Number.isFinite(constrainedX)) constrainedX = 0;
+      if (!Number.isFinite(constrainedY)) constrainedY = 0;
+      constrainedX = Math.min(constrainedX, gridCols - 1);
+      constrainedY = Math.min(constrainedY, gridRows - 1);
 
       // Create temporary card for overlap checking
       const tempCard = {
