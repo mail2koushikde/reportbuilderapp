@@ -3908,6 +3908,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         newHeight = Math.max(3, Math.round((mouseY - cardTop) / GRID_SIZE));
       }
 
+      // Clamp and ensure finite values before applying
+      if (!Number.isFinite(newX)) newX = 0;
+      if (!Number.isFinite(newY)) newY = 0;
+      if (!Number.isFinite(newWidth)) newWidth = 3;
+      if (!Number.isFinite(newHeight)) newHeight = 3;
+      newWidth = Math.max(3, Math.min(newWidth, gridCols));
+      newHeight = Math.max(3, Math.min(newHeight, gridRows));
+      newX = Math.max(0, Math.min(newX, gridCols - 1));
+      newY = Math.max(0, Math.min(newY, gridRows - 1));
+
       // Create temporary card for overlap checking
       const tempCard = {
         ...card,
