@@ -2048,6 +2048,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Upload file to database with specific version
   const uploadFileToDatabase = useCallback(async (file: File, headers: string[], data: DataRow[], version: number, overwrite = false) => {
     const timestamp = Date.now();
+    startSaving('server', data.length);
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
     const tableName = `user_uploads_${timestamp}_${sanitizedFileName}_v${version}`;
 
