@@ -2249,8 +2249,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       console.error('Error during overwrite:', error);
       setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setShowUploadSuccess(true);
+    } finally {
+      if (savingTarget === 'local') stopSaving();
     }
-  }, [pendingFileData, storageConflictData, uploadFileToDatabase, userEmail]);
+  }, [pendingFileData, storageConflictData, uploadFileToDatabase, userEmail, savingTarget, stopSaving]);
 
   // Helper function to save to local storage with versioning
   const saveToLocalStorage = useCallback(async (
