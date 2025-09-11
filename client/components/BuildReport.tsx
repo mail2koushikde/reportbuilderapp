@@ -2136,6 +2136,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       }
 
       if (result.success) {
+        setSavingRowsSaved(data.length);
         // Success: load data into state for immediate visualization
         setColumns(headers);
         setImportedData(data);
