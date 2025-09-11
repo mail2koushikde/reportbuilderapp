@@ -2251,6 +2251,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     userEmail: string,
     version: number
   ) => {
+    startSaving('local', data.length);
     try {
       console.log(`Saving dataset to Local storage v${version}...`);
       console.log('SaveToLocalStorage params:', {
@@ -2260,7 +2261,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         dataLength: data.length,
         columnsLength: headers.length
       });
-      const dataset = await duckdbService.saveDataset(data, file.name, headers, userEmail, version);
+      const dataset = await duckdbService.saveDataset(
+        data,
+        file.name,
+        headers,
+        userEmail,
+        version,
+        (inserted, total) => setSavingRowsSaved(inserted)
+      );
+      setSavingRowsSaved(data.length);
       console.log('Dataset saved successfully:', dataset);
 
       // Load the data into the app for immediate use
@@ -8244,7 +8253,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
                   �� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
-                  {importedData.length > 0 && ` ����� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
+                  {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
               </div>
