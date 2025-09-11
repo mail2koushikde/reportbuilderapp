@@ -2587,6 +2587,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         setSelectedFileName('');
         setSelectedFileVersion(null);
       }
+    } else {
+      setExpandLimits({});
+      setExpandedFiles(new Set());
     }
   }, [showExistingFilesModal, groupedExistingFiles, selectedFileName, selectedFileVersion]);
 
