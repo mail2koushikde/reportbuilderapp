@@ -4037,6 +4037,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [draggedCard, resizingCard, draggedTextBox, resizingTextBox, draggedArrow, handleMouseMove, handleMouseUp]);
 
+  // Utility: create lightweight history snapshot (omit heavy data arrays)
+  const snapshotCardsForHistory = useCallback((cardsToSnap: DashboardCard[]) => {
+    return cardsToSnap.map((c) => ({
+      ...c,
+      data: [],
+      textBoxes: c.textBoxes.map(tb => ({ ...tb })),
+      arrows: c.arrows.map(ar => ({ ...ar })),
+    }));
+  }, []);
+
   // History state calculations
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < cardsHistory.length - 1;
