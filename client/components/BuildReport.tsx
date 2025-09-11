@@ -193,7 +193,7 @@ const renderCustomLabel = (
 ) => {
   if (!showLabels) return null;
 
-  const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent, name, startAngle, endAngle } = props;
 
   const RADIAN = Math.PI / 180;
   const minPct = mode === 'outside' ? 0.02 : 0.05; // Inside labels show for bigger slices (>=5%)
@@ -294,15 +294,29 @@ const renderCustomLabel = (
     );
   }
 
-  // Inside label (percent only, fit within slice thickness)
+  // Inside label (name + percent), auto-fit to slice thickness and arc width
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
+  const angleDeg = typeof startAngle === 'number' && typeof endAngle === 'number'
+    ? Math.abs(endAngle - startAngle)
+    : Math.max(5, percent * 360);
+
   const thickness = outerRadius - innerRadius;
-  const allowedHeight = Math.max(8, thickness * 0.8);
-  const percentageText = `${(percent * 100).toFixed(0)}%`;
-  const size = Math.min(baseSize, Math.floor(allowedHeight));
+  const allowedHeight = Math.max(10, thickness * 0.9);
+  const rMid = innerRadius + thickness * 0.5;
+  const arcLength = (Math.PI * angleDeg / 180) * rMid;
+  const allowedWidth = Math.max(20, arcLength * 0.9);
+
+  const pctText = `${(percent * 100).toFixed(0)}%`;
+
+  let size = Math.min(baseSize, Math.floor(allowedHeight / 2));
+  const longest = (name || '').length >= pctText.length ? (name || '') : pctText;
+  const widthFit = fitSize(longest, size, allowedWidth);
+  size = Math.max(6, Math.min(size, widthFit));
+  const pctSize = Math.max(6, Math.round(size * 0.9));
+  const lineGap = Math.round(size * 1.1);
 
   return (
     <text
@@ -315,7 +329,8 @@ const renderCustomLabel = (
       fontWeight={700}
       style={{ pointerEvents: 'none' }}
     >
-      {percentageText}
+      <tspan x={x} dy={-lineGap/2}>{name}</tspan>
+      <tspan x={x} dy={lineGap} fontSize={pctSize}>{pctText}</tspan>
     </text>
   );
 };
