@@ -5186,7 +5186,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ������
+                            ����
                           </button>
                         </div>
                       )}
@@ -6724,10 +6724,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       // Remove any future history if we're not at the end
       const trimmedHistory = prev.slice(0, historyIndex + 1);
 
-      // Add new state
+      // Add new state (lightweight snapshot)
       const newHistory = [
         ...trimmedHistory,
-        JSON.parse(JSON.stringify(newCards)),
+        snapshotCardsForHistory(newCards),
       ];
 
       // Limit history size
@@ -8901,7 +8901,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ���️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
