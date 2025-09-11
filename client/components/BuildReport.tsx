@@ -4431,7 +4431,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const isLargeCard = cardArea >= 150000; // >= 387x387
 
         // Determine if we should show legend at all - more intelligent based on area
-        const shouldShowLegend = !isVerySmallCard && dataCount <= 500;
+        const shouldShowLegend = false;
 
         // Elastic font size calculation based on card diagonal
         const baseFontSize = Math.max(8, Math.min(16, cardDiagonal * 0.02));
