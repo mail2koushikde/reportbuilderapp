@@ -169,7 +169,7 @@ class DuckDBService {
           } else {
             s = String(v);
           }
-          if (s === 'Infinity' || s === '-Infinity' || s === 'NaN') {
+          if (typeof v === 'number' && !Number.isFinite(v)) {
             return 'NULL';
           }
           return `'${s.replace(/'/g, "''")}'`;
