@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { format } from 'date-fns';
 import { useUser } from '../contexts/UserContext';
 import { duckdbService, LocalDataset } from '../services/duckdbService';
