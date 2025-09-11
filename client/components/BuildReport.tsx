@@ -1180,6 +1180,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [selectedFileVersion, setSelectedFileVersion] = useState<ExistingFileVersion | null>(null);
   const [groupedExistingFiles, setGroupedExistingFiles] = useState<{[filename: string]: ExistingFileVersion[]}>({});
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [expandLimits, setExpandLimits] = useState<{[filename: string]: number}>({});
 
   // Chart compatibility state
   const [chartCompatibilityIssues, setChartCompatibilityIssues] = useState<{[cardId: string]: string[]}>({});
