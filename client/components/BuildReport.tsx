@@ -4733,7 +4733,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           );
                         })}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip />} wrapperStyle={{ transition: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -5072,7 +5072,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                 );
                               })}
                             </Pie>
-                            <Tooltip content={<CustomTooltip />} />
+                            <Tooltip content={<CustomTooltip />} wrapperStyle={{ transition: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                           </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -5332,7 +5332,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip />} wrapperStyle={{ transition: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
