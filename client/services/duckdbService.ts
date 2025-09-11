@@ -50,26 +50,40 @@ class DuckDBService {
       this.db = new duckdb.AsyncDuckDB(logger, worker);
       await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
 
-      // Open a persistent database file stored in OPFS/IDBFS
-      try {
-        await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
-      } catch (e: any) {
-        const msg = (e && (e.message || e.toString?.())) || String(e);
-        const isInvalid = typeof msg === 'string' && msg.includes('not a valid DuckDB database file');
-        if (isInvalid) {
-          await this.removePersistentFileIfExists(this.DB_FILE_NAME);
-          try {
-            await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
-          } catch {
-            // Try a fresh unique file
-            this.DB_FILE_NAME = `opfs://fusion_local_${Date.now()}.duckdb`;
-            await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
-          }
-        } else {
-          // For other errors, try a fresh file directly
-          this.DB_FILE_NAME = `opfs://fusion_local_${Date.now()}.duckdb`;
+      // Open database: prefer OPFS for persistence; fallback to in-memory on browsers without OPFS (e.g., Safari)
+      const anyNav: any = navigator as any;
+      const supportsOPFS = !!(anyNav?.storage?.getDirectory);
+      if (supportsOPFS) {
+        try {
           await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+        } catch (e: any) {
+          const msg = (e && (e.message || e.toString?.())) || String(e);
+          const isInvalid = typeof msg === 'string' && msg.includes('not a valid DuckDB database file');
+          if (isInvalid) {
+            await this.removePersistentFileIfExists(this.DB_FILE_NAME);
+            try {
+              await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+            } catch {
+              // Try a fresh unique file
+              this.DB_FILE_NAME = `opfs://fusion_local_${Date.now()}.duckdb`;
+              await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+            }
+          } else {
+            // For other errors, try a fresh file directly
+            this.DB_FILE_NAME = `opfs://fusion_local_${Date.now()}.duckdb`;
+            try {
+              await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+            } catch {
+              // Final fallback: open in memory
+              this.DB_FILE_NAME = ':memory:';
+              await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+            }
+          }
         }
+      } else {
+        // Safari/iOS fallback: no OPFS support, use in-memory DB (non-persistent)
+        this.DB_FILE_NAME = ':memory:';
+        await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
       }
 
       this.conn = await this.db.connect();
