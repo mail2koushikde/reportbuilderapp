@@ -159,10 +159,20 @@ class DuckDBService {
       const batch = data.slice(i, i + batchSize);
       const values = batch.map((row) => {
         const rowValues = columns.map((col) => {
-          const value = row[col];
-          if (value === null || value === undefined) return 'NULL';
-          if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
-          return String(value);
+          const v = row[col];
+          if (v === null || v === undefined) return 'NULL';
+          let s: string;
+          if (v instanceof Date) {
+            s = v.toISOString();
+          } else if (typeof v === 'object') {
+            try { s = JSON.stringify(v); } catch { s = String(v); }
+          } else {
+            s = String(v);
+          }
+          if (s === 'Infinity' || s === '-Infinity' || s === 'NaN') {
+            return 'NULL';
+          }
+          return `'${s.replace(/'/g, "''")}'`;
         }).join(', ');
         return `(${rowValues})`;
       }).join(', ');
