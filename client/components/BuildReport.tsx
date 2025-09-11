@@ -34,6 +34,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Sector,
   ResponsiveContainer,
   Tooltip,
   Legend,
@@ -316,6 +317,29 @@ const renderCustomLabel = (
     >
       {percentageText}
     </text>
+  );
+};
+
+// Active pie slice shape with subtle 3D lift on hover
+const renderActivePieShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, midAngle } = props;
+  const RADIAN = Math.PI / 180;
+  const lift = Math.max(3, Math.round(outerRadius * 0.06));
+  const grow = Math.max(6, Math.round(outerRadius * 0.08));
+  const dx = Math.cos(-midAngle * RADIAN) * lift;
+  const dy = Math.sin(-midAngle * RADIAN) * lift;
+  return (
+    <g style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.45))' }}>
+      <Sector
+        cx={cx + dx}
+        cy={cy + dy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + grow}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+    </g>
   );
 };
 
@@ -1158,6 +1182,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [dragData, setDragData] = useState<{ cardId: string; barName: string; startX: number; startY: number } | null>(null);
   const [expandedLegend, setExpandedLegend] = useState<string | null>(null);
   const [legendDialog, setLegendDialog] = useState<string | null>(null);
+
+  // Track active pie slice per card for hover effects
+  const [activePieSlice, setActivePieSlice] = useState<Record<string, number | null>>({});
 
   // Mix bar chart state
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
@@ -4537,6 +4564,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         animationDuration={600}
                         animationBegin={0}
                         stroke="none"
+                              activeIndex={activePieSlice[card.id] ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, idx) => setActivePieSlice((s) => ({ ...s, [card.id]: idx }))}
+                              onMouseLeave={() => setActivePieSlice((s) => ({ ...s, [card.id]: null }))}
                       labelLine={false}
                       label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                       >
@@ -4876,6 +4907,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                               animationDuration={600}
                               animationBegin={0}
                               stroke="none"
+                              activeIndex={activePieSlice[card.id] ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, idx) => setActivePieSlice((s) => ({ ...s, [card.id]: idx }))}
+                              onMouseLeave={() => setActivePieSlice((s) => ({ ...s, [card.id]: null }))}
                       labelLine={false}
                       label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                             >
@@ -5283,6 +5318,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       animationDuration={600}
                       animationBegin={0}
                       stroke="none"
+                              activeIndex={activePieSlice[card.id] ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, idx) => setActivePieSlice((s) => ({ ...s, [card.id]: idx }))}
+                              onMouseLeave={() => setActivePieSlice((s) => ({ ...s, [card.id]: null }))}
                       labelLine={false}
                       label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                     >
