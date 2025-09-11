@@ -195,7 +195,7 @@ const renderCustomLabel = (
   const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
 
   const RADIAN = Math.PI / 180;
-  const minPct = mode === 'outside' ? 0.02 : 0.08; // Show more labels when outside
+  const minPct = mode === 'outside' ? 0.02 : 0.05; // Inside labels show for bigger slices (>=5%)
   if (percent < minPct) return null;
 
   // Intelligent sizing
@@ -4482,7 +4482,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const isLargeCard = cardArea >= 150000; // >= 387x387
 
         // Determine if we should show legend at all - more intelligent based on area
-        const shouldShowLegend = false;
+        const shouldShowLegend = !isVerySmallCard;
 
         // Elastic font size calculation based on card diagonal
         const baseFontSize = Math.max(8, Math.min(16, cardDiagonal * 0.02));
