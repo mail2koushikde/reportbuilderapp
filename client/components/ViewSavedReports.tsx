@@ -262,17 +262,18 @@ const ViewSavedReports: React.FC<ViewSavedReportsProps> = ({ onLoadReport }) => 
         {/* Filter */}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-white/70" />
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="all">All Types</option>
-            <option value="pie">Pie Charts</option>
-            <option value="bar">Bar Charts</option>
-            <option value="mixbar">Mix Bar Charts</option>
-            <option value="table">Tables</option>
-          </select>
+          <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
+            <SelectTrigger className="bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-white text-sm">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent className="bg-black/90 text-white border-white/20">
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="pie">Pie Charts</SelectItem>
+              <SelectItem value="bar">Bar Charts</SelectItem>
+              <SelectItem value="mixbar">Mix Bar Charts</SelectItem>
+              <SelectItem value="table">Tables</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Sort */}
