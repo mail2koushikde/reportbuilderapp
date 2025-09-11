@@ -1239,6 +1239,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Generic success dialog state (e.g., report saved)
   const [showSuccessDialog, setShowSuccessDialog] = useState<{ title: string; message?: string } | null>(null);
 
+  // Saving progress UI state
+  const [isSaving, setIsSaving] = useState(false);
+  const [savingTarget, setSavingTarget] = useState<'local' | 'server' | null>(null);
+  const [savingStart, setSavingStart] = useState<number | null>(null);
+  const [savingElapsed, setSavingElapsed] = useState(0);
+  const [savingRowsTotal, setSavingRowsTotal] = useState(0);
+  const [savingRowsSaved, setSavingRowsSaved] = useState(0);
+
   // Upload button tooltip visibility
   const [showUploadTooltip, setShowUploadTooltip] = useState(true);
 
