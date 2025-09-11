@@ -8481,6 +8481,25 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         </DialogContent>
       </Dialog>
 
+      {/* Saving Overlay */}
+      {isSaving && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-5 w-full max-w-md border border-white/20 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <div>
+                <div className="font-semibold">
+                  {savingTarget === 'local' ? 'Saving locally…' : 'Saving to Snowflake…'}
+                </div>
+                <div className="text-sm text-white/70">
+                  {savingElapsed}s elapsed • {savingRowsSaved.toLocaleString()} / {savingRowsTotal.toLocaleString()} rows saved
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Existing Files Modal */}
       {showExistingFilesModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overscroll-none">
