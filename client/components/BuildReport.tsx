@@ -4538,7 +4538,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         animationBegin={0}
                         stroke="none"
                       labelLine={false}
-                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'outside', pieAreaWidth, pieAreaHeight, padding)}
+                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                       >
                         {(processedData || []).map((entry, index) => {
                           const isDragging = draggedBar === `${card.id}-${entry?.name}`;
@@ -4877,7 +4877,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                               animationBegin={0}
                               stroke="none"
                       labelLine={false}
-                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'outside', pieAreaWidth, pieAreaHeight, padding)}
+                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                             >
                               {(processedData || []).map((entry, index) => {
                                 const isDragging = draggedBar === `${card.id}-${entry?.name}`;
@@ -5284,7 +5284,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       animationBegin={0}
                       stroke="none"
                       labelLine={false}
-                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'outside', pieAreaWidth, pieAreaHeight, padding)}
+                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                     >
                       {(processedData || []).map((_, index) => (
                         <Cell
