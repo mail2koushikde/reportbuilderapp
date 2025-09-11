@@ -74,16 +74,26 @@ class DuckDBService {
             try {
               await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
             } catch {
-              // Final fallback: open in memory
-              this.DB_FILE_NAME = ':memory:';
-              await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+              // Try IndexedDB-backed persistence; fallback to in-memory
+              try {
+                this.DB_FILE_NAME = 'indexeddb://fusion_local.duckdb';
+                await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+              } catch {
+                this.DB_FILE_NAME = ':memory:';
+                await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+              }
             }
           }
         }
       } else {
-        // Safari/iOS fallback: no OPFS support, use in-memory DB (non-persistent)
-        this.DB_FILE_NAME = ':memory:';
-        await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+        // Safari/iOS fallback: try IndexedDB-backed persistence, then in-memory
+        try {
+          this.DB_FILE_NAME = 'indexeddb://fusion_local.duckdb';
+          await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+        } catch {
+          this.DB_FILE_NAME = ':memory:';
+          await this.db.open({ path: this.DB_FILE_NAME, accessMode: duckdb.DuckDBAccessMode.READ_WRITE });
+        }
       }
 
       this.conn = await this.db.connect();
