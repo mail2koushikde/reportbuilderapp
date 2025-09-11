@@ -185,7 +185,10 @@ const renderCustomLabel = (
   pieRadius: number,
   showLabels: boolean,
   labelFontSize = 10,
-  mode: 'outside' | 'inside' = 'outside'
+  mode: 'outside' | 'inside' = 'outside',
+  containerWidth = 0,
+  containerHeight = 0,
+  containerPadding = 12
 ) => {
   if (!showLabels) return null;
 
@@ -200,6 +203,14 @@ const renderCustomLabel = (
   const fontSizeMultiplier = percentValue >= 30 ? 1.1 : percentValue >= 20 ? 1.05 : percentValue >= 10 ? 1.0 : 0.95;
   const baseSize = Math.round(labelFontSize * fontSizeMultiplier);
 
+  const estimateWidth = (text: string, size: number) => text.length * size * 0.6;
+  const fitSize = (text: string, size: number, maxWidth: number) => {
+    if (maxWidth <= 0) return Math.max(8, size);
+    const need = estimateWidth(text, size);
+    if (need <= maxWidth) return Math.max(8, size);
+    return Math.max(8, Math.floor(maxWidth / (text.length * 0.6)));
+  };
+
   if (mode === 'outside') {
     const sin = Math.sin(-RADIAN * midAngle);
     const cos = Math.cos(-RADIAN * midAngle);
@@ -211,13 +222,60 @@ const renderCustomLabel = (
     const sy = cy + r0 * sin;
     const mx = cx + r1 * cos;
     const my = cy + r1 * sin;
+
+    const label = `${name} — ${(percent * 100).toFixed(2)}%`;
+
+    // Top/bottom placement when angle is near vertical
+    const nearVertical = Math.abs(sin) > 0.9 && Math.abs(cos) < 0.44;
+    if (nearVertical && containerWidth > 0) {
+      const isTop = sin < 0; // negative sin means upwards in our coordinate
+      const ex = mx;
+      const ey = my + (isTop ? -16 : 16);
+      const allowed = Math.max(32, containerWidth - 2 * containerPadding);
+      const size = fitSize(label, baseSize, allowed);
+      const textWidth = estimateWidth(label, size);
+      let textX = ex;
+      const minX = containerPadding + textWidth / 2;
+      const maxX = containerWidth - containerPadding - textWidth / 2;
+      textX = Math.max(minX, Math.min(maxX, textX));
+      const textY = ey + (isTop ? -size / 2 : size / 2);
+      return (
+        <g style={{ pointerEvents: 'none' }}>
+          <polyline
+            points={`${sx},${sy} ${mx},${my} ${ex},${ey}`}
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth={1}
+            fill="none"
+          />
+          <text x={textX} y={textY} fill="#e5e7eb" fontSize={size} fontWeight={600} textAnchor="middle" dominantBaseline="middle">
+            {label}
+          </text>
+        </g>
+      );
+    }
+
+    // Left/right placement
     const isRight = cos >= 0;
     const ex = mx + (isRight ? 16 : -16);
     const ey = my;
-
-    const textX = ex + (isRight ? 6 : -6);
+    let textX = ex + (isRight ? 6 : -6);
     const textAnchor = isRight ? 'start' : 'end';
-    const label = `${name} — ${(percent * 100).toFixed(2)}%`;
+
+    let size = baseSize;
+    if (containerWidth > 0) {
+      const allowed = isRight
+        ? Math.max(24, containerWidth - containerPadding - textX)
+        : Math.max(24, textX - containerPadding);
+      size = fitSize(label, baseSize, allowed);
+      const textWidth = estimateWidth(label, size);
+      if (isRight) {
+        const maxX = containerWidth - containerPadding - textWidth;
+        textX = Math.min(textX, maxX);
+      } else {
+        const minX = containerPadding + textWidth;
+        textX = Math.max(textX, minX);
+      }
+    }
 
     return (
       <g style={{ pointerEvents: 'none' }}>
@@ -227,15 +285,8 @@ const renderCustomLabel = (
           strokeWidth={1}
           fill="none"
         />
-        <line
-          x1={mx}
-          y1={my}
-          x2={ex}
-          y2={ey}
-          stroke="rgba(255,255,255,0.6)"
-          strokeWidth={1}
-        />
-        <text x={textX} y={ey} fill="#e5e7eb" fontSize={baseSize} fontWeight={600} textAnchor={textAnchor} dominantBaseline="middle">
+        <line x1={mx} y1={my} x2={ex} y2={ey} stroke="rgba(255,255,255,0.6)" strokeWidth={1} />
+        <text x={textX} y={ey} fill="#e5e7eb" fontSize={size} fontWeight={600} textAnchor={textAnchor} dominantBaseline="middle">
           {label}
         </text>
       </g>
