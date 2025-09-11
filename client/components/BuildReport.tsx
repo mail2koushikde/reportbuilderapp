@@ -8701,35 +8701,54 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       {/* Session Debug Component (temporary for testing) */}
       <SessionDebug />
 
-      {/* File Upload Success Popup */}
+      {/* File Upload Result Popup */}
       {showUploadSuccess && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4">
           <div className="glass-card rounded-xl p-6 w-full max-w-md">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
+              {(() => {
+                const isError = /db save failed|^error:/i.test(uploadedFileName);
+                return (
+                  <>
+                    <div className={`w-16 h-16 ${isError ? 'bg-red-500/20' : 'bg-green-500/20'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                      {isError ? (
+                        <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
 
-              <h3 className="text-lg font-semibold text-white mb-2">
-                {uploadedFileName.startsWith('Snowflake:') ? 'Data Imported Successfully!' : 'Data Loaded Successfully!'}
-              </h3>
-              <p className="text-white/70 text-sm mb-6">
-                "{uploadedFileName}" is ready to use.
-                {importedData.length > 0 && columns.length > 0 && (
-                  <span className="block text-white/50 text-xs mt-1">
-                    • {importedData.length} rows • {columns.length} columns
-                  </span>
-                )}
-              </p>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {isError
+                        ? 'Data Save Failed'
+                        : uploadedFileName.startsWith('Snowflake:')
+                          ? 'Data Imported Successfully!'
+                          : 'Data Loaded Successfully!'}
+                    </h3>
+                    <p className="text-white/70 text-sm mb-6">
+                      {isError
+                        ? 'Database save failed. The data has been loaded locally and is ready to use.'
+                        : `"${uploadedFileName}" is ready to use.`}
+                      {importedData.length > 0 && columns.length > 0 && (
+                        <span className="block text-white/50 text-xs mt-1">
+                          • {importedData.length} rows • {columns.length} columns
+                        </span>
+                      )}
+                    </p>
 
-              <button
-                onClick={() => setShowUploadSuccess(false)}
-                className="w-full px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
-              >
-                OK
-              </button>
+                    <button
+                      onClick={() => setShowUploadSuccess(false)}
+                      className={`w-full px-4 py-2 ${isError ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30' : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-400/30'} font-medium text-sm rounded-lg transition-colors`}
+                    >
+                      OK
+                    </button>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
