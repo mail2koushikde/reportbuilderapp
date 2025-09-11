@@ -1046,6 +1046,19 @@ interface BuildReportProps {
   userEmail?: string;
 }
 
+interface ExistingFileVersion {
+  id: string;
+  version: number;
+  originalFileName: string;
+  createdAt: string;
+  rowCount: number;
+  columnsCount: number;
+  fileSize: number;
+  source: 'local' | 'server';
+  datasetId?: string;
+  tableName?: string;
+}
+
 const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail = 'mayank.jain@abc.com' }) => {
   // Session management
   const { syncCards, syncData, syncFile, hasActiveSession, getInitialStateFromSession } = useBuildReportSession();
@@ -1164,8 +1177,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Existing files modal state
   const [showExistingFilesModal, setShowExistingFilesModal] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string>('');
-  const [selectedFileVersion, setSelectedFileVersion] = useState<LocalDataset | null>(null);
-  const [groupedLocalFiles, setGroupedLocalFiles] = useState<{[filename: string]: LocalDataset[]}>({});
+  const [selectedFileVersion, setSelectedFileVersion] = useState<ExistingFileVersion | null>(null);
+  const [groupedExistingFiles, setGroupedExistingFiles] = useState<{[filename: string]: ExistingFileVersion[]}>({});
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
   // Chart compatibility state
@@ -2388,33 +2401,71 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
   // Load local datasets on component mount
   useEffect(() => {
-    const loadLocalDatasets = async () => {
+    const loadExistingFiles = async () => {
       try {
-        const datasets = await duckdbService.listDatasets();
-        setLocalDatasets(datasets);
+        // Local datasets
+        const localDatasetsList = await duckdbService.listDatasets();
+        setLocalDatasets(localDatasetsList);
+        const localVersions: ExistingFileVersion[] = localDatasetsList.map(dataset => ({
+          id: dataset.id,
+          version: dataset.version,
+          originalFileName: dataset.originalFileName,
+          createdAt: dataset.createdAt.toISOString(),
+          rowCount: dataset.rowCount,
+          columnsCount: dataset.columns.length,
+          fileSize: dataset.fileSize,
+          source: 'local',
+          datasetId: dataset.id
+        }));
 
-        // Group datasets by original filename for the existing files modal
-        const grouped: {[filename: string]: LocalDataset[]} = {};
-        datasets.forEach(dataset => {
-          const filename = dataset.originalFileName;
-          if (!grouped[filename]) {
-            grouped[filename] = [];
+        // Server uploads (Snowflake)
+        let serverVersions: ExistingFileVersion[] = [];
+        try {
+          const resp = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.success && Array.isArray(data.uploads)) {
+              serverVersions = data.uploads.map((u: any) => ({
+                id: u.table_name,
+                version: u.version,
+                originalFileName: u.original_filename,
+                createdAt: u.upload_timestamp,
+                rowCount: u.row_count || 0,
+                columnsCount: u.column_count || (u.column_names ? String(u.column_names).split(',').filter(Boolean).length : 0),
+                fileSize: u.file_size_bytes || 0,
+                source: 'server',
+                tableName: u.table_name
+              }));
+            }
           }
-          grouped[filename].push(dataset);
+        } catch (e) {
+          console.warn('Failed to fetch server uploads:', (e as any)?.message || e);
+        }
+
+        // Group by filename
+        const grouped: {[filename: string]: ExistingFileVersion[]} = {};
+        [...localVersions, ...serverVersions].forEach(v => {
+          const filename = v.originalFileName;
+          if (!grouped[filename]) grouped[filename] = [];
+          grouped[filename].push(v);
         });
 
-        // Sort versions within each group (newest first)
+        // Sort versions per group (latest version first; prefer server when equal)
         Object.keys(grouped).forEach(filename => {
-          grouped[filename].sort((a, b) => b.version - a.version);
+          grouped[filename].sort((a, b) => {
+            if (a.version !== b.version) return b.version - a.version;
+            if (a.source !== b.source) return a.source === 'server' ? -1 : 1;
+            return 0;
+          });
         });
 
-        setGroupedLocalFiles(grouped);
+        setGroupedExistingFiles(grouped);
       } catch (error) {
-        console.error('Error loading local datasets:', error);
+        console.error('Error loading existing files:', error);
       }
     };
-    loadLocalDatasets();
-  }, []);
+    loadExistingFiles();
+  }, [userEmail]);
 
   // Handler for loading a dataset from local storage
   const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
@@ -2449,11 +2500,36 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   }, [fetchFileVersions, userEmail]);
 
   // Select an existing local file and load sample data via DuckDB, then inject into app
-  const handleSelectExistingFile = useCallback(async (dataset: LocalDataset) => {
+  const handleSelectExistingFile = useCallback(async (version: ExistingFileVersion) => {
     try {
-      const sampleQuery = 'SELECT * FROM {table} LIMIT 1000000';
-      const data = await duckdbService.queryDataset(dataset.id, sampleQuery);
-      await handleLoadLocalDataset(dataset, data);
+      if (version.source === 'local' && version.datasetId) {
+        const datasetMeta = await duckdbService.getDatasetMetadata(version.datasetId);
+        const data = await duckdbService.queryDataset(version.datasetId, 'SELECT * FROM {table} LIMIT 1000000');
+        setColumns(datasetMeta?.columns || []);
+        setImportedData(data || []);
+        setCacheEnabled(false);
+        const baseName = version.originalFileName.replace(/\.csv$/i, '');
+        setFileName(baseName);
+        setCurrentFileVersion(version.version);
+        setDataSource('local');
+        try { await fetchFileVersions(userEmail, version.originalFileName); } catch {}
+        setUploadedFileName(`${version.originalFileName} (v${version.version}) - Local`);
+        setShowUploadSuccess(true);
+      } else if (version.source === 'server' && version.tableName) {
+        const response = await fetch(`/api/database/tables/${version.tableName}/data?limit=1000000`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Failed to load server data');
+        setColumns(result.columns || []);
+        setImportedData(result.data || []);
+        setCacheEnabled(false);
+        const baseName = version.originalFileName.replace(/\.csv$/i, '');
+        setFileName(baseName);
+        setCurrentFileVersion(version.version);
+        setDataSource('server');
+        setUploadedFileName(`${version.originalFileName} (v${version.version}) - Snowflake`);
+        setShowUploadSuccess(true);
+      }
 
       // Close modal and reset state
       setShowExistingFilesModal(false);
@@ -2464,7 +2540,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       console.error('Error loading existing file:', error);
       alert('Failed to load file');
     }
-  }, [handleLoadLocalDataset]);
+  }, [userEmail, fetchFileVersions]);
 
   // Toggle expansion of a file's versions in existing files modal
   const toggleFileExpansion = useCallback((filename: string) => {
@@ -2482,34 +2558,34 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Existing files selection handlers
   const handleExistingFileNameChange = useCallback((name: string) => {
     setSelectedFileName(name);
-    const versions = groupedLocalFiles[name] || [];
+    const versions = groupedExistingFiles[name] || [];
     setSelectedFileVersion(versions.length > 0 ? versions[0] : null);
-  }, [groupedLocalFiles]);
+  }, [groupedExistingFiles]);
 
   const handleExistingFileVersionChange = useCallback((version: number) => {
     if (!selectedFileName) return;
-    const ds = (groupedLocalFiles[selectedFileName] || []).find(v => v.version === version) || null;
+    const ds = (groupedExistingFiles[selectedFileName] || []).find(v => v.version === version) || null;
     setSelectedFileVersion(ds);
-  }, [groupedLocalFiles, selectedFileName]);
+  }, [groupedExistingFiles, selectedFileName]);
 
   useEffect(() => {
     if (showExistingFilesModal) {
-      const names = Object.keys(groupedLocalFiles);
+      const names = Object.keys(groupedExistingFiles);
       if (names.length > 0) {
-        if (!selectedFileName || !groupedLocalFiles[selectedFileName]) {
+        if (!selectedFileName || !groupedExistingFiles[selectedFileName]) {
           const defaultName = names[0];
           setSelectedFileName(defaultName);
-          const versions = groupedLocalFiles[defaultName] || [];
+          const versions = groupedExistingFiles[defaultName] || [];
           setSelectedFileVersion(versions.length > 0 ? versions[0] : null);
-        } else if (!selectedFileVersion && groupedLocalFiles[selectedFileName]?.length > 0) {
-          setSelectedFileVersion(groupedLocalFiles[selectedFileName][0]);
+        } else if (!selectedFileVersion && groupedExistingFiles[selectedFileName]?.length > 0) {
+          setSelectedFileVersion(groupedExistingFiles[selectedFileName][0]);
         }
       } else {
         setSelectedFileName('');
         setSelectedFileVersion(null);
       }
     }
-  }, [showExistingFilesModal, groupedLocalFiles, selectedFileName, selectedFileVersion]);
+  }, [showExistingFilesModal, groupedExistingFiles, selectedFileName, selectedFileVersion]);
 
   // Cache management functions
   const toggleCache = useCallback(async () => {
@@ -8180,7 +8256,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </p>
 
               {/* Quick selectors */}
-              {Object.keys(groupedLocalFiles).length > 0 && (
+              {Object.keys(groupedExistingFiles).length > 0 && (
                 <div className="flex flex-col md:flex-row md:items-end gap-3 bg-white/5 border border-white/10 rounded-lg p-4">
                   <div className="flex-1">
                     <label className="block text-xs text-white/60 mb-1">File</label>
@@ -8189,7 +8265,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       value={selectedFileName}
                       onChange={(e) => handleExistingFileNameChange(e.target.value)}
                     >
-                      {Object.keys(groupedLocalFiles).map(name => (
+                      {Object.keys(groupedExistingFiles).map(name => (
                         <option key={name} value={name}>{name}</option>
                       ))}
                     </select>
@@ -8200,9 +8276,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       className="w-full px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                       value={selectedFileVersion?.version ?? ''}
                       onChange={(e) => handleExistingFileVersionChange(Number(e.target.value))}
-                      disabled={!selectedFileName || !(groupedLocalFiles[selectedFileName]?.length)}
+                      disabled={!selectedFileName || !(groupedExistingFiles[selectedFileName]?.length)}
                     >
-                      {(groupedLocalFiles[selectedFileName] || []).map(v => (
+                      {(groupedExistingFiles[selectedFileName] || []).map(v => (
                         <option key={v.id} value={v.version}>v{v.version}</option>
                       ))}
                     </select>
@@ -8221,7 +8297,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
               {/* File table */}
               <div className="bg-white/5 rounded-lg p-4 max-h-[400px] overflow-y-auto">
-                {Object.keys(groupedLocalFiles).length > 0 ? (
+                {Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
@@ -8239,7 +8315,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/10">
-                          {Object.entries(groupedLocalFiles).map(([filename, versions]) => {
+                          {Object.entries(groupedExistingFiles).map(([filename, versions]) => {
                             const latestVersion = versions[0];
                             const isExpanded = expandedFiles.has(filename);
 
@@ -8269,8 +8345,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                       <CheckCircle className="w-4 h-4 text-green-500" />
                                       <span className="text-sm text-white/70 capitalize">success</span>
                                       <div className="flex items-center gap-1">
-                                        <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
-                                        <span className="text-xs text-white/50">Local</span>
+                                        {latestVersion.source === 'server' ? (
+                                        <>
+                                          <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
+                                          <span className="text-xs text-white/50">Snowflake</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
+                                          <span className="text-xs text-white/50">Local</span>
+                                        </>
+                                      )}
                                       </div>
                                     </div>
                                   </td>
@@ -8305,7 +8390,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                     <span className="text-white/80">{latestVersion.rowCount.toLocaleString()}</span>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <span className="text-white/80">{latestVersion.columns?.length ?? 0}</span>
+                                    <span className="text-white/80">{latestVersion.columnsCount ?? 0}</span>
                                   </td>
                                   <td className="px-4 py-3">
                                     <span className="text-white/80">{(latestVersion.fileSize / 1024).toFixed(1)} KB</span>
@@ -8334,8 +8419,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                                   <CheckCircle className="w-4 h-4 text-green-500" />
                                                   <span className="text-sm text-white capitalize">success</span>
                                                   <div className="flex items-center gap-1">
-                                                    <HardDrive className="w-3 h-3 text-purple-400" />
-                                                    <span className="text-xs text-white/50">Local</span>
+                                                    {version.source === 'server' ? (
+                                                    <>
+                                                      <Database className="w-3 h-3 text-blue-400" />
+                                                      <span className="text-xs text-white/50">Snowflake</span>
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <HardDrive className="w-3 h-3 text-purple-400" />
+                                                      <span className="text-xs text-white/50">Local</span>
+                                                    </>
+                                                  )}
                                                   </div>
                                                 </div>
                                                 <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '200px', maxWidth: '250px' }}>
@@ -8359,7 +8453,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                                   <span className="text-white text-sm">{version.rowCount.toLocaleString()}</span>
                                                 </div>
                                                 <div className="px-4 py-0" style={{ minWidth: '80px' }}>
-                                                  <span className="text-white text-sm">{version.columns?.length ?? 0}</span>
+                                                  <span className="text-white text-sm">{version.columnsCount ?? 0}</span>
                                                 </div>
                                                 <div className="px-4 py-0" style={{ minWidth: '80px' }}>
                                                   <span className="text-white text-sm">{(version.fileSize / 1024).toFixed(1)} KB</span>
