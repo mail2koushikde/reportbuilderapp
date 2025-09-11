@@ -7439,10 +7439,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   : 'z-10 border-white/20 transition-all duration-200'
               }`}
               style={{
-                left: card.gridPosition.x * GRID_SIZE,
-                top: card.gridPosition.y * GRID_SIZE,
-                width: card.gridPosition.width * GRID_SIZE,
-                height: card.gridPosition.height * GRID_SIZE,
+                left: (Number.isFinite(card.gridPosition.x) ? card.gridPosition.x : 0) * GRID_SIZE,
+                top: (Number.isFinite(card.gridPosition.y) ? card.gridPosition.y : 0) * GRID_SIZE,
+                width: (Number.isFinite(card.gridPosition.width) ? card.gridPosition.width : 3) * GRID_SIZE,
+                height: (Number.isFinite(card.gridPosition.height) ? card.gridPosition.height : 3) * GRID_SIZE,
                 transform: 'none',
                 userSelect: 'none',
               }}
