@@ -4054,10 +4054,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Initialize history when first card is added
   useEffect(() => {
     if (cards.length > 0 && cardsHistory.length === 0) {
-      setCardsHistory([JSON.parse(JSON.stringify(cards))]);
+      setCardsHistory([snapshotCardsForHistory(cards)]);
       setHistoryIndex(0);
     }
-  }, [cards.length, cardsHistory.length]);
+  }, [cards.length, cardsHistory.length, snapshotCardsForHistory]);
 
   // Keyboard shortcuts for undo/redo and escape to preview chart
   useEffect(() => {
@@ -5186,7 +5186,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ����
+                            ������
                           </button>
                         </div>
                       )}
@@ -8901,7 +8901,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ���️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
