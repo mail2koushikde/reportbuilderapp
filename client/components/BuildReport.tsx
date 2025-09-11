@@ -8277,28 +8277,33 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <div className="flex flex-col md:flex-row md:items-end gap-3 bg-white/5 border border-white/10 rounded-lg p-4">
                   <div className="flex-1">
                     <label className="block text-xs text-white/60 mb-1">File</label>
-                    <select
-                      className="w-full px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={selectedFileName}
-                      onChange={(e) => handleExistingFileNameChange(e.target.value)}
-                    >
-                      {Object.keys(groupedExistingFiles).map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
+                    <Select value={selectedFileName} onValueChange={(v) => handleExistingFileNameChange(v)}>
+                      <SelectTrigger className="w-full bg-black/40 border border-white/20 text-white">
+                        <SelectValue placeholder="Select file" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 text-white border-white/20">
+                        {Object.keys(groupedExistingFiles).map(name => (
+                          <SelectItem key={name} value={name}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs text-white/60 mb-1">Version</label>
-                    <select
-                      className="w-full px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                      value={selectedFileVersion?.version ?? ''}
-                      onChange={(e) => handleExistingFileVersionChange(Number(e.target.value))}
+                    <Select
+                      value={selectedFileVersion ? String(selectedFileVersion.version) : ''}
+                      onValueChange={(v) => handleExistingFileVersionChange(Number(v))}
                       disabled={!selectedFileName || !(groupedExistingFiles[selectedFileName]?.length)}
                     >
-                      {(groupedExistingFiles[selectedFileName] || []).map(v => (
-                        <option key={v.id} value={v.version}>v{v.version}</option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full bg-black/40 border border-white/20 text-white disabled:opacity-50">
+                        <SelectValue placeholder="Select version" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 text-white border-white/20">
+                        {(groupedExistingFiles[selectedFileName] || []).map(v => (
+                          <SelectItem key={v.id} value={String(v.version)}>v{v.version}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="md:ml-auto">
                     <button
