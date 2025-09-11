@@ -778,17 +778,25 @@ const FileHistory: React.FC = () => {
                                 <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
                                   <div className="space-y-1">
                                     {file.allVersions.map((version, index) => (
-                                      <div key={`${file.filename}-v${version.version}-${version.storage_type}-${version.table_name}-${version.upload_timestamp}`} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
-                                        {/* Empty space to align with expand button column */}
-                                        <div style={{ width: '32px' }} className="flex-shrink-0"></div>
+                                      <div
+                                        key={`${file.filename}-v${version.version}-${version.storage_type}-${version.table_name}-${version.upload_timestamp}`}
+                                        className="items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors"
+                                        style={{
+                                          display: 'grid',
+                                          gridTemplateColumns: columnWidths.length
+                                            ? columnWidths.map((w) => `${w}px`).join(' ')
+                                            : undefined,
+                                        }}
+                                      >
+                                        {/* Column 1: spacer for expand button */}
+                                        <div className="px-4" />
 
-                                        {/* Status column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-2 w-[220px] shrink-0">
+                                        {/* Column 2: Status */}
+                                        <div className="px-4 flex items-center gap-2">
                                           {getStatusIcon(version.upload_status)}
                                           <span className="text-sm text-white capitalize">
                                             {version.upload_status}
                                           </span>
-                                          {/* Storage type indicator for versions */}
                                           <div className="flex items-center gap-1">
                                             {version.storage_type === 'local' ? (
                                               <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
@@ -801,48 +809,50 @@ const FileHistory: React.FC = () => {
                                           </div>
                                         </div>
 
-                                        {/* File Name column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-2 w-[260px] shrink-0">
+                                        {/* Column 3: File Name */}
+                                        <div className="px-4 flex items-center gap-2 min-w-0">
                                           <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                           <span className="text-white text-sm truncate">
                                             {version.original_filename}
                                           </span>
                                         </div>
 
-                                        {/* Version column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-1 w-[100px] shrink-0">
-                                          <span className={`px-2 py-1 text-xs rounded-full ${
-                                            index === 0
-                                              ? 'bg-green-600/40 text-green-200 border border-green-400/50'
-                                              : 'bg-slate-600/40 text-slate-200'
-                                          }`}>
+                                        {/* Column 4: Version */}
+                                        <div className="px-4 flex items-center gap-1">
+                                          <span
+                                            className={`px-2 py-1 text-xs rounded-full ${
+                                              index === 0
+                                                ? 'bg-green-600/40 text-green-200 border border-green-400/50'
+                                                : 'bg-slate-600/40 text-slate-200'
+                                            }`}
+                                          >
                                             v{version.version}
                                           </span>
                                         </div>
 
-                                        {/* Upload Date column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center gap-2 w-[180px] shrink-0">
+                                        {/* Column 5: Upload Date */}
+                                        <div className="px-4 flex items-center gap-2">
                                           <Calendar className="w-4 h-4 text-green-500" />
                                           <span className="text-white text-sm">{formatTimestamp(version.upload_timestamp)}</span>
                                         </div>
 
-                                        {/* Rows column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center w-[90px] shrink-0">
+                                        {/* Column 6: Rows */}
+                                        <div className="px-4 flex items-center">
                                           <span className="text-white text-sm">{version.row_count.toLocaleString()}</span>
                                         </div>
 
-                                        {/* Columns column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center w-[90px] shrink-0">
+                                        {/* Column 7: Columns */}
+                                        <div className="px-4 flex items-center">
                                           <span className="text-white text-sm">{version.column_count}</span>
                                         </div>
 
-                                        {/* Size column - match table header width */}
-                                        <div className="px-4 py-0 flex items-center w-[100px] shrink-0">
+                                        {/* Column 8: Size */}
+                                        <div className="px-4 flex items-center">
                                           <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
                                         </div>
 
-                                        {/* Table Name column - flex to fill remaining space */}
-                                        <div className="px-4 py-0 flex items-center flex-1 min-w-0">
+                                        {/* Column 9: Table Name */}
+                                        <div className="px-4 flex items-center min-w-0">
                                           <code className="text-xs bg-slate-700/50 text-slate-200 px-2 py-1 rounded truncate">
                                             {version.table_name}
                                           </code>
