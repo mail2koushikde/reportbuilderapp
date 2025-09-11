@@ -2184,8 +2184,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       setUploadedFileName(`${file.name} (v${version}) (DB save failed - using locally)`);
       setShowUploadSuccess(true);
+      stopSaving();
     }
-  }, []);
+  }, [startSaving, stopSaving]);
 
   // Handle overwrite choice from version dialog
   const handleStorageOverwrite = useCallback(async (storageType: 'local' | 'server') => {
@@ -8243,7 +8244,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
                   �� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
-                  {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
+                  {importedData.length > 0 && ` ����� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
               </div>
