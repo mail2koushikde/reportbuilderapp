@@ -2205,7 +2205,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       if (storageType === 'local') {
         // Handle local storage overwrite
-        await duckdbService.overwriteLocalFile(data, file.name, headers, userEmail, latestVersion);
+        startSaving('local', data.length);
+        await duckdbService.overwriteLocalFile(
+          data,
+          file.name,
+          headers,
+          userEmail,
+          latestVersion,
+          (inserted, total) => setSavingRowsSaved(inserted)
+        );
+        setSavingRowsSaved(data.length);
 
         // Load the data into the app for immediate use
         setColumns(headers);
