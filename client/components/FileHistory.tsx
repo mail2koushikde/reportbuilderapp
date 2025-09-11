@@ -65,6 +65,8 @@ const FileHistory: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [clearing, setClearing] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const theadRef = useRef<HTMLTableSectionElement | null>(null);
+  const [columnWidths, setColumnWidths] = useState<number[]>([]);
 
   const fetchUploads = async () => {
     try {
