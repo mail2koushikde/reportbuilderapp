@@ -2400,10 +2400,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [pendingFileData, userEmail, uploadFileToDatabase]);
 
-  // Load local datasets on component mount
+  // Load existing files only when modal is open
   useEffect(() => {
     const loadExistingFiles = async () => {
       try {
+        if (!showExistingFilesModal) return;
         // Local datasets
         const localDatasetsList = await duckdbService.listDatasets();
         setLocalDatasets(localDatasetsList);
@@ -2466,7 +2467,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       }
     };
     loadExistingFiles();
-  }, [userEmail]);
+  }, [showExistingFilesModal, userEmail]);
 
   // Handler for loading a dataset from local storage
   const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
