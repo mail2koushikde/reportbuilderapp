@@ -1917,7 +1917,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       // Read response body once as text first to avoid stream issues
       let responseText;
       try {
-        responseText = await response.text();
+        responseText = await response.clone().text();
       } catch (textError) {
         console.error('Failed to read response body:', textError);
         throw new Error(`Failed to read server response. Status: ${response.status}`);
@@ -2347,7 +2347,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
           let conflictResult;
           try {
-            const conflictText = await conflictResponse.text();
+            const conflictText = await conflictResponse.clone().text();
             conflictResult = JSON.parse(conflictText);
           } catch (jsonError) {
             console.error('Failed to parse conflict check response as JSON:', jsonError);
