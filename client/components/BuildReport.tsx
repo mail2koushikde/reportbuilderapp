@@ -8254,7 +8254,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       {/* Existing Files Modal */}
       {showExistingFilesModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overscroll-none">
-          <div className="glass-card rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-hidden overscroll-none">
+          <div className="glass-card rounded-xl p-6 w-full w-[95vw] max-w-7xl max-h-[90vh] overflow-hidden overscroll-none">
             <div className="flex items-center gap-3 mb-4">
               <Files className="w-5 h-5 text-orange-400" />
               <h2 className="text-lg font-semibold text-white">Select from Existing Files</h2>
@@ -8312,7 +8312,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               )}
 
               {/* File table */}
-              <div className="bg-white/5 rounded-lg p-4 max-h-[400px] overflow-y-auto overscroll-contain">
+              <div className="bg-white/5 rounded-lg p-4 max-h-[70vh] overflow-y-auto overscroll-contain">
                 {Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
