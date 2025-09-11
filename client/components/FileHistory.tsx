@@ -152,6 +152,20 @@ const FileHistory: React.FC = () => {
     fetchUploads();
   }, [userEmail]);
 
+  // Measure column widths to align expanded rows with table columns
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!theadRef.current) return;
+      const ths = Array.from(theadRef.current.querySelectorAll('th')) as HTMLElement[];
+      if (!ths.length) return;
+      const widths = ths.map((th) => th.offsetWidth);
+      setColumnWidths(widths);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [groupedFiles, searchTerm, statusFilter, storageFilter, sortBy, sortOrder, expandedFiles]);
+
   // Clear all data from both local and server storage
   const clearAllData = async () => {
     try {
