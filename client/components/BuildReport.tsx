@@ -54,6 +54,7 @@ import FileHistory from './FileHistory';
 import UserProfile from './UserProfile';
 import MemoryIndicator from './MemoryIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useBuildReportSession } from '../hooks/useBuildReportSession';
 import SessionDebug from './SessionDebug';
 
