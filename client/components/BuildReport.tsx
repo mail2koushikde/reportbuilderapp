@@ -1263,6 +1263,32 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [queryType, setQueryType] = useState<'table' | 'sql'>('table');
   const [testMode, setTestMode] = useState(true);
 
+  // Elapsed seconds ticker for saving overlay
+  useEffect(() => {
+    let timer: any;
+    if (isSaving && savingStart) {
+      const update = () => setSavingElapsed(Math.max(0, Math.floor((Date.now() - savingStart) / 1000)));
+      update();
+      timer = setInterval(update, 1000);
+    }
+    return () => { if (timer) clearInterval(timer); };
+  }, [isSaving, savingStart]);
+
+  const startSaving = useCallback((target: 'local' | 'server', totalRows: number) => {
+    setIsSaving(true);
+    setSavingTarget(target);
+    setSavingStart(Date.now());
+    setSavingRowsTotal(totalRows);
+    setSavingRowsSaved(0);
+    setSavingElapsed(0);
+  }, []);
+
+  const stopSaving = useCallback(() => {
+    setIsSaving(false);
+    setSavingTarget(null);
+    setSavingStart(null);
+  }, []);
+
   // Cache-related states
   const [cacheEnabled, setCacheEnabled] = useState(false);
   const [hasCachedData, setHasCachedData] = useState(false);
