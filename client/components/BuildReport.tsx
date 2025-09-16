@@ -6535,6 +6535,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         const maxBoxWidth = Math.max(0, scorecardWidth - 24);
         const boxWidth = Math.min(maxBoxWidth, Math.max(200, measuredWidth + horizontalPadding));
         const boxHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+        const headerOffset = hideControls ? 0 : 32; // Space for toolbar when visible
+        const totalBoxHeight = boxHeight + headerOffset;
 
         // Get or create scorecard text box
         const scorecardTextBoxId = `scorecard-${card.id}`;
@@ -6551,11 +6553,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             content: formattedScoreValue,
             position: {
               x: Math.max(0, (cardPixelWidth - boxWidth) / 2),
-              y: Math.max(0, (cardPixelHeight - boxHeight) / 2)
+              y: Math.max(0, (cardPixelHeight - totalBoxHeight) / 2)
             },
             size: {
               width: boxWidth,
-              height: boxHeight
+              height: totalBoxHeight
             },
             fontSize: finalFontSize,
             color: '#ffffff',
