@@ -8,6 +8,7 @@ import FileHistoryWithSession from '../components/FileHistoryWithSession';
 
 const Index: React.FC = () => {
   const { userEmail } = useUser();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [navigationCollapsed, setNavigationCollapsed] = useState(window.innerWidth < 1024); // Auto-collapse on tablets and mobile
   const [currentPage, setCurrentPage] = useState<NavigationPage>('build-report');
   const [loadedReportState, setLoadedReportState] = useState<SavedReport['dashboardState'] | undefined>(undefined);
