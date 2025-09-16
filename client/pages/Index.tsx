@@ -97,7 +97,7 @@ const Index: React.FC = () => {
           currentPage === 'build-report' ? 'overflow-visible' : 'overflow-hidden'
         }`}>
           {/* Collapse button when navigation is hidden */}
-          {navigationCollapsed && (
+          {navigationCollapsed && isMobile && (
             <button
               onClick={() => setNavigationCollapsed(false)}
               onMouseEnter={() => setNavigationCollapsed(false)}
