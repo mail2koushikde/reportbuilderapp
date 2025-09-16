@@ -1,11 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUser } from '../contexts/UserContext';
 import {
-  User,
-  Settings,
-  Bell,
   LogOut,
-  ChevronDown,
   Mail,
   Shield
 } from 'lucide-react';
@@ -13,7 +9,6 @@ import {
 const UserProfile: React.FC = () => {
   const { userEmail, displayName, initials } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -32,16 +27,15 @@ const UserProfile: React.FC = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Avatar Button */}
+      {/* Avatar Button (no arrow, avatar is the trigger) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1 rounded-full hover:bg-white/10 transition-colors group"
+        className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg hover:brightness-110 transition"
         title={`${displayName} - Click for profile options`}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg">
-          {initials}
-        </div>
-        <ChevronDown className={`w-4 h-4 text-white/70 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {initials}
       </button>
 
       {/* Dropdown Menu */}
@@ -67,42 +61,11 @@ const UserProfile: React.FC = () => {
             </div>
           </div>
 
-          {/* Profile Preferences */}
-          <div className="p-4 space-y-4">
-            <div>
-              <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                Profile Preferences
-              </h4>
-
-              {/* Notifications */}
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-white/70" />
-                  <span className="text-sm text-white/80">Notifications</span>
-                </div>
-                <button
-                  onClick={() => setNotifications(!notifications)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${
-                    notifications ? 'bg-blue-600' : 'bg-white/20'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                      notifications ? 'translate-x-5' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Footer Actions */}
-          <div className="border-t border-white/10 p-2">
+          <div className="p-2">
             <button
               onClick={() => {
                 setIsOpen(false);
-                // TODO: Implement logout functionality
                 console.log('Logout clicked');
               }}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
