@@ -29,7 +29,9 @@ const Index: React.FC = () => {
   // Handle window resize for responsive navigation
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) {
         setNavigationCollapsed(true);
       } else {
         setNavigationCollapsed(false);
