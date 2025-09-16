@@ -70,11 +70,14 @@ const Index: React.FC = () => {
           )}
 
           {/* Navigation */}
-          <div className={`${
-            navigationCollapsed
-              ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300 lg:relative lg:transform-none'
-              : 'fixed inset-y-0 left-0 z-50 transition-transform duration-300 lg:relative lg:z-auto'
-          }`}>
+          <div
+            onMouseLeave={() => setNavigationCollapsed(true)}
+            className={`${
+              navigationCollapsed
+                ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300 lg:relative lg:transform-none'
+                : 'fixed inset-y-0 left-0 z-50 transition-transform duration-300 lg:relative lg:z-auto'
+            }`}
+          >
             {!navigationCollapsed && (
               <Navigation
                 isCollapsed={navigationCollapsed}
@@ -94,6 +97,7 @@ const Index: React.FC = () => {
           {navigationCollapsed && (
             <button
               onClick={() => setNavigationCollapsed(false)}
+              onMouseEnter={() => setNavigationCollapsed(false)}
               className="absolute top-2 left-4 z-10 p-2 rounded-lg bg-transparent border-transparent hover:bg-white/10 transition-colors"
               title="Expand navigation"
             >
