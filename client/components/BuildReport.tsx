@@ -6567,14 +6567,20 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             textBoxes: [...(card.textBoxes || []), scorecardTextBox]
           });
         } else {
-          // Update existing scorecard text box with current value and font size
-          if (scorecardTextBox.content !== formattedScoreValue || scorecardTextBox.fontSize !== finalFontSize) {
-            const newWidth = Math.min(card.gridPosition.width * GRID_SIZE - 24, Math.max(200, measuredWidth + horizontalPadding));
-            const newHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
-            const cardPixelWidth2 = card.gridPosition.width * GRID_SIZE;
-            const cardPixelHeight2 = card.gridPosition.height * GRID_SIZE;
-            const newX = Math.max(0, Math.min(scorecardTextBox.position.x, cardPixelWidth2 - newWidth));
-            const newY = Math.max(0, Math.min(scorecardTextBox.position.y, cardPixelHeight2 - newHeight));
+          // Update existing scorecard text box with current value, size, and keep it centered on resize
+          const newWidth = Math.min(card.gridPosition.width * GRID_SIZE - 24, Math.max(200, measuredWidth + horizontalPadding));
+          const newHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+          const cardPixelWidth2 = card.gridPosition.width * GRID_SIZE;
+          const cardPixelHeight2 = card.gridPosition.height * GRID_SIZE;
+          const shouldUpdate = (
+            scorecardTextBox.content !== formattedScoreValue ||
+            scorecardTextBox.fontSize !== finalFontSize ||
+            scorecardTextBox.size.width !== newWidth ||
+            scorecardTextBox.size.height !== newHeight
+          );
+          if (shouldUpdate) {
+            const newX = Math.max(0, Math.round((cardPixelWidth2 - newWidth) / 2));
+            const newY = Math.max(0, Math.round((cardPixelHeight2 - newHeight) / 2));
             updateTextBox(card.id, scorecardTextBoxId, {
               content: formattedScoreValue,
               fontSize: finalFontSize,
