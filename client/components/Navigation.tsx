@@ -45,11 +45,11 @@ const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <div className={`transition-all duration-300 ease-in-out ${
-      isCollapsed ? 'w-0 opacity-0' : 'w-64 sm:w-72 lg:w-80'
+      isCollapsed ? 'w-16 opacity-100' : 'w-64 sm:w-72 lg:w-80'
     } flex-shrink-0 overflow-hidden h-full`}>
       <nav className="glass-card rounded-3xl h-full flex flex-col p-3 sm:p-4 lg:p-6">
         {/* Navigation Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className={`flex items-center gap-3 mb-6 ${isCollapsed ? 'justify-center' : ''}`}>
           <button
             onClick={onToggleCollapse}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -79,7 +79,7 @@ const Navigation: React.FC<NavigationProps> = ({
               <button
                 key={item.id}
                 onClick={() => onPageChange(item.id)}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
+                className={`flex items-center ${isCollapsed ? 'justify-center' : ''} gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
                   isActive
                     ? 'bg-blue-600/30 text-white border border-blue-400/30'
                     : 'hover:bg-white/10 text-white/80 hover:text-white'
