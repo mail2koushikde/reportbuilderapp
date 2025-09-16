@@ -65,7 +65,7 @@ const Index: React.FC = () => {
         {/* Navigation Panel */}
         <>
           {/* Mobile backdrop */}
-          {!navigationCollapsed && window.innerWidth < 1024 && (
+          {!navigationCollapsed && isMobile && (
             <div
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
               onClick={() => setNavigationCollapsed(true)}
