@@ -6571,7 +6571,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         } else {
           // Update existing scorecard text box with current value, size, and keep it centered on resize
           const newWidth = Math.min(card.gridPosition.width * GRID_SIZE - 24, Math.max(200, measuredWidth + horizontalPadding));
-          const newHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+          const contentHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+          const headerOffset2 = hideControls ? 0 : 32;
+          const newHeight = contentHeight + headerOffset2;
           const cardPixelWidth2 = card.gridPosition.width * GRID_SIZE;
           const cardPixelHeight2 = card.gridPosition.height * GRID_SIZE;
           const shouldUpdate = (
