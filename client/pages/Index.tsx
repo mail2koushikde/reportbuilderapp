@@ -76,19 +76,19 @@ const Index: React.FC = () => {
           <div
             onMouseLeave={() => setNavigationCollapsed(true)}
             className={`${
-              navigationCollapsed
-                ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300 lg:relative lg:transform-none'
-                : 'fixed inset-y-0 left-0 z-50 transition-transform duration-300 lg:relative lg:z-auto'
+              isMobile
+                ? (navigationCollapsed
+                    ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300'
+                    : 'fixed inset-y-0 left-0 z-50 transition-transform duration-300')
+                : 'relative z-auto'
             }`}
           >
-            {!navigationCollapsed && (
-              <Navigation
-                isCollapsed={navigationCollapsed}
-                currentPage={currentPage}
-                onToggleCollapse={() => setNavigationCollapsed(!navigationCollapsed)}
-                onPageChange={handlePageChange}
-              />
-            )}
+            <Navigation
+              isCollapsed={navigationCollapsed}
+              currentPage={currentPage}
+              onToggleCollapse={() => setNavigationCollapsed(!navigationCollapsed)}
+              onPageChange={handlePageChange}
+            />
           </div>
         </>
 
