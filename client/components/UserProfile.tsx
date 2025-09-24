@@ -66,21 +66,48 @@ const UserProfile: React.FC = () => {
             </div>
           </div>
 
-          {/* Preferences */}
-          <div className="p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {theme === 'dark' ? (
-                <Moon className="w-4 h-4 text-white/70" />
-              ) : (
-                <Sun className="w-4 h-4 text-white/70" />)
-              }
-              <span className="text-sm text-white/80">Light mode</span>
+          {/* Theme Toggle */}
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center justify-center">
+              <div className="relative bg-gray-800 rounded-full p-1 w-32 h-10">
+                {/* Background slider */}
+                <div
+                  className={`absolute top-1 w-14 h-8 bg-blue-600 rounded-full transition-transform duration-300 ease-in-out ${
+                    theme === 'light' ? 'transform translate-x-0' : 'transform translate-x-16'
+                  }`}
+                />
+
+                {/* Light option */}
+                <button
+                  onClick={() => theme !== 'light' && toggleTheme()}
+                  className={`relative z-10 w-14 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                    theme === 'light' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  <Sun className="w-4 h-4" />
+                </button>
+
+                {/* Dark option */}
+                <button
+                  onClick={() => theme !== 'dark' && toggleTheme()}
+                  className={`relative z-10 w-14 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  <Moon className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <Switch
-              checked={theme === 'light'}
-              onCheckedChange={toggleTheme}
-              aria-label="Toggle light mode"
-            />
+
+            {/* Labels */}
+            <div className="flex justify-between mt-2 px-2">
+              <span className={`text-xs font-medium ${theme === 'light' ? 'text-white' : 'text-white/50'}`}>
+                LIGHT
+              </span>
+              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-white' : 'text-white/50'}`}>
+                DARK
+              </span>
+            </div>
           </div>
 
           {/* Footer Actions */}
