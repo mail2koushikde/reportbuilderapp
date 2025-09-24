@@ -7080,28 +7080,44 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setShowExistingFilesModal(true)}
-                className="p-1.5 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 rounded-lg transition-colors border border-orange-400/30"
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300'
+                    : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'
+                }`}
                 title="Select from Existing Files"
               >
                 <Files className="w-3 h-3" />
               </button>
               <button
                 onClick={(e) => { setShowUploadTooltip(false); handleFileImport(); e.currentTarget.blur(); }}
-                className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300'
+                    : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
+                }`}
                 title={showUploadTooltip ? 'Upload Data' : undefined}
               >
                 <Upload className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setShowSnowflakeModal(true)}
-                className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition-colors border border-blue-400/30"
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-400/30'
+                }`}
                 title="Connect to Snowflake Dataset"
               >
                 <Database className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setShowFileHistoryModal(true)}
-                className="p-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition-colors border border-purple-400/30"
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-purple-100 hover:bg-purple-200 text-purple-700 border-purple-300'
+                    : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-400/30'
+                }`}
                 title={`View File History`}
               >
                 <HardDrive className="w-3 h-3" />
@@ -9034,7 +9050,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ����️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
