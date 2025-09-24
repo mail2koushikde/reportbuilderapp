@@ -3,11 +3,16 @@ import { useUser } from '../contexts/UserContext';
 import {
   LogOut,
   Mail,
-  Shield
+  Shield,
+  Moon,
+  Sun
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const UserProfile: React.FC = () => {
   const { userEmail, displayName, initials } = useUser();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +45,7 @@ const UserProfile: React.FC = () => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-black/90 border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-full right-0 mt-2 w-80 dropdown-panel rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -59,6 +64,23 @@ const UserProfile: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Preferences */}
+          <div className="p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {theme === 'dark' ? (
+                <Moon className="w-4 h-4 text-white/70" />
+              ) : (
+                <Sun className="w-4 h-4 text-white/70" />)
+              }
+              <span className="text-sm text-white/80">Light mode</span>
+            </div>
+            <Switch
+              checked={theme === 'light'}
+              onCheckedChange={toggleTheme}
+              aria-label="Toggle light mode"
+            />
           </div>
 
           {/* Footer Actions */}
