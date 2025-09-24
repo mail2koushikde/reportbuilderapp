@@ -69,16 +69,16 @@ const FileHistory: React.FC = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'file' | 'version'; target: string | UploadMetadata } | null>(null);
 
   useEffect(() => {
-    if (!showClearConfirm) return;
+    if (!deleteConfirm) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setShowClearConfirm(false);
+        setDeleteConfirm(null);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showClearConfirm]);
+  }, [deleteConfirm]);
   const theadRef = useRef<HTMLTableSectionElement | null>(null);
   const [columnWidths, setColumnWidths] = useState<number[]>([]);
 
