@@ -440,7 +440,7 @@ const FileHistory: React.FC = () => {
       <div className="h-full flex items-center justify-center p-8">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="text-white/70">Loading file history...</p>
+          <p className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading file history...</p>
         </div>
       </div>
     );
@@ -452,8 +452,8 @@ const FileHistory: React.FC = () => {
         <div className="flex flex-col items-center gap-4 text-center">
           <AlertCircle className="w-12 h-12 text-red-500" />
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Error Loading File History</h3>
-            <p className="text-white/70 mb-4">{error}</p>
+            <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>Error Loading File History</h3>
+            <p className={`mb-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>{error}</p>
             <button
               onClick={fetchUploads}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
