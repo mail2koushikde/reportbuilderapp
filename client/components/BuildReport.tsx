@@ -7799,8 +7799,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             onClick={() => setChartTypeWithDefaults(card.id, type.id as DashboardCard['chartType'])}
                             className={`p-1 rounded border transition-colors ${
                               card.chartType === type.id
-                                ? 'border-blue-400 bg-blue-500/20 text-blue-300'
-                                : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                ? (theme === 'light' ? 'border-blue-600 bg-blue-600 text-white' : 'border-blue-400 bg-blue-500/20 text-blue-300')
+                                : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                             }`}
                           >
                             <Icon className="w-3 h-3 mx-auto mb-0.5" />
@@ -8726,7 +8726,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 {isFetchingExistingFiles ? (
                   <div className="flex items-center justify-center py-8 text-center">
                     <span className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
-                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading files��</span>
+                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading files����</span>
                   </div>
                 ) : Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
