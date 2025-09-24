@@ -180,44 +180,78 @@ const FileHistory: React.FC = () => {
     return () => window.removeEventListener('resize', measure);
   }, [groupedFiles, searchTerm, statusFilter, storageFilter, sortBy, sortOrder, expandedFiles]);
 
-  // Clear all data from both local and server storage
-  const clearAllData = async () => {
+  // Delete all versions of a specific file
+  const deleteFile = async (filename: string) => {
     try {
-      setClearing(true);
-      console.log('Starting clear all data operation...');
+      console.log(`Deleting all versions of file: ${filename}`);
 
-      // Clear server data
-      const serverResponse = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`, {
-        method: 'DELETE'
-      });
+      // Get all versions of this file
+      const fileVersions = uploads.filter(upload => upload.original_filename === filename);
 
-      if (serverResponse.ok) {
-        const serverResult = await serverResponse.json();
-        console.log('Server data cleared:', serverResult);
-      } else {
-        console.warn('Failed to clear server data:', serverResponse.status);
+      // Delete from server
+      for (const version of fileVersions.filter(v => v.storage_type === 'server')) {
+        try {
+          const response = await fetch(`/api/database/uploads/${version.table_name}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            console.log(`Server version deleted: ${version.table_name}`);
+          }
+        } catch (error) {
+          console.warn(`Failed to delete server version ${version.table_name}:`, error);
+        }
       }
 
-      // Clear local data
-      try {
-        await duckdbService.clearAllUserData(userEmail);
-        console.log('Local data cleared');
-      } catch (localError) {
-        console.warn('Failed to clear some local data:', localError);
+      // Delete from local storage
+      for (const version of fileVersions.filter(v => v.storage_type === 'local')) {
+        try {
+          if (version.dataset_id) {
+            await duckdbService.deleteDataset(version.dataset_id);
+            console.log(`Local version deleted: ${version.dataset_id}`);
+          }
+        } catch (error) {
+          console.warn(`Failed to delete local version ${version.dataset_id}:`, error);
+        }
       }
 
       // Refresh the uploads list
       await fetchUploads();
 
-      // Show success message
-      alert('All data cleared successfully from both local and server storage!');
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert(`Error deleting file: ${error}`);
+    } finally {
+      setDeleteConfirm(null);
+    }
+  };
+
+  // Delete a specific version
+  const deleteVersion = async (version: UploadMetadata) => {
+    try {
+      console.log(`Deleting version: ${version.table_name}`);
+
+      if (version.storage_type === 'server') {
+        const response = await fetch(`/api/database/uploads/${version.table_name}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          console.log(`Server version deleted: ${version.table_name}`);
+        } else {
+          throw new Error('Failed to delete from server');
+        }
+      } else if (version.storage_type === 'local' && version.dataset_id) {
+        await duckdbService.deleteDataset(version.dataset_id);
+        console.log(`Local version deleted: ${version.dataset_id}`);
+      }
+
+      // Refresh the uploads list
+      await fetchUploads();
 
     } catch (error) {
-      console.error('Error clearing all data:', error);
-      alert(`Error clearing data: ${error}`);
+      console.error('Error deleting version:', error);
+      alert(`Error deleting version: ${error}`);
     } finally {
-      setClearing(false);
-      setShowClearConfirm(false);
+      setDeleteConfirm(null);
     }
   };
 
