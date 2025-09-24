@@ -591,7 +591,11 @@ const FileHistory: React.FC = () => {
         <div className="flex justify-end mb-4">
           <button
             onClick={toggleAllFiles}
-            className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white text-sm transition-colors"
+            className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors ${
+              theme === 'light'
+                ? 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
+                : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+            }`}
           >
             {expandedFiles.size === groupedFiles.filter(f => f.totalVersions > 1).length ? (
               <>
