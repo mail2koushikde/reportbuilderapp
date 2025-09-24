@@ -8706,7 +8706,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     <button
                       onClick={() => selectedFileVersion && handleSelectExistingFile(selectedFileVersion)}
                       disabled={!selectedFileVersion || isLoadingExisting}
-                      className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 disabled:opacity-50 text-orange-300 font-medium text-sm rounded-lg transition-colors border border-orange-400/30"
+                      className={`px-4 py-2 disabled:opacity-50 font-medium text-sm rounded-lg transition-colors border ${theme === 'light' ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300' : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'}`}
                     >
                       {isLoadingExisting ? (
                         <span className="flex items-center gap-2">
@@ -8722,11 +8722,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               )}
 
               {/* File table */}
-              <div className="bg-white/5 rounded-lg p-4 max-h-[70vh] overflow-y-auto overscroll-contain">
+              <div className={`rounded-lg p-4 max-h-[70vh] overflow-y-auto overscroll-contain ${theme === 'light' ? 'bg-gray-50' : 'bg-white/5'}`}>
                 {isFetchingExistingFiles ? (
                   <div className="flex items-center justify-center py-8 text-center">
                     <span className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
-                    <span className="text-white/70">Loading files��</span>
+                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading files��</span>
                   </div>
                 ) : Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
