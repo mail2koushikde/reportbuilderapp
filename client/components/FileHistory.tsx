@@ -823,7 +823,7 @@ const FileHistory: React.FC = () => {
                                   }`}
                                   title="Delete all versions of this file"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </td>
                             </>
