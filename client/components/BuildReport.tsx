@@ -8774,17 +8774,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   <td className="px-4 py-3">
                                     <div className="flex items-center gap-2">
                                       <CheckCircle className="w-4 h-4 text-green-500" />
-                                      <span className="text-sm text-white/70 capitalize">success</span>
+                                      <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>success</span>
                                       <div className="flex items-center gap-1">
                                         {latestVersion.source === 'server' ? (
                                         <>
                                           <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
-                                          <span className="text-xs text-white/50">Snowflake</span>
+                                          <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Snowflake</span>
                                         </>
                                       ) : (
                                         <>
                                           <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
-                                          <span className="text-xs text-white/50">Local</span>
+                                          <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Local</span>
                                         </>
                                       )}
                                       </div>
@@ -8794,9 +8794,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                     <div className="flex items-center gap-2">
                                       <FileText className="w-4 h-4 text-blue-500" />
                                       <div className="flex flex-col">
-                                        <span className="text-white font-medium">{filename}</span>
+                                        <span className={`font-medium ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{filename}</span>
                                         {versions.length > 1 && (
-                                          <span className="text-xs text-white/50">{versions.length} versions</span>
+                                          <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>{versions.length} versions</span>
                                         )}
                                       </div>
                                     </div>
@@ -8814,7 +8814,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   <td className="px-4 py-3">
                                     <div className="flex items-center gap-2">
                                       <Calendar className="w-4 h-4 text-green-500" />
-                                      <span className="text-white/80">{new Date(latestVersion.createdAt).toLocaleDateString()}</span>
+                                      <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{new Date(latestVersion.createdAt).toLocaleDateString()}</span>
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
