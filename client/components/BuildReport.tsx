@@ -7155,7 +7155,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <button
                 onClick={undo}
                 disabled={!canUndo}
-                className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 border border-gray-400/30 hover:border-gray-400/50 disabled:opacity-30 disabled:cursor-not-allowed"
+                className={`${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-800 border border-gray-200 hover:border-gray-300' : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 border border-gray-400/30 hover:border-gray-400/50'} font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed`}
                 title="Undo last change (Ctrl+Z)"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7165,7 +7165,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <button
                 onClick={redo}
                 disabled={!canRedo}
-                className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 border border-gray-400/30 hover:border-gray-400/50 disabled:opacity-30 disabled:cursor-not-allowed"
+                className={`${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-800 border border-gray-200 hover:border-gray-300' : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 border border-gray-400/30 hover:border-gray-400/50'} font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed`}
                 title="Redo last change (Ctrl+Y)"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
