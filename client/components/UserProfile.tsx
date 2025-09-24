@@ -66,46 +66,23 @@ const UserProfile: React.FC = () => {
           </div>
 
           {/* Theme Toggle */}
-          <div className="p-4 border-b border-white/10">
+          <div className="p-3 border-b border-white/10">
             <div className="flex items-center justify-center">
-              <div className="relative bg-gray-800 rounded-full p-1 w-32 h-10">
-                {/* Background slider */}
-                <div
-                  className={`absolute top-1 w-14 h-8 bg-blue-600 rounded-full transition-transform duration-300 ease-in-out ${
-                    theme === 'light' ? 'transform translate-x-0' : 'transform translate-x-16'
+              <button
+                onClick={toggleTheme}
+                aria-label="Toggle light/dark theme"
+                className={`relative inline-flex items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  theme === 'light' ? 'bg-gray-200' : 'bg-zinc-800'
+                } w-16 h-8 px-1`}
+              >
+                <Sun className={`w-3.5 h-3.5 transition-colors ${theme === 'light' ? 'text-yellow-500' : 'text-gray-400'}`} />
+                <Moon className={`w-3.5 h-3.5 ml-auto transition-colors ${theme === 'dark' ? 'text-blue-400' : 'text-gray-400'}`} />
+                <span
+                  className={`absolute top-1 left-1 inline-block w-6 h-6 rounded-full bg-white shadow transition-transform duration-300 ${
+                    theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
                   }`}
                 />
-
-                {/* Light option */}
-                <button
-                  onClick={() => theme !== 'light' && toggleTheme()}
-                  className={`relative z-10 w-14 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                    theme === 'light' ? 'text-white' : 'text-gray-400'
-                  }`}
-                >
-                  <Sun className="w-4 h-4" />
-                </button>
-
-                {/* Dark option */}
-                <button
-                  onClick={() => theme !== 'dark' && toggleTheme()}
-                  className={`relative z-10 w-14 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-400'
-                  }`}
-                >
-                  <Moon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Labels */}
-            <div className="flex justify-between mt-2 px-2">
-              <span className={`text-xs font-medium ${theme === 'light' ? 'text-white' : 'text-white/50'}`}>
-                LIGHT
-              </span>
-              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-white' : 'text-white/50'}`}>
-                DARK
-              </span>
+              </button>
             </div>
           </div>
 
