@@ -113,6 +113,7 @@
     background: var(--app-bg);
     background-attachment: scroll;
     @apply text-foreground;
+    transition: background 350ms ease, color 250ms ease;
   }
 
   html.light {
@@ -121,6 +122,12 @@
 }
 
 @layer components {
+  /* Smooth theme transitions */
+  html, body, .glass-card, .dropdown-panel, .glass-select, .table-header-sort,
+  .recharts-default-tooltip, .recharts-tooltip-wrapper, .recharts-surface,
+  .recharts-wrapper, .recharts-legend-wrapper {
+    transition: background-color 350ms ease, color 250ms ease, border-color 300ms ease, box-shadow 300ms ease;
+  }
   .glass-card {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
