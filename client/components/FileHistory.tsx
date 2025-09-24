@@ -325,7 +325,7 @@ const FileHistory: React.FC = () => {
   // Get sort icon for column
   const getSortIcon = (column: string) => {
     if (sortBy !== column) {
-      return <ArrowUpDown className="w-4 h-4 text-white/30" />;
+      return <ArrowUpDown className={`w-4 h-4 ${theme === 'light' ? 'text-gray-400' : 'text-white/30'}`} />;
     }
     return sortOrder === 'asc' ?
       <ArrowUp className="w-4 h-4 text-blue-400" /> :
