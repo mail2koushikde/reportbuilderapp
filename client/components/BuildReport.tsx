@@ -7710,7 +7710,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             left: '0',
             width: '100vw',
             height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.5)',
             backdropFilter: 'blur(4px)',
             zIndex: 9999,
             display: 'flex',
