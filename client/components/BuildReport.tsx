@@ -8655,23 +8655,23 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           <div className="glass-card rounded-xl p-6 w-full w-[95vw] max-w-7xl max-h-[90vh] overflow-hidden overscroll-none">
             <div className="flex items-center gap-3 mb-4">
               <Files className="w-5 h-5 text-orange-400" />
-              <h2 className="text-lg font-semibold text-white">Select from Existing Files</h2>
+              <h2 className={`text-lg font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>Select from Existing Files</h2>
               <button
                 onClick={() => setShowExistingFilesModal(false)}
-                className="ml-auto p-1 hover:bg-white/10 rounded-lg transition-colors"
+                className={`ml-auto p-1 rounded-lg transition-colors ${theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
               >
-                <X className="w-4 h-4 text-white/70" />
+                <X className={`w-4 h-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`} />
               </button>
             </div>
 
             <div className="space-y-4">
-              <p className="text-white/70 text-sm">
+              <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                 Select a file and version to load data for chart building.
               </p>
 
               {/* Quick selectors */}
               {!isFetchingExistingFiles && Object.keys(groupedExistingFiles).length > 0 && (
-                <div className="flex flex-col md:flex-row md:items-end gap-3 bg-white/5 border border-white/10 rounded-lg p-4">
+                <div className={`flex flex-col md:flex-row md:items-end gap-3 rounded-lg p-4 border ${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
                   <div className="flex-1">
                     <label className="block text-xs text-white/60 mb-1">File</label>
                     <Select value={selectedFileName} onValueChange={(v) => handleExistingFileNameChange(v)}>
