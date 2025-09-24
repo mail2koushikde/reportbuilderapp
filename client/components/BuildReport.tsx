@@ -9118,8 +9118,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       {/* File Upload Result Popup */}
       {showUploadSuccess && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4"
+          onClick={() => setShowUploadSuccess(false)}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="text-center">
               {(() => {
                 const isError = /db save failed|^error:/i.test(uploadedFileName);
