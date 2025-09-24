@@ -7298,7 +7298,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
               <button
                 onClick={() => setFiltersOpen(!filtersOpen)}
-                className="p-2 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 rounded-lg transition-colors border border-gray-400/30"
+                className={`p-2 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300'
+                    : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30'
+                }`}
                 title={filtersOpen ? "Collapse Filters" : "Expand Filters"}
               >
                 {filtersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
