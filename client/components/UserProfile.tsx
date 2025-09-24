@@ -7,7 +7,6 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const UserProfile: React.FC = () => {
