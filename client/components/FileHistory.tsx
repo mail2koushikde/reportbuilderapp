@@ -461,7 +461,7 @@ const FileHistory: React.FC = () => {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="glass-card p-4 rounded-lg">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
