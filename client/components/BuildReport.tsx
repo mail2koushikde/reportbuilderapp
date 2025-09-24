@@ -7129,10 +7129,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 disabled={showCachingDialog}
                 className={`p-1.5 rounded-lg transition-colors border ${
                   showCachingDialog
-                    ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30 cursor-not-allowed'
+                    ? (theme === 'light' ? 'bg-yellow-100 text-yellow-700 border-yellow-300 cursor-not-allowed' : 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30 cursor-not-allowed')
                     : cacheEnabled
-                    ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
-                    : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30'
+                    ? (theme === 'light' ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300' : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30')
+                    : (theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300' : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30')
                 }`}
                 title={
                   showCachingDialog
@@ -7152,8 +7152,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   disabled={showClearingDialog}
                   className={`p-1.5 rounded-lg transition-colors border ${
                     showClearingDialog
-                      ? 'bg-orange-500/20 text-orange-300 border-orange-400/30 cursor-not-allowed'
-                      : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-400/30'
+                      ? (theme === 'light' ? 'bg-orange-100 text-orange-700 border-orange-300 cursor-not-allowed' : 'bg-orange-500/20 text-orange-300 border-orange-400/30 cursor-not-allowed')
+                      : (theme === 'light' ? 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300' : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-400/30')
                   }`}
                   title={
                     showClearingDialog
@@ -9050,7 +9050,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ����️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
