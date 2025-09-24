@@ -623,71 +623,74 @@ const FileHistory: React.FC = () => {
           <div className="glass-card rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead ref={theadRef} className="bg-white/5">
+                <thead ref={theadRef} className={`${theme === 'light' ? 'bg-gray-100' : 'bg-white/5'}`}>
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70 w-8"></th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium w-8 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}></th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('upload_status')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         Status
                         {getSortIcon('upload_status')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('original_filename')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         File Name
                         {getSortIcon('original_filename')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('version')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         Version
                         {getSortIcon('version')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('upload_timestamp')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         Upload Date
                         {getSortIcon('upload_timestamp')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('row_count')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         Rows
                         {getSortIcon('row_count')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('column_count')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         Columns
                         {getSortIcon('column_count')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                       <button
                         onClick={() => handleColumnSort('file_size_bytes')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
                       >
                         Size
                         {getSortIcon('file_size_bytes')}
                       </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      Actions
                     </th>
                   </tr>
                 </thead>
