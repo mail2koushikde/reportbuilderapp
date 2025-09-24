@@ -338,6 +338,10 @@
   html.light .bg-white\/30 { background-color: rgba(0, 0, 0, 0.12) !important; }
   html.light .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
   html.light .hover\:bg-white\/30:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
+
+  /* Overlays */
+  html.light .bg-black\/50 { background-color: rgba(255, 255, 255, 0.6) !important; }
+  html.light .backdrop-blur-sm { backdrop-filter: blur(8px); }
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
