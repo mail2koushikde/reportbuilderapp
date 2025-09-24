@@ -8732,17 +8732,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   <div className="glass-card rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead className="bg-white/5">
+                        <thead className={`${theme === 'light' ? 'bg-gray-100' : 'bg-white/5'}`}>
                           <tr>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70 w-8"></th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Status</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">File Name</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Version</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Upload Date</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Rows</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Columns</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Size</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium text-white/70">Actions</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium w-8 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}></th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Status</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>File Name</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Version</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Upload Date</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Rows</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Columns</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Size</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/10">
