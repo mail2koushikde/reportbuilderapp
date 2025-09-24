@@ -8745,7 +8745,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/10">
+                        <tbody className={`${theme === 'light' ? 'divide-y divide-gray-200' : 'divide-y divide-white/10'}`}>
                           {Object.entries(groupedExistingFiles).map(([filename, versions]) => {
                             const latestVersion = versions[0];
                             const isExpanded = expandedFiles.has(filename);
@@ -8753,18 +8753,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             return (
                               <Fragment key={filename}>
                                 {/* Main row - Shows latest version */}
-                                <tr className="hover:bg-white/5 transition-colors">
+                                <tr className={`transition-colors ${theme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}>
                                   <td className="px-4 py-3">
                                     <button
                                       onClick={() => toggleFileExpansion(filename)}
-                                      className="p-1 hover:bg-white/10 rounded transition-colors"
+                                      className={`p-1 rounded transition-colors ${theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
                                       title={isExpanded ? 'Collapse versions' : `Show all ${versions.length} versions`}
                                     >
                                       {versions.length > 1 ? (
                                         isExpanded ? (
-                                          <ChevronUp className="w-4 h-4 text-white/70" />
+                                          <ChevronUp className={`w-4 h-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`} />
                                         ) : (
-                                          <ChevronDown className="w-4 h-4 text-white/70" />
+                                          <ChevronDown className={`w-4 h-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`} />
                                         )
                                       ) : (
                                         <div className="w-4 h-4"></div>
