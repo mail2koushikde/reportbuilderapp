@@ -1658,6 +1658,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number, isAutoReload: boolean = false, isVersionSwitch: boolean = false) => {
     // Clear previous in-memory dataset before loading a different version
     clearInMemoryData('version-switch');
+    if (isVersionSwitch) {
+      setIsLoadingExisting(true);
+    }
     try {
       let versionData = availableVersions.find(v => v.version === version);
 
@@ -1821,6 +1824,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } catch (error) {
       console.error('Error loading file version:', error);
       alert('Failed to load version data.');
+    } finally {
+      if (isVersionSwitch) {
+        setIsLoadingExisting(false);
+      }
     }
   }, [availableVersions]);
 
