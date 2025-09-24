@@ -685,9 +685,7 @@ const FileHistory: React.FC = () => {
                           </td>
                           {isExpanded ? (
                             // Expanded state - Show only empty row with proper height
-                            <td className="px-4 py-3" colSpan={7}>
-                              {/* Empty content - only expand/collapse button shows */}
-                            </td>
+                            <td className="px-4 py-3" colSpan={7}></td>
                           ) : (
                             // Collapsed state - Show latest version details
                             <>
