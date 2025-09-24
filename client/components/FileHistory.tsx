@@ -494,9 +494,9 @@ const FileHistory: React.FC = () => {
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="text-sm text-white/70">Unique Files</p>
-                <p className="text-xl font-semibold text-white">{groupedFiles.length}</p>
-                <p className="text-xs text-white/50">{uploads.length} total versions</p>
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Unique Files</p>
+                <p className={`text-xl font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{groupedFiles.length}</p>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>{uploads.length} total versions</p>
               </div>
             </div>
           </div>
@@ -504,11 +504,11 @@ const FileHistory: React.FC = () => {
             <div className="flex items-center gap-2">
               <Database className="w-5 h-5 text-blue-400" />
               <div>
-                <p className="text-sm text-white/70">Snowflake Storage</p>
-                <p className="text-xl font-semibold text-white">
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Snowflake Storage</p>
+                <p className={`text-xl font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                   {groupedFiles.filter(f => f.latestVersion.storage_type === 'server').length}
                 </p>
-                <p className="text-xs text-white/50">files in Snowflake</p>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>files in Snowflake</p>
               </div>
             </div>
           </div>
@@ -516,11 +516,11 @@ const FileHistory: React.FC = () => {
             <div className="flex items-center gap-2">
               <HardDrive className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-sm text-white/70">Local Storage</p>
-                <p className="text-xl font-semibold text-white">
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Local Storage</p>
+                <p className={`text-xl font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                   {groupedFiles.filter(f => f.latestVersion.storage_type === 'local').length}
                 </p>
-                <p className="text-xs text-white/50">files locally</p>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>files locally</p>
               </div>
             </div>
           </div>
