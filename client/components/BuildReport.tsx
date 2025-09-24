@@ -1306,6 +1306,25 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set());
   const [dimensionSelections, setDimensionSelections] = useState<Record<string, string[]>>({}); // Preserve selections per dimension
 
+  // Aggressively clear heavy in-memory data when switching dataset/version to reduce JS heap usage
+  const clearInMemoryData = useCallback((reason?: string) => {
+    try { console.log('Clearing in-memory data', reason ? `(${reason})` : ''); } catch {}
+    // Drop large arrays and derived chart data
+    setImportedData([]);
+    setColumns([]);
+    setCards(prev => prev.map(c => ({ ...c, data: [] })));
+
+    // Reset filters and selections
+    setDimensionSelections({});
+    setSelectedDimension('');
+    setSelectedValues(new Set());
+    setDimensionValues([]);
+
+    // Reset history to avoid retaining snapshots of previous datasets
+    setCardsHistory([]);
+    setHistoryIndex(-1);
+  }, []);
+
   // Version management states
   const [availableVersions, setAvailableVersions] = useState<any[]>([]);
   const [showVersionDropdown, setShowVersionDropdown] = useState(false);
@@ -1636,6 +1655,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
   // Load data for a specific version from either local or server storage
   const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number, isAutoReload: boolean = false, isVersionSwitch: boolean = false) => {
+    // Clear previous in-memory dataset before loading a different version
+    clearInMemoryData('version-switch');
     try {
       let versionData = availableVersions.find(v => v.version === version);
 
@@ -2049,6 +2070,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Upload file to database with specific version
   const uploadFileToDatabase = useCallback(async (file: File, headers: string[], data: DataRow[], version: number, overwrite = false) => {
     const timestamp = Date.now();
+    // Clear previous in-memory dataset before uploading a new one
+    clearInMemoryData('dataset-upload');
     startSaving('server', data.length);
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
     const tableName = `user_uploads_${timestamp}_${sanitizedFileName}_v${version}`;
@@ -2206,6 +2229,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       if (storageType === 'local') {
         // Handle local storage overwrite
+        clearInMemoryData('dataset-overwrite');
         startSaving('local', data.length);
         await duckdbService.overwriteLocalFile(
           data,
@@ -2263,6 +2287,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     userEmail: string,
     version: number
   ) => {
+    // Clear previous in-memory dataset before saving a new local version
+    clearInMemoryData('dataset-save-local');
     startSaving('local', data.length);
     try {
       console.log(`Saving dataset to Local storage v${version}...`);
@@ -2351,6 +2377,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Snowflake data import functionality
   const handleSnowflakeImport = useCallback(async () => {
     if (!snowflakeQuery.trim()) return;
+
+    // Clear previous in-memory dataset before importing from Snowflake
+    clearInMemoryData('snowflake-import');
 
     try {
       // Prepare the request payload
@@ -2687,6 +2716,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   // Select an existing local file and load sample data via DuckDB, then inject into app
   const handleSelectExistingFile = useCallback(async (version: ExistingFileVersion) => {
     setIsLoadingExisting(true);
+    // Clear previous in-memory dataset before loading an existing file
+    clearInMemoryData('dataset-switch');
     try {
       if (version.source === 'local' && version.datasetId) {
         const datasetMeta = await duckdbService.getDatasetMetadata(version.datasetId);
