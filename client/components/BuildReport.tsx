@@ -8673,12 +8673,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               {!isFetchingExistingFiles && Object.keys(groupedExistingFiles).length > 0 && (
                 <div className={`flex flex-col md:flex-row md:items-end gap-3 rounded-lg p-4 border ${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
                   <div className="flex-1">
-                    <label className="block text-xs text-white/60 mb-1">File</label>
+                    <label className={`block text-xs mb-1 ${theme === 'light' ? 'text-gray-600' : 'text-white/60'}`}>File</label>
                     <Select value={selectedFileName} onValueChange={(v) => handleExistingFileNameChange(v)}>
-                      <SelectTrigger className="w-full bg-black/40 border border-white/20 text-white">
+                      <SelectTrigger className={`w-full border ${theme === 'light' ? 'bg-white border-gray-300 text-gray-800' : 'bg-black/40 border-white/20 text-white'}`}>
                         <SelectValue placeholder="Select file" />
                       </SelectTrigger>
-                      <SelectContent className="bg-black/90 text-white border-white/20">
+                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/90 text-white border-white/20'}`}>
                         {Object.keys(groupedExistingFiles).map(name => (
                           <SelectItem key={name} value={name}>{name}</SelectItem>
                         ))}
