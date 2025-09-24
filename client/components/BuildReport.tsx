@@ -6980,7 +6980,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
                       {/* Version Dropdown Menu */}
                       {showVersionDropdown && (
-                        <div className="absolute top-full left-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50 min-w-64">
+                        <div className="absolute top-full left-0 mt-1 dropdown-panel border rounded-md shadow-lg z-50 min-w-64">
                           <div className="py-1 max-h-40 overflow-y-auto">
                             <div className="px-2 py-1 text-xs text-white/50 border-b border-white/10">
                               Available Versions:
@@ -7180,7 +7180,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <button
                   onClick={() => setCurrentTool('select')}
                   className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                    currentTool === 'select' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'bg-white/10 text-white/70 border border-white/20'
+                    currentTool === 'select'
+                      ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-blue-500/20 text-blue-300 border border-blue-400/30')
+                      : (theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20')
                   }`}
                   title="Select tool"
                 >
@@ -7189,7 +7191,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <button
                   onClick={() => setCurrentTool('textbox')}
                   className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                    currentTool === 'textbox' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'bg-white/10 text-white/70 border border-white/20'
+                    currentTool === 'textbox'
+                      ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-blue-500/20 text-blue-300 border border-blue-400/30')
+                      : (theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20')
                   }`}
                   title="Annotate"
                 >
@@ -7198,7 +7202,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <button
                   onClick={() => setCurrentTool('arrow')}
                   className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                    currentTool === 'arrow' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'bg-white/10 text-white/70 border border-white/20'
+                    currentTool === 'arrow'
+                      ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-blue-500/20 text-blue-300 border border-blue-400/30')
+                      : (theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20')
                   }`}
                   title="Arrow"
                 >
@@ -7207,7 +7213,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <button
                   onClick={autoResizeCharts}
                   disabled={cards.length === 0}
-                  className="p-1.5 rounded-lg transition-colors duration-200 bg-white/10 text-white/70 border border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`${theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20'} p-1.5 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
                   title="Auto-resize charts to fill screen"
                 >
                   <Maximize2 className="w-3 h-3" />
