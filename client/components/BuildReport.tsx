@@ -8449,8 +8449,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       {/* Snowflake Import Modal */}
       {showSnowflakeModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setShowSnowflakeModal(false);
+            setSnowflakeQuery('');
+            setQueryType('table');
+            setTestMode(true);
+          }}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 mb-4">
               <Database className="w-5 h-5 text-blue-400" />
               <h2 className="text-lg font-semibold text-white">Connect to Snowflake Dataset</h2>
