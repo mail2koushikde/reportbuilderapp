@@ -8873,29 +8873,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                                 </div>
                                                 <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '200px', maxWidth: '250px' }}>
                                                   <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                                  <span className="text-white text-sm truncate">{version.originalFileName}</span>
+                                                  <span className={`text-sm truncate ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{version.originalFileName}</span>
                                                 </div>
                                                 <div className="px-4 py-0 flex items-center gap-1" style={{ minWidth: '100px' }}>
                                                   <span className={`px-2 py-1 text-xs rounded-full ${
                                                     index === 0
-                                                      ? 'bg-green-600/40 text-green-200 border border-green-400/50'
-                                                      : 'bg-slate-600/40 text-slate-200'
+                                                      ? (theme === 'light' ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-green-600/40 text-green-200 border border-green-400/50')
+                                                      : (theme === 'light' ? 'bg-gray-100 text-gray-700' : 'bg-slate-600/40 text-slate-200')
                                                   }`}>
                                                     v{version.version}
                                                   </span>
                                                 </div>
                                                 <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
                                                   <Calendar className="w-4 h-4 text-green-500" />
-                                                  <span className="text-white text-sm">{new Date(version.createdAt).toLocaleDateString()}</span>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{new Date(version.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                                 <div className="px-4 py-0" style={{ minWidth: '80px' }}>
-                                                  <span className="text-white text-sm">{version.rowCount.toLocaleString()}</span>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.rowCount.toLocaleString()}</span>
                                                 </div>
                                                 <div className="px-4 py-0" style={{ minWidth: '80px' }}>
-                                                  <span className="text-white text-sm">{version.columnsCount ?? 0}</span>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.columnsCount ?? 0}</span>
                                                 </div>
                                                 <div className="px-4 py-0" style={{ minWidth: '80px' }}>
-                                                  <span className="text-white text-sm">{(version.fileSize / 1024).toFixed(1)} KB</span>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{(version.fileSize / 1024).toFixed(1)} KB</span>
                                                 </div>
                                                 <div className="px-4 py-0" style={{ minWidth: '100px' }}>
                                                   <button
