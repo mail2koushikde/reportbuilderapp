@@ -617,8 +617,8 @@ const FileHistory: React.FC = () => {
         {groupedFiles.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <FileText className="w-12 h-12 text-white/30 mx-auto mb-4" />
-              <p className="text-white/70">
+              <FileText className={`w-12 h-12 mx-auto mb-4 ${theme === 'light' ? 'text-gray-300' : 'text-white/30'}`} />
+              <p className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                 {searchTerm || statusFilter !== 'all' ? 'No files match your search criteria' : 'No files have been uploaded yet'}
               </p>
             </div>
