@@ -67,7 +67,7 @@ const UserProfile: React.FC = () => {
 
           {/* Theme Toggle */}
           <div className="p-3 border-b border-white/10">
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-start w-full">
               <button
                 onClick={toggleTheme}
                 aria-label="Toggle light/dark theme"
