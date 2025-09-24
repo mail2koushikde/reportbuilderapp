@@ -142,8 +142,8 @@ export interface SavedReport {
 
 const CHART_TYPES = [
   { id: 'pie', label: 'Pie Chart', icon: PieChartIcon },
-  { id: 'bar', label: 'Column Chart', icon: BarChart3 },
-  { id: 'mixbar', label: 'Stacked Column Chart', icon: BarChart2 },
+  { id: 'bar', label: 'Bar Chart', icon: BarChart3 },
+  { id: 'mixbar', label: 'Stacked Bar Chart', icon: BarChart2 },
   { id: 'table', label: 'Data Table', icon: Table },
   { id: 'scorecard', label: 'Scorecard', icon: Hash },
   { id: 'line', label: 'Line Chart', icon: LineChart },
@@ -3378,7 +3378,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         return { dimension: '', measure, dimension2: '', seriesColumn: '' };
 
       case 'mixbar':
-        // Stacked column needs dimension, measure, and dimension2
+        // Stacked bar needs dimension, measure, and dimension2
         const dimension2 = stringColumns.length > 1 ? stringColumns[1] :
                           (columns.length > 1 && columns[1] !== dimension ? columns[1] : '');
         return { dimension, measure, dimension2, seriesColumn: '' };
@@ -5494,7 +5494,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           </div>
         );
       case 'bar':
-        // Column Chart with optional second measure support
+        // Bar Chart with optional second measure support
         const hasSecondMeasure = card.measure2 && card.measure2.trim() !== '';
         const computedMax = hasSecondMeasure
           ? Math.max(...processedData.flatMap(d => [d.value, d.value2 || 0]))
@@ -5854,7 +5854,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 </div>
               </div>
 
-              {/* Comprehensive Legend positioned below X-axis labels (matching Stacked Column Chart) */}
+              {/* Comprehensive Legend positioned below X-axis labels (matching Stacked Bar Chart) */}
               <div
                 className="absolute flex items-center justify-center flex-wrap"
                 style={{
@@ -6726,7 +6726,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </RechartsLineChart>
             </ResponsiveContainer>
 
-            {/* Custom Legend - styled similar to Stacked Column Chart */}
+            {/* Custom Legend - styled similar to Stacked Bar Chart */}
             {allSeries.length > 1 && (() => {
               // Responsive sizing logic (similar to mixbar chart)
               const cardWidth = card.gridPosition.width * GRID_SIZE;
@@ -7874,7 +7874,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     </select>
                   </div>
 
-                  {/* Second Measure Selection (only for Column Chart) */}
+                  {/* Second Measure Selection (only for Bar Chart) */}
                   {card.chartType === 'bar' && (
                     <div>
                       <label className="block text-xs font-medium text-white/80 mb-1">
@@ -7896,7 +7896,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         ))}
                       </select>
                       <div className="text-[10px] text-white/50 mt-0.5">
-                        Creates a 2-D column chart comparing two measures
+                        Creates a 2-D bar chart comparing two measures
                       </div>
                     </div>
                   )}
@@ -8107,7 +8107,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     </div>
                   )}
 
-                  {/* Y-Axis Formatting Selection (only for Stacked Column Charts) */}
+                  {/* Y-Axis Formatting Selection (only for Stacked Bar Charts) */}
                   {card.chartType === 'mixbar' && (
                     <div>
                       <label className="block text-xs font-medium text-white/80 mb-1">
@@ -8168,7 +8168,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     </div>
                   )}
 
-                  {/* Y-Axis Formatting Selection (only for Column Charts) */}
+                  {/* Y-Axis Formatting Selection (only for Bar Charts) */}
                   {card.chartType === 'bar' && (
                     <div>
                       <label className="block text-xs font-medium text-white/80 mb-1">
