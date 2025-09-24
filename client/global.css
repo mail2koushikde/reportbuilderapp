@@ -340,6 +340,15 @@
   html.light .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
   html.light .hover\:bg-white\/30:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
 
+  /* Chart configuration button highlights - proper contrast for light mode */
+  html.light .bg-blue-500\/20 { background-color: #2563eb !important; }
+  html.light .text-blue-300 { color: white !important; }
+  html.light .border-blue-400 { border-color: #2563eb !important; }
+
+  html.light .bg-green-500\/20 { background-color: #16a34a !important; }
+  html.light .text-green-300 { color: white !important; }
+  html.light .border-green-400 { border-color: #16a34a !important; }
+
   /* Overlays */
   html.light .bg-black\/50 { background-color: rgba(255, 255, 255, 0.6) !important; }
   html.light .backdrop-blur-sm { backdrop-filter: blur(8px); }
