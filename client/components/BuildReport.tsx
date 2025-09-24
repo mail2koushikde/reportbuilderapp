@@ -9177,8 +9177,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
       {/* Generic Success Dialog (e.g., Report Saved) */}
       {showSuccessDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4"
+          onClick={() => setShowSuccessDialog(null)}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="text-center">
               <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
