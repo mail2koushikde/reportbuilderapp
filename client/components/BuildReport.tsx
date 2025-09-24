@@ -59,7 +59,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useBuildReportSession } from '../hooks/useBuildReportSession';
 import SessionDebug from './SessionDebug';
-import { Tooltip as UiTooltip, TooltipContent as UiTooltipContent, TooltipProvider, TooltipTrigger as UiTooltipTrigger } from '@/components/ui/tooltip';
 
 interface TextBox {
   id: string;
@@ -7241,28 +7240,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
             {/* Hide Controls Toggle Switch */}
             <div className="flex items-center">
-              <TooltipProvider>
-                <UiTooltip>
-                  <UiTooltipTrigger asChild>
-                    <button
-                      aria-label="Toggle hide controls"
-                      onClick={() => setHideControls(!hideControls)}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                        hideControls
-                          ? 'bg-purple-600'
-                          : (theme === 'light' ? 'bg-gray-200' : 'bg-white/20')
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                          hideControls ? 'translate-x-5' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </UiTooltipTrigger>
-                  <UiTooltipContent side="bottom">Hide controls</UiTooltipContent>
-                </UiTooltip>
-              </TooltipProvider>
+              <button
+                aria-label="Toggle hide controls"
+                title="Hide controls"
+                onClick={() => setHideControls(!hideControls)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                  hideControls
+                    ? 'bg-purple-600'
+                    : (theme === 'light' ? 'bg-gray-200' : 'bg-white/20')
+                }`}
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
+                    hideControls ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
 
             <button
