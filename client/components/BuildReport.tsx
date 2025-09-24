@@ -30,6 +30,7 @@ import {
   FileText,
   Calendar,
 } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   PieChart,
   Pie,
