@@ -7239,9 +7239,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             </div>
 
             {/* Hide Controls Toggle Switch */}
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs ${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>Hide Controls</span>
+            <div className="group flex items-center gap-1.5">
+              <span
+                className={`text-xs transition-all duration-200 ${
+                  theme === 'light' ? 'text-gray-700' : 'text-white/80'
+                } opacity-0 w-0 overflow-hidden group-hover:opacity-100 group-hover:w-auto focus-within:opacity-100 focus-within:w-auto`}
+              >
+                Hide Controls
+              </span>
               <button
+                aria-label="Toggle hide controls"
                 onClick={() => setHideControls(!hideControls)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
                   hideControls
