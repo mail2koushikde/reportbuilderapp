@@ -8849,24 +8849,24 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   <tr>
                                     <td colSpan={9} className="px-0 py-0">
                                       <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg">
-                                        <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
+                                        <div className={`px-0 py-1 rounded-r-lg border border-l-0 ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-black/20 border-white/10'}`}>
                                           <div className="space-y-1">
                                             {(versions.slice(0, (expandLimits[filename] ?? 25))).map((version, index) => (
-                                              <div key={version.id} className="flex items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors">
+                                              <div key={version.id} className={`flex items-center py-3 transition-colors border ${theme === 'light' ? 'bg-gray-50 border-gray-100 hover:bg-gray-100' : 'bg-black/30 border-white/5 hover:bg-black/40'}`}>
                                                 <div style={{ width: '32px' }} className="flex-shrink-0"></div>
                                                 <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
                                                   <CheckCircle className="w-4 h-4 text-green-500" />
-                                                  <span className="text-sm text-white capitalize">success</span>
+                                                  <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-600' : 'text-white'}`}>success</span>
                                                   <div className="flex items-center gap-1">
                                                     {version.source === 'server' ? (
                                                     <>
                                                       <Database className="w-3 h-3 text-blue-400" />
-                                                      <span className="text-xs text-white/50">Snowflake</span>
+                                                      <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Snowflake</span>
                                                     </>
                                                   ) : (
                                                     <>
                                                       <HardDrive className="w-3 h-3 text-purple-400" />
-                                                      <span className="text-xs text-white/50">Local</span>
+                                                      <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Local</span>
                                                     </>
                                                   )}
                                                   </div>
