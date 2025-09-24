@@ -1336,6 +1336,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [selectedFileVersion, setSelectedFileVersion] = useState<ExistingFileVersion | null>(null);
   const [groupedExistingFiles, setGroupedExistingFiles] = useState<{[filename: string]: ExistingFileVersion[]}>({});
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [expandLimits, setExpandLimits] = useState<{[filename: string]: number}>({});
 
   // Chart compatibility state
@@ -2685,6 +2686,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
   // Select an existing local file and load sample data via DuckDB, then inject into app
   const handleSelectExistingFile = useCallback(async (version: ExistingFileVersion) => {
+    setIsLoadingExisting(true);
     try {
       if (version.source === 'local' && version.datasetId) {
         const datasetMeta = await duckdbService.getDatasetMetadata(version.datasetId);
@@ -2723,6 +2725,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     } catch (error) {
       console.error('Error loading existing file:', error);
       alert('Failed to load file');
+    } finally {
+      setIsLoadingExisting(false);
     }
   }, [userEmail, fetchFileVersions]);
 
@@ -8544,6 +8548,20 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         </div>
       )}
 
+      {isLoadingExisting && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-5 w-full max-w-md border border-white/20 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <div>
+                <div className="font-semibold">Loading data…</div>
+                <div className="text-sm text-white/70">Please wait while the dataset is loaded</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Existing Files Modal */}
       {showExistingFilesModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overscroll-none">
@@ -8600,10 +8618,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   <div className="md:ml-auto">
                     <button
                       onClick={() => selectedFileVersion && handleSelectExistingFile(selectedFileVersion)}
-                      disabled={!selectedFileVersion}
+                      disabled={!selectedFileVersion || isLoadingExisting}
                       className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 disabled:opacity-50 text-orange-300 font-medium text-sm rounded-lg transition-colors border border-orange-400/30"
                     >
-                      Load Selected
+                      {isLoadingExisting ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-3 h-3 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></span>
+                          Loading...
+                        </span>
+                      ) : (
+                        'Load Selected'
+                      )}
                     </button>
                   </div>
                 </div>
@@ -8712,9 +8737,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                   <td className="px-4 py-3">
                                     <button
                                       onClick={() => handleSelectExistingFile(latestVersion)}
-                                      className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs rounded-lg transition-colors border border-orange-400/30"
+                                      disabled={isLoadingExisting}
+                                      className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs rounded-lg transition-colors border border-orange-400/30 disabled:opacity-50"
                                     >
-                                      Load
+                                      {isLoadingExisting ? (
+                                        <span className="flex items-center gap-1">
+                                          <span className="w-3 h-3 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></span>
+                                          Loading
+                                        </span>
+                                      ) : (
+                                        'Load'
+                                      )}
                                     </button>
                                   </td>
                                 </tr>
@@ -8775,9 +8808,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                                 <div className="px-4 py-0" style={{ minWidth: '100px' }}>
                                                   <button
                                                     onClick={() => handleSelectExistingFile(version)}
-                                                    className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs rounded-lg transition-colors border border-orange-400/30"
+                                                    disabled={isLoadingExisting}
+                                                    className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs rounded-lg transition-colors border border-orange-400/30 disabled:opacity-50"
                                                   >
-                                                    Load v{version.version}
+                                                    {isLoadingExisting ? (
+                                                      <span className="flex items-center gap-1">
+                                                        <span className="w-3 h-3 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></span>
+                                                        Loading...
+                                                      </span>
+                                                    ) : (
+                                                      <>Load v{version.version}</>
+                                                    )}
                                                   </button>
                                                 </div>
                                               </div>
