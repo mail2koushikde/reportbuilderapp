@@ -8686,16 +8686,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     </Select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs text-white/60 mb-1">Version</label>
+                    <label className={`block text-xs mb-1 ${theme === 'light' ? 'text-gray-600' : 'text-white/60'}`}>Version</label>
                     <Select
                       value={selectedFileVersion ? String(selectedFileVersion.version) : ''}
                       onValueChange={(v) => handleExistingFileVersionChange(Number(v))}
                       disabled={!selectedFileName || !(groupedExistingFiles[selectedFileName]?.length)}
                     >
-                      <SelectTrigger className="w-full bg-black/40 border border-white/20 text-white disabled:opacity-50">
+                      <SelectTrigger className={`w-full border disabled:opacity-50 ${theme === 'light' ? 'bg-white border-gray-300 text-gray-800' : 'bg-black/40 border-white/20 text-white'}`}>
                         <SelectValue placeholder="Select version" />
                       </SelectTrigger>
-                      <SelectContent className="bg-black/90 text-white border-white/20">
+                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/90 text-white border-white/20'}`}>
                         {(groupedExistingFiles[selectedFileName] || []).map(v => (
                           <SelectItem key={v.id} value={String(v.version)}>v{v.version}</SelectItem>
                         ))}
