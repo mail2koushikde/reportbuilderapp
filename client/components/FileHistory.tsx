@@ -698,7 +698,7 @@ const FileHistory: React.FC = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
+                <tbody className={`divide-y ${theme === 'light' ? 'divide-gray-200' : 'divide-white/10'}`}>
                   {groupedFiles.map((file) => {
                     const isExpanded = expandedFiles.has(file.filename);
                     return (
