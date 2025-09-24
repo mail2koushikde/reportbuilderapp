@@ -971,7 +971,7 @@ const FileHistory: React.FC = () => {
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-600/20 rounded-full flex items-center justify-center">
-                <X className="w-6 h-6 text-red-400" />
+                <Trash2 className="w-6 h-6 text-red-400" />
               </div>
               <div>
                 <h3 className={`text-lg font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
