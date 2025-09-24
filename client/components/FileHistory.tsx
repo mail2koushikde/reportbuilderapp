@@ -474,21 +474,13 @@ const FileHistory: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Database className="w-6 h-6 text-blue-500" />
-            <h1 className="text-2xl font-bold text-white">File Upload History</h1>
+            <h1 className={`text-2xl font-bold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>File Upload History</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowClearConfirm(true)}
-              disabled={clearing || groupedFiles.length === 0}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              {clearing ? 'Clearing...' : 'Clear All'}
-            </button>
-            <button
               onClick={fetchUploads}
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors"
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors`}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
