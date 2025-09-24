@@ -545,10 +545,18 @@ const FileHistory: React.FC = () => {
           
           <div className="flex gap-2">
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-              <SelectTrigger className="px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white">
+              <SelectTrigger className={`px-3 py-2 border rounded-lg ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800'
+                  : 'bg-black/40 border-white/20 text-white'
+              }`}>
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
-              <SelectContent className="bg-black/90 text-white border-white/20">
+              <SelectContent className={`${
+                theme === 'light'
+                  ? 'bg-white text-gray-800 border-gray-200'
+                  : 'bg-black/90 text-white border-white/20'
+              }`}>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="success">Success</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
@@ -557,10 +565,18 @@ const FileHistory: React.FC = () => {
             </Select>
 
             <Select value={storageFilter} onValueChange={(v) => setStorageFilter(v as any)}>
-              <SelectTrigger className="px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white">
+              <SelectTrigger className={`px-3 py-2 border rounded-lg ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800'
+                  : 'bg-black/40 border-white/20 text-white'
+              }`}>
                 <SelectValue placeholder="All Storage" />
               </SelectTrigger>
-              <SelectContent className="bg-black/90 text-white border-white/20">
+              <SelectContent className={`${
+                theme === 'light'
+                  ? 'bg-white text-gray-800 border-gray-200'
+                  : 'bg-black/90 text-white border-white/20'
+              }`}>
                 <SelectItem value="all">All Storage</SelectItem>
                 <SelectItem value="server">Snowflake Only</SelectItem>
                 <SelectItem value="local">Local Only</SelectItem>
@@ -572,10 +588,18 @@ const FileHistory: React.FC = () => {
                 setSortBy(field as any);
                 setSortOrder(order as any);
               }}>
-              <SelectTrigger className="px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-white">
+              <SelectTrigger className={`px-3 py-2 border rounded-lg ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800'
+                  : 'bg-black/40 border-white/20 text-white'
+              }`}>
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
-              <SelectContent className="bg-black/90 text-white border-white/20">
+              <SelectContent className={`${
+                theme === 'light'
+                  ? 'bg-white text-gray-800 border-gray-200'
+                  : 'bg-black/90 text-white border-white/20'
+              }`}>
                 <SelectItem value="upload_timestamp-desc">Latest First</SelectItem>
                 <SelectItem value="upload_timestamp-asc">Oldest First</SelectItem>
                 <SelectItem value="original_filename-asc">File Name A-Z</SelectItem>
