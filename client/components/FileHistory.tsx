@@ -805,14 +805,26 @@ const FileHistory: React.FC = () => {
                         {/* Expanded rows - All versions including latest */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={8} className="px-0 py-0">
-                              <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg">
-                                <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
+                            <td colSpan={9} className="px-0 py-0">
+                              <div className={`border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg ${
+                                theme === 'light'
+                                  ? 'bg-gradient-to-r from-blue-50 to-purple-50'
+                                  : 'bg-gradient-to-r from-blue-500/10 to-purple-500/10'
+                              }`}>
+                                <div className={`px-0 py-1 rounded-r-lg border border-l-0 ${
+                                  theme === 'light'
+                                    ? 'bg-white/80 border-gray-200'
+                                    : 'bg-black/20 border-white/10'
+                                }`}>
                                   <div className="space-y-1">
                                     {file.allVersions.map((version, index) => (
                                       <div
                                         key={`${file.filename}-v${version.version}-${version.storage_type}-${version.table_name}-${version.upload_timestamp}`}
-                                        className="items-center py-3 bg-black/30 border-white/5 hover:bg-black/40 transition-colors"
+                                        className={`items-center py-3 transition-colors ${
+                                          theme === 'light'
+                                            ? 'bg-gray-50/50 border-gray-100/50 hover:bg-gray-100/80'
+                                            : 'bg-black/30 border-white/5 hover:bg-black/40'
+                                        }`}
                                         style={{
                                           display: 'grid',
                                           gridTemplateColumns: columnWidths.length
@@ -826,7 +838,7 @@ const FileHistory: React.FC = () => {
                                         {/* Column 2: Status */}
                                         <div className="px-4 flex items-center gap-2">
                                           {getStatusIcon(version.upload_status)}
-                                          <span className="text-sm text-white capitalize">
+                                          <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>
                                             {version.upload_status}
                                           </span>
                                           <div className="flex items-center gap-1">
@@ -835,7 +847,7 @@ const FileHistory: React.FC = () => {
                                             ) : (
                                               <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
                                             )}
-                                            <span className="text-xs text-white/50">
+                                            <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
                                               {version.storage_type === 'local' ? 'Local' : 'Snowflake'}
                                             </span>
                                           </div>
@@ -844,7 +856,7 @@ const FileHistory: React.FC = () => {
                                         {/* Column 3: File Name */}
                                         <div className="px-4 flex items-center gap-2 min-w-0">
                                           <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                          <span className="text-white text-sm truncate">
+                                          <span className={`text-sm truncate ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                                             {version.original_filename}
                                           </span>
                                         </div>
@@ -852,9 +864,15 @@ const FileHistory: React.FC = () => {
                                         {/* Column 4: Version */}
                                         <div className="px-4 flex items-center gap-1">
                                           <span
-                                            className={`${index === 0
-                                                ? 'bg-green-600/40 text-green-200 border border-green-400/50'
-                                                : 'bg-slate-600/40 text-slate-200'} px-2 py-1 text-xs rounded-full`}
+                                            className={`px-2 py-1 text-xs rounded-full ${
+                                              index === 0
+                                                ? (theme === 'light'
+                                                    ? 'bg-green-100 text-green-700 border border-green-300'
+                                                    : 'bg-green-600/40 text-green-200 border border-green-400/50')
+                                                : (theme === 'light'
+                                                    ? 'bg-gray-100 text-gray-600'
+                                                    : 'bg-slate-600/40 text-slate-200')
+                                            }`}
                                           >
                                             v{version.version}
                                           </span>
@@ -863,22 +881,37 @@ const FileHistory: React.FC = () => {
                                         {/* Column 5: Upload Date */}
                                         <div className="px-4 flex items-center gap-2">
                                           <Calendar className="w-4 h-4 text-green-500" />
-                                          <span className="text-white text-sm">{formatTimestamp(version.upload_timestamp)}</span>
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{formatTimestamp(version.upload_timestamp)}</span>
                                         </div>
 
                                         {/* Column 6: Rows */}
                                         <div className="px-4 flex items-center">
-                                          <span className="text-white text-sm">{version.row_count.toLocaleString()}</span>
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.row_count.toLocaleString()}</span>
                                         </div>
 
                                         {/* Column 7: Columns */}
                                         <div className="px-4 flex items-center">
-                                          <span className="text-white text-sm">{version.column_count}</span>
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.column_count}</span>
                                         </div>
 
                                         {/* Column 8: Size */}
                                         <div className="px-4 flex items-center">
-                                          <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{formatFileSize(version.file_size_bytes)}</span>
+                                        </div>
+
+                                        {/* Column 9: Actions */}
+                                        <div className="px-4 flex items-center">
+                                          <button
+                                            onClick={() => setDeleteConfirm({ type: 'version', target: version })}
+                                            className={`p-1 rounded transition-colors ${
+                                              theme === 'light'
+                                                ? 'hover:bg-red-100 text-red-600 hover:text-red-700'
+                                                : 'hover:bg-red-500/20 text-red-400 hover:text-red-300'
+                                            }`}
+                                            title="Delete this version"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
                                         </div>
                                       </div>
                                     ))}
