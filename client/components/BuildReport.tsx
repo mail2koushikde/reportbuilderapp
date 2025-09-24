@@ -361,23 +361,23 @@ const renderActivePieShape = (props: any) => {
 
 // Enhanced tooltip content
 const CustomTooltip = ({ active, payload }: any) => {
+  const { theme } = useTheme();
   if (active && payload && payload.length) {
     const data = payload[0];
     const name = data.name;
     const value = data.value;
 
-    // Calculate total to get percentage
     const total = payload[0].payload.total || data.payload.value;
     const percentage = ((value / total) * 100).toFixed(1);
 
     return (
       <div
-        className="bg-black/90 border border-white/20 rounded-md p-3 shadow-lg"
+        className={`${theme === 'light' ? 'bg-white border-gray-200 text-gray-800' : 'bg-black/90 border-white/20 text-white'} border rounded-md p-3 shadow-lg backdrop-blur-sm`}
         style={{ fontSize: '11px' }}
       >
-        <div className="text-white font-semibold mb-1">{name}</div>
-        <div className="text-white/90">Value: {value.toLocaleString()}</div>
-        <div className="text-white/90">Share: {percentage}%</div>
+        <div className={`${theme === 'light' ? 'text-gray-900' : 'text-white'} font-semibold mb-1`}>{name}</div>
+        <div className={`${theme === 'light' ? 'text-gray-700' : 'text-white/90'}`}>Value: {value.toLocaleString()}</div>
+        <div className={`${theme === 'light' ? 'text-gray-700' : 'text-white/90'}`}>Share: {percentage}%</div>
       </div>
     );
   }
@@ -4340,10 +4340,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
   // Beautiful custom tooltip component for line charts
   const CustomLineTooltip = ({ active, payload, label, card }: any) => {
+    const { theme } = useTheme();
     if (active && payload && payload.length) {
       return (
-        <div className="bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 shadow-xl">
-          <div className="text-white font-medium mb-2" style={{ fontSize: '10px' }}>
+        <div className={`${theme === 'light' ? 'bg-white border-gray-200' : 'bg-black/90 border-white/20'} backdrop-blur-sm border rounded-lg px-3 py-2 shadow-xl`}>
+          <div className={`${theme === 'light' ? 'text-gray-900' : 'text-white'} font-medium mb-2`} style={{ fontSize: '10px' }}>
             {label}
           </div>
           <div className="space-y-1">
@@ -4353,10 +4354,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   className="w-2 h-[2px] rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-white/90" style={{ fontSize: '10px' }}>
+                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/90'}`} style={{ fontSize: '10px' }}>
                   {entry.name}:
                 </span>
-                <span className="text-white font-medium" style={{ fontSize: '10px' }}>
+                <span className={`${theme === 'light' ? 'text-gray-900' : 'text-white'}`} style={{ fontSize: '10px' }}>
                   {typeof entry.value === 'number' ? formatYAxisValue(entry.value, card?.yAxisFormat) : entry.value}
                 </span>
               </div>
