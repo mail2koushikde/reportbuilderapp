@@ -56,8 +56,8 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* App background gradient for light mode */
-    --app-bg: linear-gradient(to bottom right, #f8fafc, #dbeafe);
+    /* App background for light mode */
+    --app-bg: #ffffff;
   }
 
   .dark {
@@ -131,17 +131,18 @@
 
   /* Light mode adjustments */
   .light .glass-card {
-    background: rgba(0, 0, 0, 0.05);
+    background: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.06);
   }
 
   .light .dropdown-panel {
-    background: rgba(255, 255, 255, 0.9);
+    background: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.1);
   }
 
   .light .glass-select {
-    background: rgba(0, 0, 0, 0.04);
+    background: #ffffff;
     border: 1px solid rgba(0, 0, 0, 0.1);
   }
 
