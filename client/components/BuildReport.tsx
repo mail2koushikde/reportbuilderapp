@@ -8818,19 +8818,19 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <span className="text-white/80">{latestVersion.rowCount.toLocaleString()}</span>
+                                    <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{latestVersion.rowCount.toLocaleString()}</span>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <span className="text-white/80">{latestVersion.columnsCount ?? 0}</span>
+                                    <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{latestVersion.columnsCount ?? 0}</span>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <span className="text-white/80">{(latestVersion.fileSize / 1024).toFixed(1)} KB</span>
+                                    <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{(latestVersion.fileSize / 1024).toFixed(1)} KB</span>
                                   </td>
                                   <td className="px-4 py-3">
                                     <button
                                       onClick={() => handleSelectExistingFile(latestVersion)}
                                       disabled={isLoadingExisting}
-                                      className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs rounded-lg transition-colors border border-orange-400/30 disabled:opacity-50"
+                                      className={`px-3 py-1 text-xs rounded-lg transition-colors border disabled:opacity-50 ${theme === 'light' ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300' : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'}`}
                                     >
                                       {isLoadingExisting ? (
                                         <span className="flex items-center gap-1">
