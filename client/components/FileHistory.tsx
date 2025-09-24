@@ -890,7 +890,7 @@ const FileHistory: React.FC = () => {
       {/* Clear All Confirmation Modal */}
       {showClearConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-white/20 rounded-lg p-6 max-w-md w-full">
+          <div className="glass-card rounded-lg p-6 max-w-md w-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-600/20 rounded-full flex items-center justify-center">
                 <Trash2 className="w-6 h-6 text-red-400" />
