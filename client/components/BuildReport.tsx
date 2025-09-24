@@ -8234,8 +8234,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                               onClick={() => updateCard(card.id, { sortBy: 'dimension' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortBy === 'dimension'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               X-Axis
@@ -8244,8 +8244,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                               onClick={() => updateCard(card.id, { sortBy: 'measure' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortBy === 'measure'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               Values
@@ -8263,8 +8263,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                               onClick={() => updateCard(card.id, { sortOrder: 'asc' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortOrder === 'asc'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               Ascending ↑
@@ -8273,8 +8273,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                               onClick={() => updateCard(card.id, { sortOrder: 'desc' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortOrder === 'desc'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               Descending ↓
