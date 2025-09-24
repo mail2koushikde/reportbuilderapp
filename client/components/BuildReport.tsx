@@ -6494,13 +6494,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <div
                 style={{
                   position: 'absolute',
-                  backgroundColor: 'rgba(0,0,0,0.95)',
+                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(0,0,0,0.95)',
                   backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  border: theme === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.3)',
                   borderRadius: '12px',
                   padding: isVeryCompact ? '8px 10px' : '12px 16px',
                   fontSize: isVeryCompact ? '9px' : '10px',
-                  color: 'white',
+                  color: theme === 'light' ? '#111827' : 'white',
                   pointerEvents: 'none',
                   zIndex: 1000,
                   left: `${marginLeft + hoveredSegment.barIndex * (svgBarWidth + barGap) + svgBarWidth / 2}px`,
@@ -8565,7 +8565,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       <Dialog open={showFileHistoryModal} onOpenChange={setShowFileHistoryModal}>
         <DialogContent
           className="max-w-5xl w-full p-0 max-h-[85vh] overflow-hidden border border-white/20 bg-transparent"
-          style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
+          style={{ background: theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
         >
           <DialogHeader className="px-4 py-3 border-b border-white/10">
             <DialogTitle className="text-white">File History</DialogTitle>
