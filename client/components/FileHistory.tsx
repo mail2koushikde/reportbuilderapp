@@ -496,18 +496,6 @@ const FileHistory: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="glass-card p-4 rounded-lg">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              <div>
-                <p className="text-sm text-white/70">Successful</p>
-                <p className="text-xl font-semibold text-white">
-                  {groupedFiles.filter(f => f.latestVersion.upload_status === 'success').length}
-                </p>
-                <p className="text-xs text-white/50">latest versions</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Filters and Search */}
@@ -669,15 +657,6 @@ const FileHistory: React.FC = () => {
                         {getSortIcon('file_size_bytes')}
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-white/70">
-                      <button
-                        onClick={() => handleColumnSort('table_name')}
-                        className="flex items-center gap-2 hover:text-white transition-colors"
-                      >
-                        Table Name
-                        {getSortIcon('table_name')}
-                      </button>
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
@@ -706,7 +685,7 @@ const FileHistory: React.FC = () => {
                           </td>
                           {isExpanded ? (
                             // Expanded state - Show only empty row with proper height
-                            <td className="px-4 py-3" colSpan={8}>
+                            <td className="px-4 py-3" colSpan={7}>
                               {/* Empty content - only expand/collapse button shows */}
                             </td>
                           ) : (
@@ -773,11 +752,6 @@ const FileHistory: React.FC = () => {
                               <td className="px-4 py-3">
                                 <span className="text-white/80">{formatFileSize(file.latestVersion.file_size_bytes)}</span>
                               </td>
-                              <td className="px-4 py-3">
-                                <code className="text-xs bg-gray-700/50 px-2 py-1 rounded text-gray-300">
-                                  {file.latestVersion.table_name}
-                                </code>
-                              </td>
                             </>
                           )}
                         </tr>
@@ -785,7 +759,7 @@ const FileHistory: React.FC = () => {
                         {/* Expanded rows - All versions including latest */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={9} className="px-0 py-0">
+                            <td colSpan={8} className="px-0 py-0">
                               <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg">
                                 <div className="px-0 py-1 bg-black/20 rounded-r-lg border border-white/10 border-l-0">
                                   <div className="space-y-1">
@@ -832,11 +806,9 @@ const FileHistory: React.FC = () => {
                                         {/* Column 4: Version */}
                                         <div className="px-4 flex items-center gap-1">
                                           <span
-                                            className={`px-2 py-1 text-xs rounded-full ${
-                                              index === 0
+                                            className={`${index === 0
                                                 ? 'bg-green-600/40 text-green-200 border border-green-400/50'
-                                                : 'bg-slate-600/40 text-slate-200'
-                                            }`}
+                                                : 'bg-slate-600/40 text-slate-200'} px-2 py-1 text-xs rounded-full`}
                                           >
                                             v{version.version}
                                           </span>
@@ -861,13 +833,6 @@ const FileHistory: React.FC = () => {
                                         {/* Column 8: Size */}
                                         <div className="px-4 flex items-center">
                                           <span className="text-white text-sm">{formatFileSize(version.file_size_bytes)}</span>
-                                        </div>
-
-                                        {/* Column 9: Table Name */}
-                                        <div className="px-4 flex items-center min-w-0">
-                                          <code className="text-xs bg-slate-700/50 text-slate-200 px-2 py-1 rounded truncate">
-                                            {version.table_name}
-                                          </code>
                                         </div>
                                       </div>
                                     ))}
