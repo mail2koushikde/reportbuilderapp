@@ -1958,34 +1958,37 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     }
   }, [importedData]);
 
-  // Responsive grid dimensions based on screen size
+  // Responsive grid dimensions based on available container width (reacts to sidebar collapse)
   useEffect(() => {
     const calculateDimensions = () => {
-      const screenWidth = window.innerWidth;
+      const el = containerRef.current;
+      const availableWidth = el ? el.clientWidth : window.innerWidth;
       const screenHeight = window.innerHeight;
 
-      // Calculate available width (accounting for navigation and padding)
-      const navigationWidth = screenWidth >= 1024 ? 320 : 0; // lg:w-80 = 320px
-      const padding = screenWidth >= 1024 ? 64 : screenWidth >= 640 ? 32 : 16; // lg:p-4, sm:p-2, p-1
-      const availableWidth = screenWidth - navigationWidth - padding;
-
-      // Calculate grid dimensions
-      const cols = Math.max(Math.floor(availableWidth / GRID_SIZE), 20); // Minimum 20 columns
-      const rows = Math.max(Math.floor((screenHeight - 200) / GRID_SIZE), 20); // Minimum 20 rows, account for header
+      const cols = Math.max(Math.floor(availableWidth / GRID_SIZE), 20);
+      const rows = Math.max(Math.floor((screenHeight - 200) / GRID_SIZE), 20);
 
       setGridCols(cols);
       setGridRows(rows);
-      setContainerWidth(Math.max(cols * GRID_SIZE, 800)); // Minimum 800px width
+      setContainerWidth(Math.max(cols * GRID_SIZE, availableWidth, 800));
     };
 
     calculateDimensions();
 
-    const handleResize = () => {
-      calculateDimensions();
-    };
+    const handleResize = () => calculateDimensions();
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (containerRef.current) {
+      resizeObserver = new ResizeObserver(() => handleResize());
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
   }, []);
 
   // Close version dropdown when clicking outside
@@ -8681,7 +8684,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 {isFetchingExistingFiles ? (
                   <div className="flex items-center justify-center py-8 text-center">
                     <span className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
-                    <span className="text-white/70">Loading files…</span>
+                    <span className="text-white/70">Loading files��</span>
                   </div>
                 ) : Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
