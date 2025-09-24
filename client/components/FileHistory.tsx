@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { format } from 'date-fns';
 import { useUser } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { duckdbService, LocalDataset } from '../services/duckdbService';
 import {
   FileText,
@@ -21,7 +22,8 @@ import {
   Expand,
   Minimize2,
   HardDrive,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
