@@ -7239,11 +7239,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
             {/* Hide Controls Toggle Switch */}
             <div className="flex items-center gap-1.5">
-              <span className="text-white/80 text-xs">Hide Controls</span>
+              <span className={`text-xs ${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>Hide Controls</span>
               <button
                 onClick={() => setHideControls(!hideControls)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                  hideControls ? 'bg-purple-600' : 'bg-white/20'
+                  hideControls
+                    ? 'bg-purple-600'
+                    : (theme === 'light' ? 'bg-gray-200' : 'bg-white/20')
                 }`}
               >
                 <span
@@ -7257,7 +7259,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             <button
               onClick={openSaveDialog}
               disabled={cards.length === 0}
-              className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`p-1.5 rounded-lg transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                theme === 'light'
+                  ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300'
+                  : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
+              }`}
               title="Save Report"
             >
               <Save className="w-3 h-3" />
@@ -7267,7 +7273,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <button
                 onClick={addCard}
                 disabled={cards.length >= 6}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-medium text-xs rounded-lg transition-colors border border-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex items-center gap-2 px-3 py-1.5 font-medium text-xs rounded-lg transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === 'light'
+                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-400/30'
+                }`}
               >
                 <Plus className="w-3 h-3" />
                 Add Card ({cards.length}/6)
@@ -7276,7 +7286,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <button
                 onClick={() => setShowClearAllDialog(true)}
                 disabled={cards.length === 0}
-                className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors border border-red-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`p-1.5 rounded-lg transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === 'light'
+                    ? 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300'
+                    : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-400/30'
+                }`}
                 title="Clear all cards"
               >
                 <Trash className="w-3 h-3" />
