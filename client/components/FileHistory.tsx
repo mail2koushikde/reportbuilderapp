@@ -700,18 +700,18 @@ const FileHistory: React.FC = () => {
                     return (
                       <Fragment key={file.filename}>
                         {/* Main row - Shows latest version when collapsed, file summary when expanded */}
-                        <tr className="hover:bg-white/5 transition-colors">
+                        <tr className={`transition-colors ${theme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}>
                           <td className="px-4 py-3">
                             <button
                               onClick={() => toggleFileExpansion(file.filename)}
-                              className="p-1 hover:bg-white/10 rounded transition-colors"
+                              className={`p-1 rounded transition-colors ${theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
                               title={isExpanded ? 'Collapse versions' : `Show all ${file.totalVersions} versions`}
                             >
                               {file.totalVersions > 1 ? (
                                 isExpanded ? (
-                                  <ChevronUp className="w-4 h-4 text-white/70" />
+                                  <ChevronUp className={`w-4 h-4 ${theme === 'light' ? 'text-gray-500' : 'text-white/70'}`} />
                                 ) : (
-                                  <ChevronDown className="w-4 h-4 text-white/70" />
+                                  <ChevronDown className={`w-4 h-4 ${theme === 'light' ? 'text-gray-500' : 'text-white/70'}`} />
                                 )
                               ) : (
                                 <div className="w-4 h-4"></div>
@@ -720,14 +720,14 @@ const FileHistory: React.FC = () => {
                           </td>
                           {isExpanded ? (
                             // Expanded state - Show only empty row with proper height
-                            <td className="px-4 py-3" colSpan={7}></td>
+                            <td className="px-4 py-3" colSpan={8}></td>
                           ) : (
                             // Collapsed state - Show latest version details
                             <>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   {getStatusIcon(file.latestVersion.upload_status)}
-                                  <span className="text-sm text-white/70 capitalize">
+                                  <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
                                     {file.latestVersion.upload_status}
                                   </span>
                                   {/* Storage type indicator */}
@@ -737,7 +737,7 @@ const FileHistory: React.FC = () => {
                                     ) : (
                                       <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
                                     )}
-                                    <span className="text-xs text-white/50">
+                                    <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
                                       {file.latestVersion.storage_type === 'local' ? 'Local' : 'Snowflake'}
                                     </span>
                                   </div>
@@ -747,11 +747,11 @@ const FileHistory: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                   <FileText className="w-4 h-4 text-blue-500" />
                                   <div className="flex flex-col">
-                                    <span className="text-white font-medium">
+                                    <span className={`font-medium ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
                                       {file.filename}
                                     </span>
                                     {file.totalVersions > 1 && (
-                                      <span className="text-xs text-white/50">
+                                      <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
                                         {file.totalVersions} versions
                                       </span>
                                     )}
@@ -773,17 +773,30 @@ const FileHistory: React.FC = () => {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <Calendar className="w-4 h-4 text-green-500" />
-                                  <span className="text-white/80">{formatTimestamp(file.latestVersion.upload_timestamp)}</span>
+                                  <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{formatTimestamp(file.latestVersion.upload_timestamp)}</span>
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-white/80">{file.latestVersion.row_count.toLocaleString()}</span>
+                                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{file.latestVersion.row_count.toLocaleString()}</span>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-white/80">{file.latestVersion.column_count}</span>
+                                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{file.latestVersion.column_count}</span>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-white/80">{formatFileSize(file.latestVersion.file_size_bytes)}</span>
+                                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{formatFileSize(file.latestVersion.file_size_bytes)}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => setDeleteConfirm({ type: 'file', target: file.filename })}
+                                  className={`p-1 rounded transition-colors ${
+                                    theme === 'light'
+                                      ? 'hover:bg-red-100 text-red-600 hover:text-red-700'
+                                      : 'hover:bg-red-500/20 text-red-400 hover:text-red-300'
+                                  }`}
+                                  title="Delete all versions of this file"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
                               </td>
                             </>
                           )}
