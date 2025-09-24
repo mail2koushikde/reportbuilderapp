@@ -13,6 +13,14 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
+// Apply initial theme class before React renders (default to dark)
+try {
+  const stored = (localStorage.getItem('theme') as 'dark' | 'light' | null) || 'dark';
+  const root = document.documentElement;
+  root.classList.add(stored);
+  root.classList.remove(stored === 'dark' ? 'light' : 'dark');
+} catch {}
+
 const queryClient = new QueryClient();
 
 const App = () => (
