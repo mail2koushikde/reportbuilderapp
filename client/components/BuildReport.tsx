@@ -7062,7 +7062,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   )}
                   {/* Data info */}
                   {importedData.length > 0 && columns.length > 0 && (
-                    <span className="text-white/50">
+                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/50'}`}>
                       • {importedData.length} rows • {columns.length} cols
                     </span>
                   )}
