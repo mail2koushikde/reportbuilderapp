@@ -7478,8 +7478,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               className="absolute inset-0 pointer-events-none z-0"
               style={{
                 backgroundImage: `
-                  linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)
+                  linear-gradient(to right, ${theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'} 1px, transparent 1px),
+                  linear-gradient(to bottom, ${theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'} 1px, transparent 1px)
                 `,
                 backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
                 width: gridCols * GRID_SIZE,
