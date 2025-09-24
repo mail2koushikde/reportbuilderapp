@@ -1356,6 +1356,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
   const [groupedExistingFiles, setGroupedExistingFiles] = useState<{[filename: string]: ExistingFileVersion[]}>({});
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  const [isFetchingExistingFiles, setIsFetchingExistingFiles] = useState(false);
   const [expandLimits, setExpandLimits] = useState<{[filename: string]: number}>({});
 
   // Chart compatibility state
@@ -2617,6 +2618,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     const loadExistingFiles = async () => {
       try {
         if (!showExistingFilesModal) return;
+        setIsFetchingExistingFiles(true);
         // Local datasets
         const localDatasetsList = await duckdbService.listDatasets();
         setLocalDatasets(localDatasetsList);
@@ -2676,6 +2678,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         setGroupedExistingFiles(grouped);
       } catch (error) {
         console.error('Error loading existing files:', error);
+      } finally {
+        setIsFetchingExistingFiles(false);
       }
     };
     loadExistingFiles();
@@ -8614,7 +8618,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </p>
 
               {/* Quick selectors */}
-              {Object.keys(groupedExistingFiles).length > 0 && (
+              {!isFetchingExistingFiles && Object.keys(groupedExistingFiles).length > 0 && (
                 <div className="flex flex-col md:flex-row md:items-end gap-3 bg-white/5 border border-white/10 rounded-lg p-4">
                   <div className="flex-1">
                     <label className="block text-xs text-white/60 mb-1">File</label>
