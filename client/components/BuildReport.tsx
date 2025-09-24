@@ -225,7 +225,7 @@ const renderCustomLabel = (
     const mx = cx + r1 * cos;
     const my = cy + r1 * sin;
 
-    const label = `${name} — ${(percent * 100).toFixed(2)}%`;
+    const label = `${name} ��� ${(percent * 100).toFixed(2)}%`;
 
     // Top/bottom placement when angle is near vertical
     const nearVertical = Math.abs(sin) > 0.9 && Math.abs(cos) < 0.44;
@@ -8901,7 +8901,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                                   <button
                                                     onClick={() => handleSelectExistingFile(version)}
                                                     disabled={isLoadingExisting}
-                                                    className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 text-xs rounded-lg transition-colors border border-orange-400/30 disabled:opacity-50"
+                                                    className={`px-3 py-1 text-xs rounded-lg transition-colors border disabled:opacity-50 ${theme === 'light' ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300' : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'}`}
                                                   >
                                                     {isLoadingExisting ? (
                                                       <span className="flex items-center gap-1">
@@ -8919,7 +8919,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                                               <div className="px-4 py-2">
                                                 <button
                                                   onClick={() => setExpandLimits(l => ({ ...l, [filename]: (l[filename] ?? 25) + 25 }))}
-                                                  className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white/80 text-xs rounded-lg border border-white/20"
+                                                  className={`px-3 py-1 text-xs rounded-lg border ${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200' : 'bg-white/10 hover:bg-white/20 text-white/80 border-white/20'}`}
                                                 >
                                                   Show more ({versions.length - (expandLimits[filename] ?? 25)} more)
                                                 </button>
@@ -8940,9 +8940,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Files className="w-12 h-12 text-white/30 mb-4" />
-                    <h3 className="text-white/70 font-medium mb-2">No Files Found</h3>
-                    <p className="text-white/50 text-sm mb-4">
+                    <Files className={`w-12 h-12 mb-4 ${theme === 'light' ? 'text-gray-400' : 'text-white/30'}`} />
+                    <h3 className={`font-medium mb-2 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>No Files Found</h3>
+                    <p className={`text-sm mb-4 ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
                       Upload some files first to see them here.
                     </p>
                     <button
