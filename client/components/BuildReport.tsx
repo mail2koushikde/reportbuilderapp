@@ -8671,7 +8671,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
 
               {/* File table */}
               <div className="bg-white/5 rounded-lg p-4 max-h-[70vh] overflow-y-auto overscroll-contain">
-                {Object.keys(groupedExistingFiles).length > 0 ? (
+                {isFetchingExistingFiles ? (
+                  <div className="flex items-center justify-center py-8 text-center">
+                    <span className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
+                    <span className="text-white/70">Loading files…</span>
+                  </div>
+                ) : Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
