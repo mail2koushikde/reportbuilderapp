@@ -931,11 +931,11 @@ const FileHistory: React.FC = () => {
         )}
       </div>
 
-      {/* Clear All Confirmation Modal */}
-      {showClearConfirm && (
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowClearConfirm(false)}
+          onClick={() => setDeleteConfirm(null)}
         >
           <div
             className="glass-card rounded-lg p-6 max-w-md w-full"
@@ -943,54 +943,53 @@ const FileHistory: React.FC = () => {
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-600/20 rounded-full flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-400" />
+                <X className="w-6 h-6 text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">Clear All Data</h3>
-                <p className="text-white/70 text-sm">This action cannot be undone</p>
+                <h3 className={`text-lg font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                  {deleteConfirm.type === 'file' ? 'Delete File' : 'Delete Version'}
+                </h3>
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>This action cannot be undone</p>
               </div>
             </div>
 
             <div className="mb-6">
-              <p className="text-white/80 mb-4">
-                This will permanently delete <strong>all {groupedFiles.length} files</strong> and their versions from both:
+              <p className={`mb-4 ${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>
+                {deleteConfirm.type === 'file' ? (
+                  <>
+                    This will permanently delete <strong>"{deleteConfirm.target as string}"</strong> and all its versions.
+                  </>
+                ) : (
+                  <>
+                    This will permanently delete version <strong>v{(deleteConfirm.target as UploadMetadata).version}</strong> of <strong>"{(deleteConfirm.target as UploadMetadata).original_filename}"</strong>.
+                  </>
+                )}
               </p>
-              <ul className="space-y-2 text-sm text-white/70">
-                <li className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-blue-400" />
-                  <span>Snowflake database ({groupedFiles.filter(f => f.latestVersion.storage_type === 'server').length} files)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <HardDrive className="w-4 h-4 text-purple-400" />
-                  <span>Local browser storage ({groupedFiles.filter(f => f.latestVersion.storage_type === 'local').length} files)</span>
-                </li>
-              </ul>
             </div>
 
             <div className="flex items-center justify-end gap-3">
               <button
-                onClick={() => setShowClearConfirm(false)}
-                disabled={clearing}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                onClick={() => setDeleteConfirm(null)}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  theme === 'light'
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
               >
                 Cancel
               </button>
               <button
-                onClick={clearAllData}
-                disabled={clearing}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors"
+                onClick={() => {
+                  if (deleteConfirm.type === 'file') {
+                    deleteFile(deleteConfirm.target as string);
+                  } else {
+                    deleteVersion(deleteConfirm.target as UploadMetadata);
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors"
               >
-                {clearing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Clearing...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" />
-                    Yes, Clear All
-                  </>
-                )}
+                <X className="w-4 h-4" />
+                Delete
               </button>
             </div>
           </div>
