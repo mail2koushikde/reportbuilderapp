@@ -7281,7 +7281,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
         <div className="px-4 pb-4 transition-all duration-300 ease-out">
           <section
             className="p-4 rounded-2xl border border-white/10"
-            style={{ background: "rgba(255, 255, 255, 0.05)" }}
+            style={{ background: theme === "light" ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.05)" }}
           >
             <div className="grid gap-6" style={{ gridTemplateColumns: leftSectionVisible ? '1fr 4fr' : '1fr', alignItems: 'stretch' }}>
               {/* Left Column: Dimension & Values Selection */}
