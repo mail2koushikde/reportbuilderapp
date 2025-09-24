@@ -1179,6 +1179,7 @@ interface ExistingFileVersion {
 const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail = 'mayank.jain@abc.com' }) => {
   // Session management
   const { syncCards, syncData, syncFile, hasActiveSession, getInitialStateFromSession } = useBuildReportSession();
+  const { theme } = useTheme();
 
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
