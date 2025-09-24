@@ -6953,7 +6953,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             <h1 className="text-lg sm:text-xl lg:text-2xl font-normal tracking-wider">
               Generate Report
               {fileName && (
-                <span className="text-xs sm:text-sm text-blue-300 font-light ml-1 sm:ml-2 flex items-center gap-1">
+                <span className={`text-xs sm:text-sm font-light ml-1 sm:ml-2 flex items-center gap-1 ${theme === 'light' ? 'text-gray-700' : 'text-blue-300'}`}>
                   | {fileName}
                   {/* Version Dropdown - show for any versioned file */}
                   {currentFileVersion && currentFileVersion > 0 && (
