@@ -766,7 +766,7 @@ const TextBoxComponent: React.FC<{
           : 'z-30 border-white/20 transition-all duration-200'
       }`}
       style={{
-        ...(hideControls ? { backgroundColor: 'transparent' } : { backgroundColor: 'rgba(255, 255, 255, 0.05)' }),
+        ...(hideControls ? { backgroundColor: 'transparent' } : { backgroundColor: theme === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)' }),
         left: textBox.position.x,
         top: textBox.position.y,
         width: textBox.size.width,
