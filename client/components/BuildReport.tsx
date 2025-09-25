@@ -7959,19 +7959,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Series Column (Optional)
                       </label>
-                      <select
-                        value={card.seriesColumn || ''}
-                        onChange={(e) => updateCard(card.id, { seriesColumn: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select series column (optional)...</option>
-                        {columns.filter(col => {
-                          // Exclude dimension and measure columns
-                          return col !== card.dimension && col !== card.measure;
-                        }).map((col) => (
-                          <option key={`series-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.seriesColumn || ''}
+                          onChange={(e) => updateCard(card.id, { seriesColumn: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select series column (optional)...</option>
+                          {columns.filter(col => col !== card.dimension && col !== card.measure).map((col) => (
+                            <option key={`series-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.seriesColumn || ''} onValueChange={(v) => updateCard(card.id, { seriesColumn: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select series column (optional)..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/90 text-white border-white/20">
+                            {columns.filter(col => col !== card.dimension && col !== card.measure).map((col) => (
+                              <SelectItem key={`series-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="text-[10px] text-white/50 mt-0.5">
                         Creates multiple lines for each distinct value in the series column
                       </div>
