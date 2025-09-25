@@ -341,18 +341,11 @@
   html.light .hover\:bg-white/20:hover { background-color: rgba(0, 0, 0, 0.12) !important; }
 
   /* Additional mappings for translucency and text in light mode */
-  html.light .text-white\/90 { color: hsl(var(--foreground) / 0.9) !important; }
-  html.light .text-white\/40 { color: hsl(var(--foreground) / 0.4) !important; }
-  html.light .text-white\/30 { color: hsl(var(--foreground) / 0.3) !important; }
-  html.light .text-white\/20 { color: hsl(var(--foreground) / 0.2) !important; }
-  html.light .text-white\/10 { color: hsl(var(--foreground) / 0.1) !important; }
-
-  /* Unescaped selectors for actual class names */
-  html.light .text-white/90 { color: hsl(var(--foreground) / 0.9) !important; }
-  html.light .text-white/40 { color: hsl(var(--foreground) / 0.4) !important; }
-  html.light .text-white/30 { color: hsl(var(--foreground) / 0.3) !important; }
-  html.light .text-white/20 { color: hsl(var(--foreground) / 0.2) !important; }
-  html.light .text-white/10 { color: hsl(var(--foreground) / 0.1) !important; }
+  html.light [class*="text-white/90"] { color: hsl(var(--foreground) / 0.9) !important; }
+  html.light [class*="text-white/40"] { color: hsl(var(--foreground) / 0.4) !important; }
+  html.light [class*="text-white/30"] { color: hsl(var(--foreground) / 0.3) !important; }
+  html.light [class*="text-white/20"] { color: hsl(var(--foreground) / 0.2) !important; }
+  html.light [class*="text-white/10"] { color: hsl(var(--foreground) / 0.1) !important; }
 
   html.light .border-white\/30 { border-color: hsl(var(--border)) !important; }
   html.light .border-white/30 { border-color: hsl(var(--border)) !important; }
