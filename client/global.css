@@ -346,6 +346,13 @@
   html.light .text-white\/20 { color: hsl(var(--foreground) / 0.2) !important; }
   html.light .text-white\/10 { color: hsl(var(--foreground) / 0.1) !important; }
 
+  /* Unescaped selectors for actual class names */
+  html.light .text-white/90 { color: hsl(var(--foreground) / 0.9) !important; }
+  html.light .text-white/40 { color: hsl(var(--foreground) / 0.4) !important; }
+  html.light .text-white/30 { color: hsl(var(--foreground) / 0.3) !important; }
+  html.light .text-white/20 { color: hsl(var(--foreground) / 0.2) !important; }
+  html.light .text-white/10 { color: hsl(var(--foreground) / 0.1) !important; }
+
   html.light .border-white\/30 { border-color: hsl(var(--border)) !important; }
 
   html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
