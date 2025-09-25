@@ -7335,18 +7335,33 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                     Select Dimension & Values
                   </label>
                   <div className="glass-select rounded-lg border border-white/20 bg-white/5">
-                    <select
-                      value={selectedDimension}
-                      onChange={(e) => handleDimensionSelect(e.target.value)}
-                      className="w-full p-2 bg-transparent text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded-lg text-xs"
-                    >
-                      <option value="" className="bg-slate-800 text-xs">Select a column...</option>
-                      {columns.map((column) => (
-                        <option key={`filter-${column}`} value={column} className="bg-slate-800 text-xs">
-                          {column}
-                        </option>
-                      ))}
-                    </select>
+                    {theme === 'light' ? (
+                      <select
+                        value={selectedDimension}
+                        onChange={(e) => handleDimensionSelect(e.target.value)}
+                        className="w-full p-2 bg-transparent text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded-lg text-xs"
+                      >
+                        <option value="" className="bg-slate-800 text-xs">Select a column...</option>
+                        {columns.map((column) => (
+                          <option key={`filter-${column}`} value={column} className="bg-slate-800 text-xs">
+                            {column}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Select value={selectedDimension} onValueChange={(v) => handleDimensionSelect(v)}>
+                        <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                          <SelectValue placeholder="Select a column..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black/90 text-white border-white/20">
+                          {columns.map((column) => (
+                            <SelectItem key={`filter-${column}`} value={column}>
+                              {column}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
 
