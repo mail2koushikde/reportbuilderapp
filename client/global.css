@@ -320,33 +320,28 @@
 @layer utilities {
   /* Light mode overrides for common Tailwind classes used across the app */
   html.light .text-white { color: hsl(var(--foreground)) !important; }
-  html.light [class*="text-white\/"] { color: hsl(var(--foreground)) !important; }
-  html.light [class*="text-white\/80"] { color: hsl(var(--foreground) / 0.8) !important; }
-  html.light [class*="text-white\/70"] { color: hsl(var(--foreground) / 0.7) !important; }
-  html.light [class*="text-white\/60"] { color: hsl(var(--foreground) / 0.6) !important; }
-  html.light [class*="text-white\/50"] { color: hsl(var(--foreground) / 0.5) !important; }
+  html.light .text-white\/90 { color: hsl(var(--foreground) / 0.9) !important; }
+  html.light .text-white\/80 { color: hsl(var(--foreground) / 0.8) !important; }
+  html.light .text-white\/70 { color: hsl(var(--foreground) / 0.7) !important; }
+  html.light .text-white\/60 { color: hsl(var(--foreground) / 0.6) !important; }
+  html.light .text-white\/50 { color: hsl(var(--foreground) / 0.5) !important; }
+  html.light .text-white\/40 { color: hsl(var(--foreground) / 0.4) !important; }
+  html.light .text-white\/30 { color: hsl(var(--foreground) / 0.3) !important; }
+  html.light .text-white\/20 { color: hsl(var(--foreground) / 0.2) !important; }
+  html.light .text-white\/10 { color: hsl(var(--foreground) / 0.1) !important; }
 
-  html.light [class*="border-white/20"] { border-color: hsl(var(--border)) !important; }
-  html.light [class*="border-white/10"] { border-color: hsl(var(--border)) !important; }
+  html.light .border-white\/30 { border-color: hsl(var(--border)) !important; }
+  html.light .border-white\/20 { border-color: hsl(var(--border)) !important; }
+  html.light .border-white\/10 { border-color: hsl(var(--border)) !important; }
 
-  html.light [class*="bg-white/10"] { background-color: rgba(0, 0, 0, 0.05) !important; }
-  html.light [class*="bg-white/20"] { background-color: rgba(0, 0, 0, 0.08) !important; }
-  html.light [class*="hover:bg-white/10"]:hover { background-color: rgba(0, 0, 0, 0.07) !important; }
-  html.light [class*="hover:bg-white/20"]:hover { background-color: rgba(0, 0, 0, 0.12) !important; }
-
-  /* Additional mappings for translucency and text in light mode */
-  html.light [class*="text-white/90"] { color: hsl(var(--foreground) / 0.9) !important; }
-  html.light [class*="text-white/40"] { color: hsl(var(--foreground) / 0.4) !important; }
-  html.light [class*="text-white/30"] { color: hsl(var(--foreground) / 0.3) !important; }
-  html.light [class*="text-white/20"] { color: hsl(var(--foreground) / 0.2) !important; }
-  html.light [class*="text-white/10"] { color: hsl(var(--foreground) / 0.1) !important; }
-
-  html.light [class*="border-white/30"] { border-color: hsl(var(--border)) !important; }
-
-  html.light [class*="bg-white/5"] { background-color: rgba(0, 0, 0, 0.03) !important; }
-  html.light [class*="bg-white/30"] { background-color: rgba(0, 0, 0, 0.12) !important; }
-  html.light [class*="hover:bg-white/5"]:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
-  html.light [class*="hover:bg-white/30"]:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
+  html.light .bg-white\/30 { background-color: rgba(0, 0, 0, 0.12) !important; }
+  html.light .bg-white\/20 { background-color: rgba(0, 0, 0, 0.08) !important; }
+  html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
+  html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
+  html.light .hover\:bg-white\/30:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
+  html.light .hover\:bg-white\/20:hover { background-color: rgba(0, 0, 0, 0.12) !important; }
+  html.light .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.07) !important; }
+  html.light .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
 
   /* Chart configuration button highlights - proper contrast for light mode */
   html.light .bg-blue-500\/20 { background-color: #2563eb !important; }
