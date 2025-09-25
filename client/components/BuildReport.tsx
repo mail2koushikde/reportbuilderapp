@@ -372,7 +372,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
     return (
       <div
-        className={`${theme === 'light' ? 'bg-white border-gray-200 text-gray-800' : 'bg-black/90 border-white/20 text-white'} border rounded-md p-3 shadow-lg backdrop-blur-sm`}
+        className={`${theme === 'light' ? 'bg-white border-gray-200 text-gray-800' : 'bg-black/80 border-white/20 text-white'} border rounded-md p-3 shadow-lg backdrop-blur-sm`}
         style={{ fontSize: '11px' }}
       >
         <div className={`${theme === 'light' ? 'text-gray-900' : 'text-white'} font-semibold mb-1`}>{name}</div>
@@ -825,7 +825,7 @@ const TextBoxComponent: React.FC<{
 
               {/* Font Size Dropdown */}
               {showFontSizeDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50 min-w-16">
+                <div className="absolute top-full left-0 mt-1 bg-black/80 border border-white/20 rounded-md shadow-lg z-50 min-w-16">
                   <div className="py-1 max-h-40 overflow-y-auto">
                     {fontSizes.map(size => (
                       <button
@@ -875,7 +875,7 @@ const TextBoxComponent: React.FC<{
 
               {/* Color Picker Dropdown */}
               {showColorPicker && (
-                <div className="absolute top-full right-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50">
+                <div className="absolute top-full right-0 mt-1 bg-black/80 border border-white/20 rounded-md shadow-lg z-50">
                   <div className="p-2 grid grid-cols-5 gap-1">
                     {colors.map(color => (
                       <button
@@ -4343,7 +4343,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
     const { theme } = useTheme();
     if (active && payload && payload.length) {
       return (
-        <div className={`${theme === 'light' ? 'bg-white border-gray-200' : 'bg-black/90 border-white/20'} backdrop-blur-sm border rounded-lg px-3 py-2 shadow-xl`}>
+        <div className={`${theme === 'light' ? 'bg-white border-gray-200' : 'bg-black/80 border-white/20'} backdrop-blur-sm border rounded-lg px-3 py-2 shadow-xl`}>
           <div className={`${theme === 'light' ? 'text-gray-900' : 'text-white'} font-medium mb-2`} style={{ fontSize: '10px' }}>
             {label}
           </div>
@@ -7353,7 +7353,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
                           <SelectValue placeholder="Select a column..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-black/90 text-white border-white/20">
+                        <SelectContent className="bg-black/80 text-white border-white/20">
                           {columns.map((column) => (
                             <SelectItem key={`filter-${column}`} value={column}>
                               {column}
@@ -7864,7 +7864,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
                             <SelectValue placeholder="Select dimension..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-black/90 text-white border-white/20">
+                          <SelectContent className="bg-black/80 text-white border-white/20">
                             {columns.map((col) => (
                               <SelectItem key={`dimension-${col}`} value={col}>{col}</SelectItem>
                             ))}
@@ -7898,7 +7898,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                         <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
                           <SelectValue placeholder="Select measure..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-black/90 text-white border-white/20">
+                        <SelectContent className="bg-black/80 text-white border-white/20">
                           {columns.filter(col => {
                             const sampleValue = importedData[0]?.[col];
                             return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
@@ -7936,7 +7936,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
                             <SelectValue placeholder="Select second measure (optional)..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-black/90 text-white border-white/20">
+                          <SelectContent className="bg-black/80 text-white border-white/20">
                             {columns.filter(col => {
                               const sampleValue = importedData[0]?.[col];
                               const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
@@ -7975,7 +7975,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
                             <SelectValue placeholder="Select series column (optional)..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-black/90 text-white border-white/20">
+                          <SelectContent className="bg-black/80 text-white border-white/20">
                             {columns.filter(col => col !== card.dimension && col !== card.measure).map((col) => (
                               <SelectItem key={`series-${col}`} value={col}>{col}</SelectItem>
                             ))}
@@ -8071,7 +8071,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                           <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
                             <SelectValue placeholder="Select second dimension..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-black/90 text-white border-white/20">
+                          <SelectContent className="bg-black/80 text-white border-white/20">
                             {columns.filter(col => col !== card.dimension).map((col) => (
                               <SelectItem key={`dimension2-${col}`} value={col}>{col}</SelectItem>
                             ))}
@@ -8785,7 +8785,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <SelectTrigger className={`w-full border ${theme === 'light' ? 'bg-white border-gray-300 text-gray-800' : 'bg-black/40 border-white/20 text-white'}`}>
                         <SelectValue placeholder="Select file" />
                       </SelectTrigger>
-                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/90 text-white border-white/20'}`}>
+                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/80 text-white border-white/20'}`}>
                         {Object.keys(groupedExistingFiles).map(name => (
                           <SelectItem key={name} value={name}>{name}</SelectItem>
                         ))}
@@ -8802,7 +8802,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <SelectTrigger className={`w-full border disabled:opacity-50 ${theme === 'light' ? 'bg-white border-gray-300 text-gray-800' : 'bg-black/40 border-white/20 text-white'}`}>
                         <SelectValue placeholder="Select version" />
                       </SelectTrigger>
-                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/90 text-white border-white/20'}`}>
+                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/80 text-white border-white/20'}`}>
                         {(groupedExistingFiles[selectedFileName] || []).map(v => (
                           <SelectItem key={v.id} value={String(v.version)}>v{v.version}</SelectItem>
                         ))}
