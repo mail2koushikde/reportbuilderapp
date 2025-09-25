@@ -8055,16 +8055,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Second Dimension (Segments)
                       </label>
-                      <select
-                        value={card.dimension2 || ''}
-                        onChange={(e) => updateCard(card.id, { dimension2: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select second dimension...</option>
-                        {columns.filter(col => col !== card.dimension).map((col) => (
-                          <option key={`dimension2-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.dimension2 || ''}
+                          onChange={(e) => updateCard(card.id, { dimension2: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select second dimension...</option>
+                          {columns.filter(col => col !== card.dimension).map((col) => (
+                            <option key={`dimension2-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.dimension2 || ''} onValueChange={(v) => updateCard(card.id, { dimension2: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select second dimension..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/90 text-white border-white/20">
+                            {columns.filter(col => col !== card.dimension).map((col) => (
+                              <SelectItem key={`dimension2-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="text-[10px] text-white/50 mt-0.5">
                         This will create segments within each bar
                       </div>
