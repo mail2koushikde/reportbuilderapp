@@ -267,7 +267,7 @@ const ViewSavedReports: React.FC<ViewSavedReportsProps> = ({ onLoadReport }) => 
             <SelectTrigger className="bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-white text-sm">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
-            <SelectContent className="bg-black/90 text-white border-white/20">
+            <SelectContent className="bg-black/80 text-white border-white/20">
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="pie">Pie Charts</SelectItem>
               <SelectItem value="bar">Bar Charts</SelectItem>
@@ -290,7 +290,7 @@ const ViewSavedReports: React.FC<ViewSavedReportsProps> = ({ onLoadReport }) => 
             <SelectTrigger className="bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-white text-sm">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent className="bg-black/90 text-white border-white/20">
+            <SelectContent className="bg-black/80 text-white border-white/20">
               <SelectItem value="date">Date</SelectItem>
               <SelectItem value="name">Name</SelectItem>
               <SelectItem value="charts">Chart Count</SelectItem>
