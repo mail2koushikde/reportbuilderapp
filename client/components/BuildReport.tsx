@@ -7848,16 +7848,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Dimension (Categories)
                       </label>
-                      <select
-                        value={card.dimension}
-                        onChange={(e) => updateCard(card.id, { dimension: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select dimension...</option>
-                        {columns.map((col) => (
-                          <option key={`dimension-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.dimension}
+                          onChange={(e) => updateCard(card.id, { dimension: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select dimension...</option>
+                          {columns.map((col) => (
+                            <option key={`dimension-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.dimension || ''} onValueChange={(v) => updateCard(card.id, { dimension: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select dimension..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/90 text-white border-white/20">
+                            {columns.map((col) => (
+                              <SelectItem key={`dimension-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   )}
 
