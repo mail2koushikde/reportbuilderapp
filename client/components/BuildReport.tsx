@@ -225,7 +225,7 @@ const renderCustomLabel = (
     const mx = cx + r1 * cos;
     const my = cy + r1 * sin;
 
-    const label = `${name} ��� ${(percent * 100).toFixed(2)}%`;
+    const label = `${name} • ${(percent * 100).toFixed(2)}%`;
 
     // Top/bottom placement when angle is near vertical
     const nearVertical = Math.abs(sin) > 0.9 && Math.abs(cos) < 0.44;
@@ -5254,7 +5254,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ����
+                            ×
                           </button>
                         </div>
                       )}
@@ -8409,7 +8409,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
                   • {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
-                  {importedData.length > 0 && ` • Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
+                  {importedData.length > 0 && ` �� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
               </div>
@@ -9099,7 +9099,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               </div>
 
               <p className="text-white/60 text-xs">
-                ��️ This action cannot be undone, but you can use the Undo button to restore your work.
+                ⚠️ This action cannot be undone, but you can use the Undo button to restore your work.
               </p>
 
               <div className="flex gap-3 mt-6">
