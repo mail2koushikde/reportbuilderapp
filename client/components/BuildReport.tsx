@@ -7803,6 +7803,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
             justifyContent: 'center',
             padding: '1rem'
           }}
+          onClick={() => setConfiguringCard(null)}
         >
           <div
             className="glass-card rounded-lg p-3 border border-white/20"
@@ -7813,6 +7814,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               overflowY: 'auto',
               margin: '0 auto'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-semibold text-white">Configure Chart</h3>
