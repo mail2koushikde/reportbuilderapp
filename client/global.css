@@ -353,7 +353,7 @@
   html.light .border-green-400 { border-color: #16a34a !important; }
 
   /* Overlays */
-  html.light [class*="bg-black/50"] { background-color: rgba(255, 255, 255, 0.6) !important; }
+  html.light .bg-black\/50 { background-color: rgba(255, 255, 255, 0.6) !important; }
   html.light .backdrop-blur-sm { backdrop-filter: blur(8px); }
   ::-webkit-scrollbar {
     width: 4px;
