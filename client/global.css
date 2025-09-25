@@ -320,11 +320,11 @@
 @layer utilities {
   /* Light mode overrides for common Tailwind classes used across the app */
   html.light .text-white { color: hsl(var(--foreground)) !important; }
-  html.light [class*="text-white/"] { color: hsl(var(--foreground)) !important; }
-  html.light [class*="text-white/80"] { color: hsl(var(--foreground) / 0.8) !important; }
-  html.light [class*="text-white/70"] { color: hsl(var(--foreground) / 0.7) !important; }
-  html.light [class*="text-white/60"] { color: hsl(var(--foreground) / 0.6) !important; }
-  html.light [class*="text-white/50"] { color: hsl(var(--foreground) / 0.5) !important; }
+  html.light [class*="text-white\/"] { color: hsl(var(--foreground)) !important; }
+  html.light [class*="text-white\/80"] { color: hsl(var(--foreground) / 0.8) !important; }
+  html.light [class*="text-white\/70"] { color: hsl(var(--foreground) / 0.7) !important; }
+  html.light [class*="text-white\/60"] { color: hsl(var(--foreground) / 0.6) !important; }
+  html.light [class*="text-white\/50"] { color: hsl(var(--foreground) / 0.5) !important; }
 
   html.light [class*="border-white/20"] { border-color: hsl(var(--border)) !important; }
   html.light [class*="border-white/10"] { border-color: hsl(var(--border)) !important; }
