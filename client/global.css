@@ -341,17 +341,12 @@
   html.light [class*="text-white/20"] { color: hsl(var(--foreground) / 0.2) !important; }
   html.light [class*="text-white/10"] { color: hsl(var(--foreground) / 0.1) !important; }
 
-  html.light .border-white\/30 { border-color: hsl(var(--border)) !important; }
-  html.light .border-white/30 { border-color: hsl(var(--border)) !important; }
+  html.light [class*="border-white/30"] { border-color: hsl(var(--border)) !important; }
 
-  html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
-  html.light .bg-white\/30 { background-color: rgba(0, 0, 0, 0.12) !important; }
-  html.light .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
-  html.light .hover\:bg-white\/30:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
-  html.light .bg-white/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
-  html.light .bg-white/30 { background-color: rgba(0, 0, 0, 0.12) !important; }
-  html.light .hover\:bg-white/5:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
-  html.light .hover\:bg-white/30:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
+  html.light [class*="bg-white/5"] { background-color: rgba(0, 0, 0, 0.03) !important; }
+  html.light [class*="bg-white/30"] { background-color: rgba(0, 0, 0, 0.12) !important; }
+  html.light [class*="hover:bg-white/5"]:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
+  html.light [class*="hover:bg-white/30"]:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
 
   /* Chart configuration button highlights - proper contrast for light mode */
   html.light .bg-blue-500\/20 { background-color: #2563eb !important; }
