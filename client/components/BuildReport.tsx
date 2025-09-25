@@ -2646,25 +2646,53 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
           datasetId: dataset.id
         }));
 
-        // Server uploads (Snowflake)
+        // Server uploads (Snowflake) - safe fetch with health check and timeout
         let serverVersions: ExistingFileVersion[] = [];
         try {
-          const resp = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`);
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.success && Array.isArray(data.uploads)) {
-              serverVersions = data.uploads.map((u: any) => ({
-                id: u.table_name,
-                version: u.version,
-                originalFileName: u.original_filename,
-                createdAt: u.upload_timestamp,
-                rowCount: u.row_count || 0,
-                columnsCount: u.column_count || (u.column_names ? String(u.column_names).split(',').filter(Boolean).length : 0),
-                fileSize: u.file_size_bytes || 0,
-                source: 'server',
-                tableName: u.table_name
-              }));
+          const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+          if (isOnline) {
+            let apiHealthy = false;
+            try {
+              const healthCtrl = new AbortController();
+              setTimeout(() => healthCtrl.abort(), 5000);
+              const healthResp = await fetch('/api/database/health', { signal: healthCtrl.signal });
+              apiHealthy = healthResp.ok;
+            } catch {
+              apiHealthy = false;
             }
+
+            if (apiHealthy) {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 10000);
+              try {
+                const resp = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`, {
+                  signal: controller.signal,
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                if (resp.ok) {
+                  const data = await resp.json();
+                  if (data.success && Array.isArray(data.uploads)) {
+                    serverVersions = data.uploads.map((u: any) => ({
+                      id: u.table_name,
+                      version: u.version,
+                      originalFileName: u.original_filename,
+                      createdAt: u.upload_timestamp,
+                      rowCount: u.row_count || 0,
+                      columnsCount: u.column_count || (u.column_names ? String(u.column_names).split(',').filter(Boolean).length : 0),
+                      fileSize: u.file_size_bytes || 0,
+                      source: 'server',
+                      tableName: u.table_name
+                    }));
+                  }
+                }
+              } finally {
+                clearTimeout(timeout);
+              }
+            } else {
+              console.log('Database API not reachable - skipping server uploads fetch');
+            }
+          } else {
+            console.log('Offline - skipping server uploads fetch');
           }
         } catch (e) {
           console.warn('Failed to fetch server uploads:', (e as any)?.message || e);
