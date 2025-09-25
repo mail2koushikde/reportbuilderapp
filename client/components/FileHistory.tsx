@@ -555,7 +555,7 @@ const FileHistory: React.FC = () => {
               <SelectContent className={`${
                 theme === 'light'
                   ? 'bg-white text-gray-800 border-gray-200'
-                  : 'bg-black/90 text-white border-white/20'
+                  : 'bg-black/80 text-white border-white/20'
               }`}>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="success">Success</SelectItem>
@@ -575,7 +575,7 @@ const FileHistory: React.FC = () => {
               <SelectContent className={`${
                 theme === 'light'
                   ? 'bg-white text-gray-800 border-gray-200'
-                  : 'bg-black/90 text-white border-white/20'
+                  : 'bg-black/80 text-white border-white/20'
               }`}>
                 <SelectItem value="all">All Storage</SelectItem>
                 <SelectItem value="server">Snowflake Only</SelectItem>
@@ -598,7 +598,7 @@ const FileHistory: React.FC = () => {
               <SelectContent className={`${
                 theme === 'light'
                   ? 'bg-white text-gray-800 border-gray-200'
-                  : 'bg-black/90 text-white border-white/20'
+                  : 'bg-black/80 text-white border-white/20'
               }`}>
                 <SelectItem value="upload_timestamp-desc">Latest First</SelectItem>
                 <SelectItem value="upload_timestamp-asc">Oldest First</SelectItem>
