@@ -345,11 +345,11 @@
 
   /* Chart configuration button highlights - proper contrast for light mode */
   html.light .bg-blue-500\/20 { background-color: #2563eb !important; }
-  html.light .text-blue-300 { color: white !important; }
+  html.light .bg-blue-500\/20.text-blue-300 { color: white !important; }
   html.light .border-blue-400 { border-color: #2563eb !important; }
 
   html.light .bg-green-500\/20 { background-color: #16a34a !important; }
-  html.light .text-green-300 { color: white !important; }
+  html.light .bg-green-500\/20.text-green-300 { color: white !important; }
   html.light .border-green-400 { border-color: #16a34a !important; }
 
   /* Overlays */

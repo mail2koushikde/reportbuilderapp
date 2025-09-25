@@ -4413,7 +4413,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
       return (
         <div className="text-white/60 text-center p-4">
           <div className="mb-3">
-            <div className="text-red-400 font-medium mb-2">���️ Chart Configuration Error</div>
+            <div className="text-red-400 font-medium mb-2">⚠️ Chart Configuration Error</div>
             <div className="text-sm mb-2">This chart cannot be rendered with the current dataset version:</div>
             <ul className="text-xs text-left space-y-1 mb-3">
               {cardIssues.map((issue, index) => (
@@ -8296,10 +8296,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                   {/* Merge Instructions (only for bar, mixbar, and pie charts) */}
                   {(card.chartType === 'bar' || card.chartType === 'mixbar' || card.chartType === 'pie') && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
-                      <div className="text-[10px] text-blue-300 font-medium mb-0.5">
-                        ���� Tip: Merge Columns
+                      <div className={`text-[10px] font-medium mb-0.5 ${theme === 'light' ? 'text-gray-800' : 'text-blue-300'}`}>
+                        💡 Tip: Merge Columns
                       </div>
-                      <div className="text-[10px] text-white/70">
+                      <div className={`text-[10px] ${theme === 'light' ? 'text-gray-700' : 'text-white/70'}`}>
                         {card.chartType === 'bar'
                           ? 'Drag and drop bars onto each other to merge columns and combine their values.'
                           : card.chartType === 'mixbar'
@@ -8408,8 +8408,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
-                  �� {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
-                  {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
+                  • {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
+                  {importedData.length > 0 && ` • Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
               </div>
@@ -8751,7 +8751,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                 {isFetchingExistingFiles ? (
                   <div className="flex items-center justify-center py-8 text-center">
                     <span className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
-                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading files����</span>
+                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading files…</span>
                   </div>
                 ) : Object.keys(groupedExistingFiles).length > 0 ? (
                   <div className="glass-card rounded-lg overflow-hidden">
