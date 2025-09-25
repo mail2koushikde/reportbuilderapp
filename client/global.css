@@ -333,11 +333,17 @@
 
   html.light .border-white\/20 { border-color: hsl(var(--border)) !important; }
   html.light .border-white\/10 { border-color: hsl(var(--border)) !important; }
+  html.light .border-white/20 { border-color: hsl(var(--border)) !important; }
+  html.light .border-white/10 { border-color: hsl(var(--border)) !important; }
 
   html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
   html.light .bg-white\/20 { background-color: rgba(0, 0, 0, 0.08) !important; }
   html.light .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.07) !important; }
   html.light .hover\:bg-white\/20:hover { background-color: rgba(0, 0, 0, 0.12) !important; }
+  html.light .bg-white/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
+  html.light .bg-white/20 { background-color: rgba(0, 0, 0, 0.08) !important; }
+  html.light .hover\:bg-white/10:hover { background-color: rgba(0, 0, 0, 0.07) !important; }
+  html.light .hover\:bg-white/20:hover { background-color: rgba(0, 0, 0, 0.12) !important; }
 
   /* Additional mappings for translucency and text in light mode */
   html.light .text-white\/90 { color: hsl(var(--foreground) / 0.9) !important; }
