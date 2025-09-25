@@ -7916,21 +7916,37 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail 
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Second Measure (Optional)
                       </label>
-                      <select
-                        value={card.measure2 || ''}
-                        onChange={(e) => updateCard(card.id, { measure2: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select second measure (optional)...</option>
-                        {columns.filter(col => {
-                          // Filter to show likely numeric columns, exclude first measure
-                          const sampleValue = importedData[0]?.[col];
-                          const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
-                          return isNumeric && col !== card.measure;
-                        }).map((col) => (
-                          <option key={`measure2-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.measure2 || ''}
+                          onChange={(e) => updateCard(card.id, { measure2: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select second measure (optional)...</option>
+                          {columns.filter(col => {
+                            const sampleValue = importedData[0]?.[col];
+                            const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+                            return isNumeric && col !== card.measure;
+                          }).map((col) => (
+                            <option key={`measure2-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.measure2 || ''} onValueChange={(v) => updateCard(card.id, { measure2: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select second measure (optional)..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/90 text-white border-white/20">
+                            {columns.filter(col => {
+                              const sampleValue = importedData[0]?.[col];
+                              const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+                              return isNumeric && col !== card.measure;
+                            }).map((col) => (
+                              <SelectItem key={`measure2-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="text-[10px] text-white/50 mt-0.5">
                         Creates a 2-D bar chart comparing two measures
                       </div>
