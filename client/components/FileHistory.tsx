@@ -1,0 +1,1030 @@
+import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
+import { format } from 'date-fns';
+import { useUser } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { duckdbService, LocalDataset } from '../services/duckdbService';
+import {
+  FileText,
+  Calendar,
+  Database,
+  Download,
+  RefreshCw,
+  Search,
+  Filter,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Expand,
+  Minimize2,
+  HardDrive,
+  Trash2,
+  X
+} from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
+
+interface UploadMetadata {
+  user_name: string;
+  original_filename: string;
+  version: number;
+  table_name: string;
+  upload_timestamp: string;
+  row_count: number;
+  column_count: number;
+  column_names: string;
+  file_size_bytes?: number;
+  upload_status: 'success' | 'failed' | 'processing';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  storage_type?: 'server' | 'local'; // Add field to distinguish storage type
+  dataset_id?: string; // For local storage, this will be the dataset ID
+}
+
+interface GroupedFile {
+  filename: string;
+  latestVersion: UploadMetadata;
+  allVersions: UploadMetadata[];
+  totalVersions: number;
+}
+
+const FileHistory: React.FC = () => {
+  const { userEmail } = useUser();
+  const { theme } = useTheme();
+  const [uploads, setUploads] = useState<UploadMetadata[]>([]);
+  const [filteredUploads, setFilteredUploads] = useState<UploadMetadata[]>([]);
+  const [groupedFiles, setGroupedFiles] = useState<GroupedFile[]>([]);
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed' | 'processing'>('all');
+  const [storageFilter, setStorageFilter] = useState<'all' | 'server' | 'local'>('all');
+  const [sortBy, setSortBy] = useState<'upload_timestamp' | 'original_filename'>('upload_timestamp');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'file' | 'version'; target: string | UploadMetadata } | null>(null);
+
+  useEffect(() => {
+    if (!deleteConfirm) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setDeleteConfirm(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [deleteConfirm]);
+  const theadRef = useRef<HTMLTableSectionElement | null>(null);
+  const [columnWidths, setColumnWidths] = useState<number[]>([]);
+
+  const fetchUploads = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch from both server and local storage
+      const [serverUploads, localUploads] = await Promise.allSettled([
+        fetchServerUploads(),
+        fetchLocalUploads()
+      ]);
+
+      const serverData = serverUploads.status === 'fulfilled' ? serverUploads.value : [];
+      const localData = localUploads.status === 'fulfilled' ? localUploads.value : [];
+
+      // Merge server and local uploads
+      const allUploads = [...serverData, ...localData];
+      setUploads(allUploads);
+      setError(null);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error('Error fetching uploads:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchServerUploads = async (): Promise<UploadMetadata[]> => {
+    try {
+      const response = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch server uploads:', response.status);
+        return [];
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        return data.uploads.map((upload: any) => ({
+          ...upload,
+          storage_type: 'server' as const
+        }));
+      } else {
+        console.warn('Server uploads API returned error:', data.error);
+        return [];
+      }
+    } catch (err) {
+      console.warn('Error fetching server uploads:', err);
+      return [];
+    }
+  };
+
+  const fetchLocalUploads = async (): Promise<UploadMetadata[]> => {
+    try {
+      const localDatasets = await duckdbService.getLocalUserUploads(userEmail);
+
+      // Convert LocalDataset to UploadMetadata format
+      return localDatasets.map((dataset: LocalDataset) => ({
+        user_name: dataset.userEmail,
+        original_filename: dataset.originalFileName,
+        version: dataset.version,
+        table_name: dataset.id, // Use dataset ID as table name for local storage
+        upload_timestamp: dataset.createdAt.toISOString(),
+        row_count: dataset.rowCount,
+        column_count: dataset.columns.length,
+        column_names: dataset.columns.join(', '),
+        file_size_bytes: dataset.fileSize,
+        upload_status: 'success' as const, // Local datasets are always successful
+        notes: '',
+        created_at: dataset.createdAt.toISOString(),
+        updated_at: dataset.updatedAt.toISOString(),
+        storage_type: 'local' as const,
+        dataset_id: dataset.id
+      }));
+    } catch (err) {
+      console.warn('Error fetching local uploads:', err);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    fetchUploads();
+  }, [userEmail]);
+
+  // Measure column widths to align expanded rows with table columns
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!theadRef.current) return;
+      const ths = Array.from(theadRef.current.querySelectorAll('th')) as HTMLElement[];
+      if (!ths.length) return;
+      const widths = ths.map((th) => th.offsetWidth);
+      setColumnWidths(widths);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [groupedFiles, searchTerm, statusFilter, storageFilter, sortBy, sortOrder, expandedFiles]);
+
+  // Delete all versions of a specific file
+  const deleteFile = async (filename: string) => {
+    try {
+      console.log(`Deleting all versions of file: ${filename}`);
+
+      // Get all versions of this file
+      const fileVersions = uploads.filter(upload => upload.original_filename === filename);
+
+      // Delete from server
+      for (const version of fileVersions.filter(v => v.storage_type === 'server')) {
+        try {
+          const response = await fetch(`/api/database/uploads/${version.table_name}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            console.log(`Server version deleted: ${version.table_name}`);
+          }
+        } catch (error) {
+          console.warn(`Failed to delete server version ${version.table_name}:`, error);
+        }
+      }
+
+      // Delete from local storage
+      for (const version of fileVersions.filter(v => v.storage_type === 'local')) {
+        try {
+          if (version.dataset_id) {
+            await duckdbService.deleteDataset(version.dataset_id);
+            console.log(`Local version deleted: ${version.dataset_id}`);
+          }
+        } catch (error) {
+          console.warn(`Failed to delete local version ${version.dataset_id}:`, error);
+        }
+      }
+
+      // Refresh the uploads list
+      await fetchUploads();
+
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert(`Error deleting file: ${error}`);
+    } finally {
+      setDeleteConfirm(null);
+    }
+  };
+
+  // Delete a specific version
+  const deleteVersion = async (version: UploadMetadata) => {
+    try {
+      console.log(`Deleting version: ${version.table_name}`);
+
+      if (version.storage_type === 'server') {
+        const response = await fetch(`/api/database/uploads/${version.table_name}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          console.log(`Server version deleted: ${version.table_name}`);
+        } else {
+          throw new Error('Failed to delete from server');
+        }
+      } else if (version.storage_type === 'local' && version.dataset_id) {
+        await duckdbService.deleteDataset(version.dataset_id);
+        console.log(`Local version deleted: ${version.dataset_id}`);
+      }
+
+      // Refresh the uploads list
+      await fetchUploads();
+
+    } catch (error) {
+      console.error('Error deleting version:', error);
+      alert(`Error deleting version: ${error}`);
+    } finally {
+      setDeleteConfirm(null);
+    }
+  };
+
+  // Group files by filename only (versioning independent of storage type)
+  const groupFilesByName = (uploads: UploadMetadata[]): GroupedFile[] => {
+    const fileGroups = new Map<string, UploadMetadata[]>();
+
+    // Group uploads by filename only
+    uploads.forEach(upload => {
+      const filename = upload.original_filename;
+      if (!fileGroups.has(filename)) {
+        fileGroups.set(filename, []);
+      }
+      fileGroups.get(filename)!.push(upload);
+    });
+
+    // Convert to GroupedFile array with latest version
+    const grouped: GroupedFile[] = [];
+    fileGroups.forEach((versions, filename) => {
+      // Sort versions by version number descending (latest first)
+      const sortedVersions = versions.sort((a, b) => b.version - a.version);
+
+      grouped.push({
+        filename,
+        latestVersion: sortedVersions[0],
+        allVersions: sortedVersions,
+        totalVersions: versions.length
+      });
+    });
+
+    return grouped;
+  };
+
+  // Toggle expansion of a file's versions
+  const toggleFileExpansion = (filename: string) => {
+    setExpandedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(filename)) {
+        newSet.delete(filename);
+      } else {
+        newSet.add(filename);
+      }
+      return newSet;
+    });
+  };
+
+  // Expand or collapse all files
+  const toggleAllFiles = () => {
+    const allFilenames = groupedFiles.filter(f => f.totalVersions > 1).map(f => f.filename);
+    if (expandedFiles.size === allFilenames.length) {
+      // All are expanded, collapse all
+      setExpandedFiles(new Set());
+    } else {
+      // Not all are expanded, expand all
+      setExpandedFiles(new Set(allFilenames));
+    }
+  };
+
+  // Handle column sorting
+  const handleColumnSort = (column: string) => {
+    if (sortBy === column) {
+      // Same column, toggle order
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to desc for most columns, asc for name
+      setSortBy(column as any);
+      setSortOrder(column === 'original_filename' ? 'asc' : 'desc');
+    }
+  };
+
+  // Get sort icon for column
+  const getSortIcon = (column: string) => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className={`w-4 h-4 ${theme === 'light' ? 'text-gray-400' : 'text-white/30'}`} />;
+    }
+    return sortOrder === 'asc' ?
+      <ArrowUp className="w-4 h-4 text-blue-400" /> :
+      <ArrowDown className="w-4 h-4 text-blue-400" />;
+  };
+
+  // Filter and sort grouped files
+  useEffect(() => {
+    let filtered = uploads.filter(upload => {
+      const matchesSearch = searchTerm === '' ||
+        upload.original_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        upload.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = statusFilter === 'all' || upload.upload_status === statusFilter;
+      const matchesStorage = storageFilter === 'all' || upload.storage_type === storageFilter;
+
+      return matchesSearch && matchesStatus && matchesStorage;
+    });
+
+    // Group the filtered uploads
+    const grouped = groupFilesByName(filtered);
+
+    // Sort grouped files
+    grouped.sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortBy) {
+        case 'upload_status':
+          aValue = a.latestVersion.upload_status;
+          bValue = b.latestVersion.upload_status;
+          break;
+        case 'upload_timestamp':
+          aValue = new Date(a.latestVersion.upload_timestamp).getTime();
+          bValue = new Date(b.latestVersion.upload_timestamp).getTime();
+          break;
+        case 'original_filename':
+          aValue = a.filename.toLowerCase();
+          bValue = b.filename.toLowerCase();
+          break;
+        case 'version':
+          aValue = a.latestVersion.version;
+          bValue = b.latestVersion.version;
+          break;
+        case 'row_count':
+          aValue = a.latestVersion.row_count;
+          bValue = b.latestVersion.row_count;
+          break;
+        case 'column_count':
+          aValue = a.latestVersion.column_count;
+          bValue = b.latestVersion.column_count;
+          break;
+        case 'file_size_bytes':
+          aValue = a.latestVersion.file_size_bytes || 0;
+          bValue = b.latestVersion.file_size_bytes || 0;
+          break;
+        case 'table_name':
+          aValue = a.latestVersion.table_name.toLowerCase();
+          bValue = b.latestVersion.table_name.toLowerCase();
+          break;
+        default:
+          aValue = new Date(a.latestVersion.upload_timestamp).getTime();
+          bValue = new Date(b.latestVersion.upload_timestamp).getTime();
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    setFilteredUploads(filtered);
+    setGroupedFiles(grouped);
+  }, [uploads, searchTerm, statusFilter, storageFilter, sortBy, sortOrder]);
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return 'N/A';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
+    } catch {
+      return timestamp;
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'failed':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'processing':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+          <p className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading file history...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500" />
+          <div>
+            <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>Error Loading File History</h3>
+            <p className={`mb-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>{error}</p>
+            <button
+              onClick={fetchUploads}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col p-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Database className="w-6 h-6 text-blue-500" />
+            <h1 className={`text-2xl font-bold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>File Upload History</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchUploads}
+              disabled={loading}
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors`}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="glass-card p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Unique Files</p>
+                <p className={`text-xl font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{groupedFiles.length}</p>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>{uploads.length} total versions</p>
+              </div>
+            </div>
+          </div>
+          <div className="glass-card p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Database className="w-5 h-5 text-blue-400" />
+              <div>
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Snowflake Storage</p>
+                <p className={`text-xl font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                  {groupedFiles.filter(f => f.latestVersion.storage_type === 'server').length}
+                </p>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>files in Snowflake</p>
+              </div>
+            </div>
+          </div>
+          <div className="glass-card p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <HardDrive className="w-5 h-5 text-purple-400" />
+              <div>
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Local Storage</p>
+                <p className={`text-xl font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                  {groupedFiles.filter(f => f.latestVersion.storage_type === 'local').length}
+                </p>
+                <p className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>files locally</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme === 'light' ? 'text-gray-400' : 'text-white/50'}`} />
+            <input
+              type="text"
+              placeholder="Search files or tables..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+                  : 'bg-white/10 border-white/20 text-white placeholder-white/50'
+              }`}
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+              <SelectTrigger className={`px-3 py-2 border rounded-lg ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800'
+                  : 'bg-black/40 border-white/20 text-white'
+              }`}>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent className={`${
+                theme === 'light'
+                  ? 'bg-white text-gray-800 border-gray-200'
+                  : 'bg-black/80 text-white border-white/20'
+              }`}>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={storageFilter} onValueChange={(v) => setStorageFilter(v as any)}>
+              <SelectTrigger className={`px-3 py-2 border rounded-lg ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800'
+                  : 'bg-black/40 border-white/20 text-white'
+              }`}>
+                <SelectValue placeholder="All Storage" />
+              </SelectTrigger>
+              <SelectContent className={`${
+                theme === 'light'
+                  ? 'bg-white text-gray-800 border-gray-200'
+                  : 'bg-black/80 text-white border-white/20'
+              }`}>
+                <SelectItem value="all">All Storage</SelectItem>
+                <SelectItem value="server">Snowflake Only</SelectItem>
+                <SelectItem value="local">Local Only</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={`${sortBy}-${sortOrder}`} onValueChange={(v) => {
+                const [field, order] = v.split('-');
+                setSortBy(field as any);
+                setSortOrder(order as any);
+              }}>
+              <SelectTrigger className={`px-3 py-2 border rounded-lg ${
+                theme === 'light'
+                  ? 'bg-white border-gray-300 text-gray-800'
+                  : 'bg-black/40 border-white/20 text-white'
+              }`}>
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className={`${
+                theme === 'light'
+                  ? 'bg-white text-gray-800 border-gray-200'
+                  : 'bg-black/80 text-white border-white/20'
+              }`}>
+                <SelectItem value="upload_timestamp-desc">Latest First</SelectItem>
+                <SelectItem value="upload_timestamp-asc">Oldest First</SelectItem>
+                <SelectItem value="original_filename-asc">File Name A-Z</SelectItem>
+                <SelectItem value="original_filename-desc">File Name Z-A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Expand/Collapse All Button */}
+      {groupedFiles.some(f => f.totalVersions > 1) && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleAllFiles}
+            className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors ${
+              theme === 'light'
+                ? 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
+                : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+            }`}
+          >
+            {expandedFiles.size === groupedFiles.filter(f => f.totalVersions > 1).length ? (
+              <>
+                <Minimize2 className="w-4 h-4" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <Expand className="w-4 h-4" />
+                Expand All
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="flex-1 overflow-auto">
+        {groupedFiles.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <FileText className={`w-12 h-12 mx-auto mb-4 ${theme === 'light' ? 'text-gray-300' : 'text-white/30'}`} />
+              <p className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                {searchTerm || statusFilter !== 'all' ? 'No files match your search criteria' : 'No files have been uploaded yet'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="glass-card rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead ref={theadRef} className={`${theme === 'light' ? 'bg-gray-100' : 'bg-white/5'}`}>
+                  <tr>
+                    <th className={`px-4 py-3 text-left text-sm font-medium w-8 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}></th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('upload_status')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        Status
+                        {getSortIcon('upload_status')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('original_filename')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        File Name
+                        {getSortIcon('original_filename')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('version')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        Version
+                        {getSortIcon('version')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('upload_timestamp')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        Upload Date
+                        {getSortIcon('upload_timestamp')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('row_count')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        Rows
+                        {getSortIcon('row_count')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('column_count')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        Columns
+                        {getSortIcon('column_count')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      <button
+                        onClick={() => handleColumnSort('file_size_bytes')}
+                        className={`flex items-center gap-2 transition-colors ${theme === 'light' ? 'hover:text-gray-800' : 'hover:text-white'}`}
+                      >
+                        Size
+                        {getSortIcon('file_size_bytes')}
+                      </button>
+                    </th>
+                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${theme === 'light' ? 'divide-gray-200' : 'divide-white/10'}`}>
+                  {groupedFiles.map((file) => {
+                    const isExpanded = expandedFiles.has(file.filename);
+                    return (
+                      <Fragment key={file.filename}>
+                        {/* Main row - Shows latest version when collapsed, file summary when expanded */}
+                        <tr className={`transition-colors ${theme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => toggleFileExpansion(file.filename)}
+                              className={`p-1 rounded transition-colors ${theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
+                              title={isExpanded ? 'Collapse versions' : `Show all ${file.totalVersions} versions`}
+                            >
+                              {file.totalVersions > 1 ? (
+                                isExpanded ? (
+                                  <ChevronUp className={`w-4 h-4 ${theme === 'light' ? 'text-gray-500' : 'text-white/70'}`} />
+                                ) : (
+                                  <ChevronDown className={`w-4 h-4 ${theme === 'light' ? 'text-gray-500' : 'text-white/70'}`} />
+                                )
+                              ) : (
+                                <div className="w-4 h-4"></div>
+                              )}
+                            </button>
+                          </td>
+                          {isExpanded ? (
+                            // Expanded state - Show only empty row with proper height
+                            <td className="px-4 py-3" colSpan={8}></td>
+                          ) : (
+                            // Collapsed state - Show latest version details
+                            <>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  {getStatusIcon(file.latestVersion.upload_status)}
+                                  <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                                    {file.latestVersion.upload_status}
+                                  </span>
+                                  {/* Storage type indicator */}
+                                  <div className="flex items-center gap-1">
+                                    {file.latestVersion.storage_type === 'local' ? (
+                                      <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
+                                    ) : (
+                                      <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
+                                    )}
+                                    <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
+                                      {file.latestVersion.storage_type === 'local' ? 'Local' : 'Snowflake'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-blue-500" />
+                                  <div className="flex flex-col">
+                                    <span className={`font-medium ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                                      {file.filename}
+                                    </span>
+                                    {file.totalVersions > 1 && (
+                                      <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
+                                        {file.totalVersions} versions
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-1">
+                                  <span className="px-2 py-1 bg-blue-600/30 text-blue-300 text-xs rounded-full">
+                                    v{file.latestVersion.version}
+                                  </span>
+                                  {file.totalVersions > 1 && (
+                                    <span className="text-xs text-green-400 font-medium">
+                                      LATEST
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-green-500" />
+                                  <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{formatTimestamp(file.latestVersion.upload_timestamp)}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{file.latestVersion.row_count.toLocaleString()}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{file.latestVersion.column_count}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{formatFileSize(file.latestVersion.file_size_bytes)}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => setDeleteConfirm({ type: 'file', target: file.filename })}
+                                  className={`p-1 rounded transition-colors ${
+                                    theme === 'light'
+                                      ? 'hover:bg-red-100 text-red-600 hover:text-red-700'
+                                      : 'hover:bg-red-500/20 text-red-400 hover:text-red-300'
+                                  }`}
+                                  title="Delete all versions of this file"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+
+                        {/* Expanded rows - All versions including latest */}
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={9} className="px-0 py-0">
+                              <div className={`border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg ${
+                                theme === 'light'
+                                  ? 'bg-gradient-to-r from-blue-50 to-purple-50'
+                                  : 'bg-gradient-to-r from-blue-500/10 to-purple-500/10'
+                              }`}>
+                                <div className={`px-0 py-1 rounded-r-lg border border-l-0 ${
+                                  theme === 'light'
+                                    ? 'bg-white/80 border-gray-200'
+                                    : 'bg-black/20 border-white/10'
+                                }`}>
+                                  <div className="space-y-1">
+                                    {file.allVersions.map((version, index) => (
+                                      <div
+                                        key={`${file.filename}-v${version.version}-${version.storage_type}-${version.table_name}-${version.upload_timestamp}`}
+                                        className={`items-center py-3 transition-colors ${
+                                          theme === 'light'
+                                            ? 'bg-gray-50/50 border-gray-100/50 hover:bg-gray-100/80'
+                                            : 'bg-black/30 border-white/5 hover:bg-black/40'
+                                        }`}
+                                        style={{
+                                          display: 'grid',
+                                          gridTemplateColumns: columnWidths.length
+                                            ? columnWidths.map((w) => `${w}px`).join(' ')
+                                            : undefined,
+                                        }}
+                                      >
+                                        {/* Column 1: spacer for expand button */}
+                                        <div className="px-4" />
+
+                                        {/* Column 2: Status */}
+                                        <div className="px-4 flex items-center gap-2">
+                                          {getStatusIcon(version.upload_status)}
+                                          <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>
+                                            {version.upload_status}
+                                          </span>
+                                          <div className="flex items-center gap-1">
+                                            {version.storage_type === 'local' ? (
+                                              <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
+                                            ) : (
+                                              <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
+                                            )}
+                                            <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
+                                              {version.storage_type === 'local' ? 'Local' : 'Snowflake'}
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {/* Column 3: File Name */}
+                                        <div className="px-4 flex items-center gap-2 min-w-0">
+                                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                          <span className={`text-sm truncate ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                                            {version.original_filename}
+                                          </span>
+                                        </div>
+
+                                        {/* Column 4: Version */}
+                                        <div className="px-4 flex items-center gap-1">
+                                          <span
+                                            className={`px-2 py-1 text-xs rounded-full ${
+                                              index === 0
+                                                ? (theme === 'light'
+                                                    ? 'bg-green-100 text-green-700 border border-green-300'
+                                                    : 'bg-green-600/40 text-green-200 border border-green-400/50')
+                                                : (theme === 'light'
+                                                    ? 'bg-gray-100 text-gray-600'
+                                                    : 'bg-slate-600/40 text-slate-200')
+                                            }`}
+                                          >
+                                            v{version.version}
+                                          </span>
+                                        </div>
+
+                                        {/* Column 5: Upload Date */}
+                                        <div className="px-4 flex items-center gap-2">
+                                          <Calendar className="w-4 h-4 text-green-500" />
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{formatTimestamp(version.upload_timestamp)}</span>
+                                        </div>
+
+                                        {/* Column 6: Rows */}
+                                        <div className="px-4 flex items-center">
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.row_count.toLocaleString()}</span>
+                                        </div>
+
+                                        {/* Column 7: Columns */}
+                                        <div className="px-4 flex items-center">
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.column_count}</span>
+                                        </div>
+
+                                        {/* Column 8: Size */}
+                                        <div className="px-4 flex items-center">
+                                          <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{formatFileSize(version.file_size_bytes)}</span>
+                                        </div>
+
+                                        {/* Column 9: Actions */}
+                                        <div className="px-4 flex items-center">
+                                          <button
+                                            onClick={() => setDeleteConfirm({ type: 'version', target: version })}
+                                            className={`p-1 rounded transition-colors ${
+                                              theme === 'light'
+                                                ? 'hover:bg-red-100 text-red-600 hover:text-red-700'
+                                                : 'hover:bg-red-500/20 text-red-400 hover:text-red-300'
+                                            }`}
+                                            title="Delete this version"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <div
+            className="glass-card rounded-lg p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-600/20 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
+                  {deleteConfirm.type === 'file' ? 'Delete File' : 'Delete Version'}
+                </h3>
+                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className={`mb-4 ${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>
+                {deleteConfirm.type === 'file' ? (
+                  <>
+                    This will permanently delete <strong>"{deleteConfirm.target as string}"</strong> and all its versions.
+                  </>
+                ) : (
+                  <>
+                    This will permanently delete version <strong>v{(deleteConfirm.target as UploadMetadata).version}</strong> of <strong>"{(deleteConfirm.target as UploadMetadata).original_filename}"</strong>.
+                  </>
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  theme === 'light'
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (deleteConfirm.type === 'file') {
+                    deleteFile(deleteConfirm.target as string);
+                  } else {
+                    deleteVersion(deleteConfirm.target as UploadMetadata);
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default FileHistory;

@@ -2,15 +2,12 @@ import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  Database,
-  Eye,
-  BarChart,
   FileText,
   Bookmark,
-  Inbox,
+  Database,
 } from "lucide-react";
 
-export type NavigationPage = 'allocation' | 'source-data' | 'published-data' | 'build-report' | 'saved-reports' | 'inbox';
+export type NavigationPage = 'build-report' | 'saved-reports' | 'file-history';
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -27,30 +24,6 @@ const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const navigationItems = [
     {
-      id: 'allocation' as NavigationPage,
-      label: 'Allocation',
-      icon: BarChart,
-      description: 'Budget allocation and analysis'
-    },
-    {
-      id: 'inbox' as NavigationPage,
-      label: 'Inbox',
-      icon: Inbox,
-      description: 'Manage orders and approvals'
-    },
-    {
-      id: 'source-data' as NavigationPage,
-      label: 'Source Data Management',
-      icon: Database,
-      description: 'Manage and import data sources'
-    },
-    {
-      id: 'published-data' as NavigationPage,
-      label: 'View Published Data',
-      icon: Eye,
-      description: 'View and analyze published datasets'
-    },
-    {
       id: 'build-report' as NavigationPage,
       label: 'Build Report',
       icon: FileText,
@@ -61,16 +34,22 @@ const Navigation: React.FC<NavigationProps> = ({
       label: 'View Saved Reports',
       icon: Bookmark,
       description: 'View and restore saved dashboard reports'
+    },
+    {
+      id: 'file-history' as NavigationPage,
+      label: 'File History',
+      icon: Database,
+      description: 'View uploaded files and versions'
     }
   ];
 
   return (
     <div className={`transition-all duration-300 ease-in-out ${
-      isCollapsed ? 'w-0 opacity-0' : 'w-64'
-    } flex-shrink-0 overflow-hidden`}>
-      <nav className="glass-card rounded-3xl h-full flex flex-col p-4">
+      isCollapsed ? 'w-16 opacity-100' : 'w-64 sm:w-72 lg:w-80'
+    } flex-shrink-0 overflow-hidden h-full`}>
+      <nav className="glass-card rounded-3xl h-full flex flex-col p-3 sm:p-4 lg:p-6">
         {/* Navigation Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className={`flex items-center gap-3 mb-6 ${isCollapsed ? 'justify-center' : ''}`}>
           <button
             onClick={onToggleCollapse}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -100,7 +79,7 @@ const Navigation: React.FC<NavigationProps> = ({
               <button
                 key={item.id}
                 onClick={() => onPageChange(item.id)}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
+                className={`flex items-center ${isCollapsed ? 'justify-center' : ''} gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
                   isActive
                     ? 'bg-blue-600/30 text-white border border-blue-400/30'
                     : 'hover:bg-white/10 text-white/80 hover:text-white'

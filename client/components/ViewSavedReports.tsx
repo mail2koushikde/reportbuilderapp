@@ -15,6 +15,7 @@ import {
   SortDesc,
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
 interface TextBox {
   id: string;
@@ -262,17 +263,18 @@ const ViewSavedReports: React.FC<ViewSavedReportsProps> = ({ onLoadReport }) => 
         {/* Filter */}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-white/70" />
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="all">All Types</option>
-            <option value="pie">Pie Charts</option>
-            <option value="bar">Bar Charts</option>
-            <option value="mixbar">Mix Bar Charts</option>
-            <option value="table">Tables</option>
-          </select>
+          <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
+            <SelectTrigger className="bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-white text-sm">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent className="bg-black/80 text-white border-white/20">
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="pie">Pie Charts</SelectItem>
+              <SelectItem value="bar">Bar Charts</SelectItem>
+              <SelectItem value="mixbar">Mix Bar Charts</SelectItem>
+              <SelectItem value="table">Tables</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Sort */}
@@ -284,15 +286,16 @@ const ViewSavedReports: React.FC<ViewSavedReportsProps> = ({ onLoadReport }) => 
           >
             {sortOrder === 'asc' ? <SortAsc className="w-4 h-4 text-white/70" /> : <SortDesc className="w-4 h-4 text-white/70" />}
           </button>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="date">Date</option>
-            <option value="name">Name</option>
-            <option value="charts">Chart Count</option>
-          </select>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-white text-sm">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent className="bg-black/80 text-white border-white/20">
+              <SelectItem value="date">Date</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="charts">Chart Count</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

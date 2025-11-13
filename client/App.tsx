@@ -1,3 +1,4 @@
+import React from "react";
 import "./global.css";
 
 // import { Toaster } from "@/components/ui/toaster";
@@ -6,23 +7,40 @@ import { createRoot } from "react-dom/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { UserProvider } from "./contexts/UserContext";
+import { SessionProvider } from "./contexts/SessionContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./contexts/ThemeContext";
+
+// Apply initial theme class before React renders (default to dark)
+try {
+  const stored = (localStorage.getItem('theme') as 'dark' | 'light' | null) || 'dark';
+  const root = document.documentElement;
+  root.classList.add(stored);
+  root.classList.remove(stored === 'dark' ? 'light' : 'dark');
+} catch {}
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      {/* <Toaster /> */}
-      {/* <Sonner /> */}
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <UserProvider initialUserEmail="mail2koushikde@gmail.com">
+        <SessionProvider>
+          <ThemeProvider>
+            {/* <Toaster /> */}
+            {/* <Sonner /> */}
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ThemeProvider>
+        </SessionProvider>
+      </UserProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

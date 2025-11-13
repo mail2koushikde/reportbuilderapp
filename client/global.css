@@ -55,11 +55,15 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* App background for light mode */
+    --app-bg: #ffffff;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+    color-scheme: dark;
 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
@@ -93,6 +97,9 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* App background gradient for dark mode */
+    --app-bg: linear-gradient(to bottom right, #0c0a09, #1e3a8a);
   }
 }
 
@@ -103,25 +110,54 @@
 
   body {
     font-family: "Inter", sans-serif;
-    background: linear-gradient(to bottom right, #0c0a09, #1e3a8a);
-    background-attachment: fixed;
-    @apply text-white;
+    background: var(--app-bg);
+    background-attachment: scroll;
+    @apply text-foreground;
+    transition: background 350ms ease, color 250ms ease;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 }
 
 @layer components {
+  /* Smooth theme transitions */
+  html, body, .glass-card, .dropdown-panel, .glass-select, .table-header-sort,
+  .recharts-default-tooltip, .recharts-tooltip-wrapper, .recharts-surface,
+  .recharts-wrapper, .recharts-legend-wrapper {
+    transition: background-color 350ms ease, color 250ms ease, border-color 300ms ease, box-shadow 300ms ease;
+  }
   .glass-card {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
   }
+
+  /* Light mode adjustments */
+  .light .glass-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .light .dropdown-panel {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .light .glass-select {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
 
   .dropdown-panel {
     background: rgba(30, 41, 59, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
@@ -239,6 +275,13 @@
     background-color: rgba(255, 255, 255, 0.3);
   }
 
+  .light .pill {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+  .light .pill:hover {
+    background-color: rgba(0, 0, 0, 0.12);
+  }
+
   .quarter-cell,
   .dropdown-option {
     transition: background-color 0.2s;
@@ -265,12 +308,53 @@
     background-color: rgba(255, 255, 255, 0.05);
   }
 
+  .light .table-header-sort:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
   .filter-input:focus {
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.5);
   }
 }
 
 @layer utilities {
+  /* Light mode overrides for common Tailwind classes used across the app */
+  html.light .text-white { color: hsl(var(--foreground)) !important; }
+  html.light .text-white\/90 { color: hsl(var(--foreground) / 0.9) !important; }
+  html.light .text-white\/80 { color: hsl(var(--foreground) / 0.8) !important; }
+  html.light .text-white\/70 { color: hsl(var(--foreground) / 0.7) !important; }
+  html.light .text-white\/60 { color: hsl(var(--foreground) / 0.6) !important; }
+  html.light .text-white\/50 { color: hsl(var(--foreground) / 0.5) !important; }
+  html.light .text-white\/40 { color: hsl(var(--foreground) / 0.4) !important; }
+  html.light .text-white\/30 { color: hsl(var(--foreground) / 0.3) !important; }
+  html.light .text-white\/20 { color: hsl(var(--foreground) / 0.2) !important; }
+  html.light .text-white\/10 { color: hsl(var(--foreground) / 0.1) !important; }
+
+  html.light .border-white\/30 { border-color: hsl(var(--border)) !important; }
+  html.light .border-white\/20 { border-color: hsl(var(--border)) !important; }
+  html.light .border-white\/10 { border-color: hsl(var(--border)) !important; }
+
+  html.light .bg-white\/30 { background-color: rgba(0, 0, 0, 0.12) !important; }
+  html.light .bg-white\/20 { background-color: rgba(0, 0, 0, 0.08) !important; }
+  html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.05) !important; }
+  html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.03) !important; }
+  html.light .hover\:bg-white\/30:hover { background-color: rgba(0, 0, 0, 0.16) !important; }
+  html.light .hover\:bg-white\/20:hover { background-color: rgba(0, 0, 0, 0.12) !important; }
+  html.light .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.07) !important; }
+  html.light .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
+
+  /* Chart configuration button highlights - proper contrast for light mode */
+  html.light .bg-blue-500\/20 { background-color: #2563eb !important; }
+  html.light .bg-blue-500\/20.text-blue-300 { color: white !important; }
+  html.light .border-blue-400 { border-color: #2563eb !important; }
+
+  html.light .bg-green-500\/20 { background-color: #16a34a !important; }
+  html.light .bg-green-500\/20.text-green-300 { color: white !important; }
+  html.light .border-green-400 { border-color: #16a34a !important; }
+
+  /* Overlays */
+  html.light .bg-black\/50 { background-color: rgba(255, 255, 255, 0.6) !important; }
+  html.light .backdrop-blur-sm { backdrop-filter: blur(8px); }
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;

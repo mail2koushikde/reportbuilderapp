@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: {
+      overlay: false, // Disable error overlay to prevent frame access issues in iframe
+    },
   },
   build: {
     outDir: "dist/spa",
@@ -18,6 +21,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./client"),
       "@shared": path.resolve(__dirname, "./shared"),
     },
+  },
+  // Configure for iframe usage
+  define: {
+    __DEV__: mode === 'development',
   },
 }));
 

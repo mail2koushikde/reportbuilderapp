@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo, Fragment } from 'react';
 import {
   Plus,
   Settings,
@@ -20,11 +20,22 @@ import {
   ChevronUp,
   ChevronRight,
   ChevronLeft,
+  Maximize2,
+  Copy,
+  Database,
+  HardDrive,
+  Trash,
+  Files,
+  CheckCircle,
+  FileText,
+  Calendar,
 } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   PieChart,
   Pie,
   Cell,
+  Sector,
   ResponsiveContainer,
   Tooltip,
   Legend,
@@ -38,6 +49,16 @@ import {
   Line,
 } from "recharts";
 import { storageService } from '../services/storageService';
+import { cacheService, CachedData } from '../services/cacheService';
+import { duckdbService, LocalDataset } from '../services/duckdbService';
+import { StorageOptionModal } from './StorageOptionModal';
+import FileHistory from './FileHistory';
+import UserProfile from './UserProfile';
+import MemoryIndicator from './MemoryIndicator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
+import { useBuildReportSession } from '../hooks/useBuildReportSession';
+import SessionDebug from './SessionDebug';
 
 interface TextBox {
   id: string;
@@ -74,7 +95,7 @@ interface Arrow {
 
 interface DashboardCard {
   id: string;
-  chartType: 'pie' | 'bar' | 'mixbar' | 'table' | 'scorecard' | 'line';
+  chartType: 'none' | 'pie' | 'bar' | 'mixbar' | 'table' | 'scorecard' | 'line';
   title: string;
   gridPosition: {
     x: number;
@@ -120,8 +141,8 @@ export interface SavedReport {
 
 const CHART_TYPES = [
   { id: 'pie', label: 'Pie Chart', icon: PieChartIcon },
-  { id: 'bar', label: 'Column Chart', icon: BarChart3 },
-  { id: 'mixbar', label: 'Stacked Column Chart', icon: BarChart2 },
+  { id: 'bar', label: 'Bar Chart', icon: BarChart3 },
+  { id: 'mixbar', label: 'Stacked Bar Chart', icon: BarChart2 },
   { id: 'table', label: 'Data Table', icon: Table },
   { id: 'scorecard', label: 'Scorecard', icon: Hash },
   { id: 'line', label: 'Line Chart', icon: LineChart },
@@ -156,53 +177,147 @@ const SAMPLE_DATA = [
 ];
 
 const GRID_SIZE = 25; // Grid cell size in pixels
-const GRID_COLS = 40; // Increased for more horizontal space
-const GRID_ROWS = 30; // Increased for more vertical space
+const DEFAULT_GRID_COLS = 40; // Default grid columns
+const DEFAULT_GRID_ROWS = 30; // Default grid rows
+const Y_AXIS_GUTTER_LEFT = 40; // Consistent left gutter for Y-axis alignment across charts
 
-// Custom label renderer for pie chart
-const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, labelFontSize = 10) => {
+// Custom label renderer for pie chart (outside label style with leader lines)
+const renderCustomLabel = (
+  props: any,
+  pieRadius: number,
+  showLabels: boolean,
+  labelFontSize = 10,
+  mode: 'outside' | 'inside' = 'outside',
+  containerWidth = 0,
+  containerHeight = 0,
+  containerPadding = 12
+) => {
   if (!showLabels) return null;
 
-  const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
-
-  // Only show labels for segments >= 8% (slightly lower threshold for better coverage)
-  if (percent < 0.08) return null;
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent, name, startAngle, endAngle } = props;
 
   const RADIAN = Math.PI / 180;
-  // Position label in the center of the segment (middle between inner and outer radius)
+  const minPct = mode === 'outside' ? 0.02 : 0.05; // Inside labels show for bigger slices (>=5%)
+  if (percent < minPct) return null;
+
+  // Intelligent sizing
+  const percentValue = percent * 100;
+  const fontSizeMultiplier = percentValue >= 30 ? 1.1 : percentValue >= 20 ? 1.05 : percentValue >= 10 ? 1.0 : 0.95;
+  const baseSize = Math.round(labelFontSize * fontSizeMultiplier);
+
+  const estimateWidth = (text: string, size: number) => text.length * size * 0.6;
+  const fitSize = (text: string, size: number, maxWidth: number) => {
+    if (maxWidth <= 0) return Math.max(8, size);
+    const need = estimateWidth(text, size);
+    if (need <= maxWidth) return Math.max(8, size);
+    return Math.max(8, Math.floor(maxWidth / (text.length * 0.6)));
+  };
+
+  if (mode === 'outside') {
+    const sin = Math.sin(-RADIAN * midAngle);
+    const cos = Math.cos(-RADIAN * midAngle);
+
+    const r0 = outerRadius + Math.max(6, Math.round(pieRadius * 0.06));
+    const r1 = outerRadius + Math.max(18, Math.round(pieRadius * 0.12));
+
+    const sx = cx + r0 * cos;
+    const sy = cy + r0 * sin;
+    const mx = cx + r1 * cos;
+    const my = cy + r1 * sin;
+
+    const label = `${name} • ${(percent * 100).toFixed(2)}%`;
+
+    // Top/bottom placement when angle is near vertical
+    const nearVertical = Math.abs(sin) > 0.9 && Math.abs(cos) < 0.44;
+    if (nearVertical && containerWidth > 0) {
+      const isTop = sin < 0; // negative sin means upwards in our coordinate
+      const ex = mx;
+      const ey = my + (isTop ? -16 : 16);
+      const allowed = Math.max(32, containerWidth - 2 * containerPadding);
+      const size = fitSize(label, baseSize, allowed);
+      const textWidth = estimateWidth(label, size);
+      let textX = ex;
+      const minX = containerPadding + textWidth / 2;
+      const maxX = containerWidth - containerPadding - textWidth / 2;
+      textX = Math.max(minX, Math.min(maxX, textX));
+      const textY = ey + (isTop ? -size / 2 : size / 2);
+      return (
+        <g style={{ pointerEvents: 'none' }}>
+          <polyline
+            points={`${sx},${sy} ${mx},${my} ${ex},${ey}`}
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth={1}
+            fill="none"
+          />
+          <text x={textX} y={textY} fill="#e5e7eb" fontSize={size} fontWeight={600} textAnchor="middle" dominantBaseline="middle">
+            {label}
+          </text>
+        </g>
+      );
+    }
+
+    // Left/right placement
+    const isRight = cos >= 0;
+    const ex = mx + (isRight ? 16 : -16);
+    const ey = my;
+    let textX = ex + (isRight ? 6 : -6);
+    const textAnchor = isRight ? 'start' : 'end';
+
+    let size = baseSize;
+    if (containerWidth > 0) {
+      const allowed = isRight
+        ? Math.max(24, containerWidth - containerPadding - textX)
+        : Math.max(24, textX - containerPadding);
+      size = fitSize(label, baseSize, allowed);
+      const textWidth = estimateWidth(label, size);
+      if (isRight) {
+        const maxX = containerWidth - containerPadding - textWidth;
+        textX = Math.min(textX, maxX);
+      } else {
+        const minX = containerPadding + textWidth;
+        textX = Math.max(textX, minX);
+      }
+    }
+
+    return (
+      <g style={{ pointerEvents: 'none' }}>
+        <polyline
+          points={`${sx},${sy} ${mx},${my} ${ex},${ey}`}
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth={1}
+          fill="none"
+        />
+        <line x1={mx} y1={my} x2={ex} y2={ey} stroke="rgba(255,255,255,0.6)" strokeWidth={1} />
+        <text x={textX} y={ey} fill="#e5e7eb" fontSize={size} fontWeight={600} textAnchor={textAnchor} dominantBaseline="middle">
+          {label}
+        </text>
+      </g>
+    );
+  }
+
+  // Inside label (name + percent), auto-fit to slice thickness and arc width
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-  const percentageText = `${(percent * 100).toFixed(0)}%`;
+  const angleDeg = typeof startAngle === 'number' && typeof endAngle === 'number'
+    ? Math.abs(endAngle - startAngle)
+    : Math.max(5, percent * 360);
 
-  // Intelligent font sizing based on segment size
-  const percentValue = percent * 100;
-  let fontSizeMultiplier;
+  const thickness = outerRadius - innerRadius;
+  const allowedHeight = Math.max(10, thickness * 0.9);
+  const rMid = innerRadius + thickness * 0.5;
+  const arcLength = (Math.PI * angleDeg / 180) * rMid;
+  const allowedWidth = Math.max(20, arcLength * 0.9);
 
-  if (percentValue >= 30) {
-    // Very large segments (30%+) - largest font
-    fontSizeMultiplier = 1.4;
-  } else if (percentValue >= 20) {
-    // Large segments (20-30%) - large font
-    fontSizeMultiplier = 1.2;
-  } else if (percentValue >= 15) {
-    // Medium-large segments (15-20%) - medium-large font
-    fontSizeMultiplier = 1.1;
-  } else if (percentValue >= 10) {
-    // Medium segments (10-15%) - standard font
-    fontSizeMultiplier = 1.0;
-  } else {
-    // Small segments (8-10%) - smaller font to fit
-    fontSizeMultiplier = 0.85;
-  }
+  const pctText = `${(percent * 100).toFixed(0)}%`;
 
-  // Apply intelligent sizing with larger base size
-  const intelligentFontSize = Math.round(labelFontSize * fontSizeMultiplier);
-  const percentageFontSize = Math.round(intelligentFontSize * 0.9); // Slightly smaller for percentage
-
-  // Dynamic line spacing based on font size
-  const lineSpacing = Math.round(intelligentFontSize * 1.2);
+  let size = Math.min(baseSize, Math.floor(allowedHeight / 2));
+  const longest = (name || '').length >= pctText.length ? (name || '') : pctText;
+  const widthFit = fitSize(longest, size, allowedWidth);
+  size = Math.max(6, Math.min(size, widthFit));
+  const pctSize = Math.max(6, Math.round(size * 0.9));
+  const lineGap = Math.round(size * 1.1);
 
   return (
     <text
@@ -211,37 +326,58 @@ const renderCustomLabel = (props: any, pieRadius: number, showLabels: boolean, l
       fill="white"
       textAnchor="middle"
       dominantBaseline="central"
-      fontSize={intelligentFontSize}
-      fontWeight="600"
-      style={{
-        pointerEvents: 'none'
-      }}
+      fontSize={size}
+      fontWeight={700}
+      style={{ pointerEvents: 'none' }}
     >
-      <tspan x={x} dy="0">{name}</tspan>
-      <tspan x={x} dy={lineSpacing} fontSize={percentageFontSize}>{percentageText}</tspan>
+      <tspan x={x} dy={-lineGap/2}>{name}</tspan>
+      <tspan x={x} dy={lineGap} fontSize={pctSize}>{pctText}</tspan>
     </text>
+  );
+};
+
+// Active pie slice shape with subtle 3D lift on hover
+const renderActivePieShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, midAngle } = props;
+  const RADIAN = Math.PI / 180;
+  const lift = Math.max(3, Math.round(outerRadius * 0.06));
+  const grow = Math.max(6, Math.round(outerRadius * 0.08));
+  const dx = Math.cos(-midAngle * RADIAN) * lift;
+  const dy = Math.sin(-midAngle * RADIAN) * lift;
+  return (
+    <g style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.45))' }}>
+      <Sector
+        cx={cx + dx}
+        cy={cy + dy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + grow}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+    </g>
   );
 };
 
 // Enhanced tooltip content
 const CustomTooltip = ({ active, payload }: any) => {
+  const { theme } = useTheme();
   if (active && payload && payload.length) {
     const data = payload[0];
     const name = data.name;
     const value = data.value;
 
-    // Calculate total to get percentage
     const total = payload[0].payload.total || data.payload.value;
     const percentage = ((value / total) * 100).toFixed(1);
 
     return (
       <div
-        className="bg-black/90 border border-white/20 rounded-md p-3 shadow-lg"
+        className={`${theme === 'light' ? 'bg-white border-gray-200 text-gray-800' : 'bg-black/80 border-white/20 text-white'} border rounded-md p-3 shadow-lg backdrop-blur-sm`}
         style={{ fontSize: '11px' }}
       >
-        <div className="text-white font-semibold mb-1">{name}</div>
-        <div className="text-white/90">Value: {value.toLocaleString()}</div>
-        <div className="text-white/90">Share: {percentage}%</div>
+        <div className={`${theme === 'light' ? 'text-gray-900' : 'text-white'} font-semibold mb-1`}>{name}</div>
+        <div className={`${theme === 'light' ? 'text-gray-700' : 'text-white/90'}`}>Value: {value.toLocaleString()}</div>
+        <div className={`${theme === 'light' ? 'text-gray-700' : 'text-white/90'}`}>Share: {percentage}%</div>
       </div>
     );
   }
@@ -614,7 +750,7 @@ const TextBoxComponent: React.FC<{
 
   return (
     <div
-      className={`absolute overflow-hidden ${
+      className={`absolute ${textBox.id.startsWith('scorecard-') ? 'overflow-visible' : 'overflow-hidden'} ${
         hideControls ? 'border-0' : 'border rounded-lg'
       } ${
         hideControls ? '' : 'glass-card'
@@ -630,7 +766,7 @@ const TextBoxComponent: React.FC<{
           : 'z-30 border-white/20 transition-all duration-200'
       }`}
       style={{
-        ...(hideControls ? { backgroundColor: 'transparent' } : { backgroundColor: 'rgba(255, 255, 255, 0.05)' }),
+        ...(hideControls ? { backgroundColor: 'transparent' } : { backgroundColor: theme === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.05)' }),
         left: textBox.position.x,
         top: textBox.position.y,
         width: textBox.size.width,
@@ -689,7 +825,7 @@ const TextBoxComponent: React.FC<{
 
               {/* Font Size Dropdown */}
               {showFontSizeDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50 min-w-16">
+                <div className="absolute top-full left-0 mt-1 bg-black/80 border border-white/20 rounded-md shadow-lg z-50 min-w-16">
                   <div className="py-1 max-h-40 overflow-y-auto">
                     {fontSizes.map(size => (
                       <button
@@ -739,7 +875,7 @@ const TextBoxComponent: React.FC<{
 
               {/* Color Picker Dropdown */}
               {showColorPicker && (
-                <div className="absolute top-full right-0 mt-1 bg-black/90 border border-white/20 rounded-md shadow-lg z-50">
+                <div className="absolute top-full right-0 mt-1 bg-black/80 border border-white/20 rounded-md shadow-lg z-50">
                   <div className="p-2 grid grid-cols-5 gap-1">
                     {colors.map(color => (
                       <button
@@ -810,7 +946,7 @@ const TextBoxComponent: React.FC<{
         ) : (
           <div
             onClick={startEditing}
-            className="w-full h-full cursor-text overflow-hidden"
+            className={`w-full h-full cursor-text ${textBox.id.startsWith('scorecard-') ? 'overflow-visible' : 'overflow-hidden'}`}
             style={{
               fontSize: textBox.fontSize,
               color: textBox.color || '#ffffff',
@@ -1024,9 +1160,27 @@ interface BuildReportProps {
     hideControls: boolean;
     importedData: any[];
   };
+  userEmail?: string;
 }
 
-const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
+interface ExistingFileVersion {
+  id: string;
+  version: number;
+  originalFileName: string;
+  createdAt: string;
+  rowCount: number;
+  columnsCount: number;
+  fileSize: number;
+  source: 'local' | 'server';
+  datasetId?: string;
+  tableName?: string;
+}
+
+const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState, userEmail = 'mayank.jain@abc.com' }) => {
+  // Session management
+  const { syncCards, syncData, syncFile, hasActiveSession, getInitialStateFromSession } = useBuildReportSession();
+  const { theme } = useTheme();
+
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -1036,6 +1190,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [importedData, setImportedData] = useState<DataRow[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
   const [fileName, setFileName] = useState<string>('');
+  const [currentFileVersion, setCurrentFileVersion] = useState<number | null>(null);
   const [configuringCard, setConfiguringCard] = useState<string | null>(null);
   const [hideControls, setHideControls] = useState(false);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
@@ -1044,6 +1199,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [dragData, setDragData] = useState<{ cardId: string; barName: string; startX: number; startY: number } | null>(null);
   const [expandedLegend, setExpandedLegend] = useState<string | null>(null);
   const [legendDialog, setLegendDialog] = useState<string | null>(null);
+
+  // Track active pie slice per card for hover effects
+  const [activePieSlice, setActivePieSlice] = useState<Record<string, number | null>>({});
 
   // Mix bar chart state
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
@@ -1076,6 +1234,72 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [saveReportDescription, setSaveReportDescription] = useState('');
   const [storageInfo, setStorageInfo] = useState({ viewsCount: 0, storageSize: 0, percentUsed: 0, isNearLimit: false });
 
+  // File upload success popup state
+  const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState('');
+
+  // Generic success dialog state (e.g., report saved)
+  const [showSuccessDialog, setShowSuccessDialog] = useState<{ title: string; message?: string } | null>(null);
+
+  // Saving progress UI state
+  const [isSaving, setIsSaving] = useState(false);
+  const [savingTarget, setSavingTarget] = useState<'local' | 'server' | null>(null);
+  const [savingStart, setSavingStart] = useState<number | null>(null);
+  const [savingElapsed, setSavingElapsed] = useState(0);
+  const [savingRowsTotal, setSavingRowsTotal] = useState(0);
+  const [savingRowsSaved, setSavingRowsSaved] = useState(0);
+
+  // Upload button tooltip visibility
+  const [showUploadTooltip, setShowUploadTooltip] = useState(true);
+
+  // Clear All confirmation dialog state
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
+
+  // Storage conflict state
+  const [storageConflictData, setStorageConflictData] = useState<any>(null);
+  const [selectedStorageType, setSelectedStorageType] = useState<'local' | 'server' | null>(null);
+
+  // Snowflake modal state
+  const [showSnowflakeModal, setShowSnowflakeModal] = useState(false);
+  const [snowflakeQuery, setSnowflakeQuery] = useState('');
+  const [queryType, setQueryType] = useState<'table' | 'sql'>('table');
+  const [testMode, setTestMode] = useState(true);
+
+  // Elapsed seconds ticker for saving overlay
+  useEffect(() => {
+    let timer: any;
+    if (isSaving && savingStart) {
+      const update = () => setSavingElapsed(Math.max(0, Math.floor((Date.now() - savingStart) / 1000)));
+      update();
+      timer = setInterval(update, 1000);
+    }
+    return () => { if (timer) clearInterval(timer); };
+  }, [isSaving, savingStart]);
+
+  const startSaving = useCallback((target: 'local' | 'server', totalRows: number) => {
+    setIsSaving(true);
+    setSavingTarget(target);
+    setSavingStart(Date.now());
+    setSavingRowsTotal(totalRows);
+    setSavingRowsSaved(0);
+    setSavingElapsed(0);
+  }, []);
+
+  const stopSaving = useCallback(() => {
+    setIsSaving(false);
+    setSavingTarget(null);
+    setSavingStart(null);
+  }, []);
+
+  // Cache-related states
+  const [cacheEnabled, setCacheEnabled] = useState(false);
+  const [hasCachedData, setHasCachedData] = useState(false);
+  const [cacheInfo, setCacheInfo] = useState({ count: 0, size: 0 });
+  const [showCachingDialog, setShowCachingDialog] = useState(false);
+  const [cachingStatus, setCachingStatus] = useState('');
+  const [showClearingDialog, setShowClearingDialog] = useState(false);
+  const [clearingStatus, setClearingStatus] = useState('');
+
   // Filter section states
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [leftSectionVisible, setLeftSectionVisible] = useState(true);
@@ -1084,8 +1308,65 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set());
   const [dimensionSelections, setDimensionSelections] = useState<Record<string, string[]>>({}); // Preserve selections per dimension
 
+  // Aggressively clear heavy in-memory data when switching dataset/version to reduce JS heap usage
+  const clearInMemoryData = useCallback((reason?: string) => {
+    try { console.log('Clearing in-memory data', reason ? `(${reason})` : ''); } catch {}
+    // Drop large arrays and derived chart data
+    setImportedData([]);
+    setColumns([]);
+    setCards(prev => prev.map(c => ({ ...c, data: [] })));
+
+    // Reset filters and selections
+    setDimensionSelections({});
+    setSelectedDimension('');
+    setSelectedValues(new Set());
+    setDimensionValues([]);
+
+    // Reset history to avoid retaining snapshots of previous datasets
+    setCardsHistory([]);
+    setHistoryIndex(-1);
+  }, []);
+
+  // Version management states
+  const [availableVersions, setAvailableVersions] = useState<any[]>([]);
+  const [showVersionDropdown, setShowVersionDropdown] = useState(false);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [dataSource, setDataSource] = useState<'local' | 'server' | 'unknown'>('unknown');
+
+  // Responsive grid dimensions
+  const [gridCols, setGridCols] = useState(DEFAULT_GRID_COLS);
+  const [gridRows, setGridRows] = useState(DEFAULT_GRID_ROWS);
+  const [containerWidth, setContainerWidth] = useState(1200);
+
+  // Storage option modal state
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  const [pendingFileData, setPendingFileData] = useState<{
+    file: File;
+    headers: string[];
+    data: DataRow[];
+    rowCount: number;
+  } | null>(null);
+  const [localDatasets, setLocalDatasets] = useState<LocalDataset[]>([]);
+
+  // File history modal state
+  const [showFileHistoryModal, setShowFileHistoryModal] = useState(false);
+
+  // Existing files modal state
+  const [showExistingFilesModal, setShowExistingFilesModal] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
+  const [selectedFileVersion, setSelectedFileVersion] = useState<ExistingFileVersion | null>(null);
+  const [groupedExistingFiles, setGroupedExistingFiles] = useState<{[filename: string]: ExistingFileVersion[]}>({});
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  const [isFetchingExistingFiles, setIsFetchingExistingFiles] = useState(false);
+  const [expandLimits, setExpandLimits] = useState<{[filename: string]: number}>({});
+
+  // Chart compatibility state
+  const [chartCompatibilityIssues, setChartCompatibilityIssues] = useState<{[cardId: string]: string[]}>({});
+
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const versionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load saved report state when provided
   useEffect(() => {
@@ -1093,89 +1374,1869 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       setCards(loadedReportState.cards);
       setHideControls(loadedReportState.hideControls);
       setImportedData(loadedReportState.importedData);
+      setColumns(loadedReportState.columns || []);
+      setFileName(loadedReportState.fileName || '');
+      setCurrentFileVersion(loadedReportState.currentFileVersion || null);
       // Clear any configuration state
       setConfiguringCard(null);
       setCurrentTool('select');
     }
   }, [loadedReportState]);
 
+  // Sync cards to session whenever they change
+  useEffect(() => {
+    try {
+      if (cards.length > 0) {
+        syncCards(cards);
+      }
+    } catch (e) {
+      console.warn('Failed to sync cards to session:', e.message);
+    }
+  }, [cards, syncCards]);
+
+  // Sync imported data to session whenever it changes
+  useEffect(() => {
+    try {
+      if (importedData.length > 0 && columns.length > 0) {
+        syncData(importedData, columns);
+      }
+    } catch (e) {
+      console.warn('Failed to sync data to session:', e.message);
+    }
+  }, [importedData, columns, syncData]);
+
+  // Sync file information to session whenever it changes
+  useEffect(() => {
+    try {
+      if (fileName) {
+        syncFile(fileName, currentFileVersion);
+      }
+    } catch (e) {
+      console.warn('Failed to sync file info to session:', e.message);
+    }
+  }, [fileName, currentFileVersion, syncFile]);
+
+  // Guard to avoid multiple session restores
+  const hasRestoredFromSessionRef = React.useRef(false);
+
+  // Initialize from session if no loadedReportState is provided
+  useEffect(() => {
+    if (!loadedReportState && hasActiveSession && !hasRestoredFromSessionRef.current) {
+      const sessionData = getInitialStateFromSession();
+      if (sessionData) {
+        console.log('Restoring work from session:', sessionData);
+
+        // Always restore cards and file info if they exist
+        if (sessionData.cards && sessionData.cards.length > 0) {
+          console.log('Restoring cards:', sessionData.cards.length);
+          setCards(sessionData.cards);
+        }
+
+        if (sessionData.fileName) {
+          console.log('Restoring file info:', sessionData.fileName, 'version:', sessionData.currentFileVersion);
+          setFileName(sessionData.fileName);
+          setCurrentFileVersion(sessionData.currentFileVersion || null);
+          setColumns(sessionData.columns || []);
+        }
+
+        // Only restore imported data if it exists and has content
+        if (sessionData.importedData && sessionData.importedData.length > 0) {
+          console.log('Restoring data:', sessionData.importedData.length, 'rows');
+          setImportedData(sessionData.importedData);
+        }
+
+        if (sessionData.hideControls !== undefined) {
+          setHideControls(sessionData.hideControls);
+        }
+
+        hasRestoredFromSessionRef.current = true;
+      }
+    }
+  }, [loadedReportState, hasActiveSession, getInitialStateFromSession]);
+
+  // Validate chart compatibility with current columns
+  const validateChartCompatibility = useCallback(() => {
+    const issues: {[cardId: string]: string[]} = {};
+
+    cards.forEach(card => {
+      const cardIssues: string[] = [];
+
+      // Check if dimension column exists
+      if (card.dimension && !columns.includes(card.dimension)) {
+        cardIssues.push(`Dimension column "${card.dimension}" not found`);
+      }
+
+      // Check if measure column exists
+      if (card.measure && !columns.includes(card.measure)) {
+        cardIssues.push(`Measure column "${card.measure}" not found`);
+      }
+
+      // Check if second measure exists (for charts that support it)
+      if (card.measure2 && !columns.includes(card.measure2)) {
+        cardIssues.push(`Second measure column "${card.measure2}" not found`);
+      }
+
+      // Check if dimension2 exists (for mixbar charts)
+      if (card.dimension2 && !columns.includes(card.dimension2)) {
+        cardIssues.push(`Second dimension column "${card.dimension2}" not found`);
+      }
+
+      // Check if series column exists (for line charts)
+      if (card.seriesColumn && !columns.includes(card.seriesColumn)) {
+        cardIssues.push(`Series column "${card.seriesColumn}" not found`);
+      }
+
+      if (cardIssues.length > 0) {
+        issues[card.id] = cardIssues;
+      }
+    });
+
+    setChartCompatibilityIssues(issues);
+    return Object.keys(issues).length === 0; // Return true if no issues
+  }, [cards, columns]);
+
+  // Fetch available versions for the current file from both local and server storage
+  const fetchFileVersions = useCallback(async (userEmail: string, filename: string) => {
+    if (!userEmail || !filename) {
+      setAvailableVersions([]);
+      return;
+    }
+
+    try {
+      setLoadingVersions(true);
+      console.log(`Fetching versions for file: ${filename}, user: ${userEmail}`);
+
+      const allVersions: any[] = [];
+
+      // 1. Fetch SERVER versions (Snowflake database) only if online
+      const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+      const filenameVariants = [
+        filename,
+        filename.endsWith('.csv') ? filename.slice(0, -4) : `${filename}.csv`
+      ];
+
+      // Helper function to retry fetch requests
+      const fetchWithRetry = async (url: string, retries = 2): Promise<Response | null> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            // Create timeout signal with fallback for older browsers
+            let timeoutSignal: AbortSignal | undefined;
+            try {
+              // Some environments may not support AbortSignal.timeout
+              timeoutSignal = (AbortSignal as any)?.timeout ? (AbortSignal as any).timeout(10000) : undefined;
+            } catch {
+              // Fallback
+              const controller = new AbortController();
+              setTimeout(() => controller.abort(), 10000);
+              timeoutSignal = controller.signal;
+            }
+
+            const opts: RequestInit = {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            };
+            if (timeoutSignal) {
+              (opts as any).signal = timeoutSignal;
+            }
+
+            const response = await fetch(url, opts);
+            return response;
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.warn(`Fetch attempt ${attempt + 1} failed for ${url}:`, errorMessage);
+
+            if (attempt === retries) {
+              return null;
+            }
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          }
+        }
+        return null;
+      };
+
+      let foundServerVersions = false;
+      if (isOnline && dataSource === 'server') {
+        // Quick health check to avoid noisy fetch errors when API is down
+        let apiHealthy = false;
+        try {
+          const healthResp = await fetchWithRetry('/api/database/health', 0);
+          apiHealthy = !!healthResp && healthResp.ok;
+        } catch {
+          apiHealthy = false;
+        }
+
+        if (!apiHealthy) {
+          console.log('Database API not reachable - skipping server version fetch');
+        } else {
+          for (const filenameVariant of filenameVariants) {
+            try {
+              const encodedFilename = encodeURIComponent(filenameVariant);
+              const url = `/api/database/uploads/file/${encodeURIComponent(userEmail)}/${encodedFilename}/versions`;
+              const response = await fetchWithRetry(url);
+
+              if (!response) {
+                console.warn(`Failed to fetch server versions for ${filenameVariant} after retries - continuing with local versions only`);
+                continue;
+              }
+
+              if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.versions && result.versions.length > 0) {
+                  const serverVersions = result.versions.map((v: any) => ({
+                    ...v,
+                    source: 'server',
+                    sourceLabel: 'Snowflake',
+                    sourceColor: 'text-blue-400'
+                  }));
+                  allVersions.push(...serverVersions);
+                  foundServerVersions = true;
+                  console.log(`Found ${serverVersions.length} server versions for: ${filenameVariant}`);
+                  break;
+                }
+              } else if (response.status === 404) {
+                console.log(`No server versions found for: ${filenameVariant} (404)`);
+              } else {
+                console.warn(`Server version check failed for ${filenameVariant}: ${response.status}`);
+              }
+            } catch (serverError) {
+              console.warn(`Unexpected error checking server versions for ${filenameVariant}:`, (serverError as any)?.message || serverError);
+            }
+          }
+        }
+      } else {
+        console.log('Offline detected - skipping server version fetch');
+      }
+
+      // 2. Fetch LOCAL versions (IndexedDB via DuckDB service)
+      try {
+        const localVersions = await duckdbService.getLocalFileVersions(userEmail, filename);
+        if (localVersions && localVersions.length > 0) {
+          const localVersionsWithSource = localVersions.map((dataset: LocalDataset) => ({
+            version: dataset.version,
+            upload_timestamp: dataset.createdAt.toISOString(),
+            table_name: dataset.id,
+            file_size_bytes: dataset.fileSize,
+            original_filename: dataset.originalFileName,
+            source: 'local',
+            sourceLabel: 'Local',
+            sourceColor: 'text-purple-400',
+            dataset_id: dataset.id
+          }));
+          allVersions.push(...localVersionsWithSource);
+          console.log(`Found ${localVersionsWithSource.length} local versions for: ${filename}`);
+        } else {
+          console.log(`No local versions found for: ${filename}`);
+        }
+      } catch (localError) {
+        console.error('Error fetching local versions:', localError);
+      }
+
+      // 3. Combine and sort all versions
+      if (allVersions.length > 0) {
+        const sortedVersions = allVersions.sort((a, b) => {
+          if (a.version !== b.version) return b.version - a.version;
+          if (a.source === 'server' && b.source === 'local') return -1;
+          if (a.source === 'local' && b.source === 'server') return 1;
+          return 0;
+        });
+
+        setAvailableVersions(sortedVersions);
+        const highestVersion = sortedVersions[0].version;
+        if (!currentFileVersion) setCurrentFileVersion(highestVersion);
+
+        console.log(`Total versions found: ${sortedVersions.length} (${foundServerVersions ? 'server + ' : ''}local)`);
+      } else {
+        setAvailableVersions([]);
+      }
+    } catch (error) {
+      console.warn('Version fetch failed (handled gracefully):', (error as any)?.message || error);
+      setAvailableVersions([]);
+    } finally {
+      setLoadingVersions(false);
+    }
+  }, [currentFileVersion, dataSource]);
+
+  // Load data for a specific version from either local or server storage
+  const loadFileVersion = useCallback(async (userEmail: string, filename: string, version: number, isAutoReload: boolean = false, isVersionSwitch: boolean = false) => {
+    // Clear previous in-memory dataset before loading a different version
+    clearInMemoryData('version-switch');
+    if (isVersionSwitch) {
+      setIsLoadingExisting(true);
+    }
+    try {
+      let versionData = availableVersions.find(v => v.version === version);
+
+      if (!versionData) {
+        console.warn(`Requested version v${version} not found in availableVersions (${availableVersions.length}).`);
+
+        if (availableVersions.length > 0) {
+          const fallback = availableVersions[0];
+          console.warn(`Falling back to latest available version v${fallback.version} from ${fallback.sourceLabel}.`);
+          versionData = fallback;
+          version = fallback.version;
+        } else {
+          // No versions in memory. Try reconstructing from local storage (DuckDB)
+          try {
+            const localVersions = await duckdbService.getLocalFileVersions(userEmail, filename);
+            if (localVersions && localVersions.length > 0) {
+              // Prefer exact version; otherwise highest
+              const exact = localVersions.find((v: any) => v.version === version);
+              const chosen = exact || localVersions.reduce((a: any, b: any) => (a.version > b.version ? a : b));
+              const datasetId = chosen.id;
+              const dataset = await duckdbService.getDatasetMetadata(datasetId);
+              if (dataset) {
+                const query = 'SELECT * FROM {table} LIMIT 1000000';
+                const data = await duckdbService.queryDataset(datasetId, query);
+                setColumns(dataset.columns || []);
+                setImportedData(data || []);
+                setCurrentFileVersion(chosen.version);
+                setShowVersionDropdown(false);
+                setCacheEnabled(false);
+
+                // Validate chart compatibility with new data
+                setTimeout(() => validateChartCompatibility(), 100);
+                if (!isAutoReload && !isVersionSwitch) {
+                  setUploadedFileName(`${filename} (v${chosen.version}) - Local Storage`);
+                  setShowUploadSuccess(true);
+                  setTimeout(() => setShowUploadSuccess(false), 3000);
+                }
+                console.log(`Loaded local fallback version ${chosen.version} with ${data.length} rows`);
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn('Local version fallback failed:', e);
+          }
+
+          // Final fallback: load last cached dataset
+          try {
+            await cacheService.init();
+            const cached = await cacheService.getCachedData();
+            if (cached && cached.data && cached.data.length > 0) {
+              setColumns(cached.columns || []);
+              setImportedData(cached.data || []);
+              setCurrentFileVersion(null);
+              if (cached.fileName) setFileName(cached.fileName);
+              setShowVersionDropdown(false);
+              setCacheEnabled(false);
+
+              // Validate chart compatibility with new data
+              setTimeout(() => validateChartCompatibility(), 100);
+              if (!isAutoReload && !isVersionSwitch) {
+                setUploadedFileName(cached.fileName || 'Cached dataset');
+                setShowUploadSuccess(true);
+                setTimeout(() => setShowUploadSuccess(false), 3000);
+              }
+              console.log(`Loaded fallback from cache with ${cached.data.length} rows`);
+              return;
+            }
+          } catch (e) {
+            console.warn('Cache fallback failed:', e);
+          }
+
+          console.warn('Version data not found and no available versions to fallback to');
+          // Instead of erroring, show a helpful message to the user
+          setUploadedFileName(`${filename} - No versions available`);
+          setImportedData([]);
+          setColumns([]);
+          return;
+        }
+      }
+
+      console.log(`Loading version ${version} from ${versionData.sourceLabel}:`, versionData);
+
+      if (versionData.source === 'local') {
+        // Load from local storage (IndexedDB)
+        try {
+          const datasetId = versionData.dataset_id || versionData.table_name;
+          const dataset = await duckdbService.getDatasetMetadata(datasetId);
+
+          if (!dataset) {
+            console.error('Local dataset not found:', datasetId);
+            return;
+          }
+
+          // Load the dataset data from IndexedDB
+          const query = 'SELECT * FROM {table} LIMIT 1000000'; // Limit for performance
+          const data = await duckdbService.queryDataset(datasetId, query);
+
+          setColumns(dataset.columns || []);
+          setImportedData(data || []);
+          setCurrentFileVersion(version);
+          setShowVersionDropdown(false);
+          setCacheEnabled(false); // Local data doesn't use cache
+          setDataSource('local');
+
+          // Validate chart compatibility with new data
+          setTimeout(() => validateChartCompatibility(), 100);
+
+          // Show success notification (only if not auto-reload and not version switch)
+          if (!isAutoReload && !isVersionSwitch) {
+            setUploadedFileName(`${filename} (v${version}) - Local Storage`);
+            setShowUploadSuccess(true);
+            setTimeout(() => setShowUploadSuccess(false), 3000);
+          }
+
+          console.log(`Loaded local version ${version} with ${data.length} rows`);
+        } catch (localError) {
+          console.error('Error loading local version:', localError);
+          alert('Failed to load local version. The data may have been removed from local storage.');
+        }
+      } else {
+        // Load from server storage (Snowflake)
+        try {
+          const tableName = versionData.table_name;
+          const response = await fetch(`/api/database/tables/${tableName}/data?limit=1000000`);
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              setColumns(result.columns || []);
+              setImportedData(result.data || []);
+              setCurrentFileVersion(version);
+              setShowVersionDropdown(false);
+              setCacheEnabled(false); // Fresh data doesn't use cache
+
+              // Validate chart compatibility with new data
+              setTimeout(() => validateChartCompatibility(), 100);
+
+              // Show success notification (only if not auto-reload and not version switch)
+              if (!isAutoReload && !isVersionSwitch) {
+                setUploadedFileName(`${filename} (v${version}) - Snowflake`);
+                setShowUploadSuccess(true);
+                setTimeout(() => setShowUploadSuccess(false), 3000);
+              }
+
+              console.log(`Loaded server version ${version} with ${result.data.length} rows`);
+            } else {
+              console.error('Failed to load version data:', result.error);
+              alert(`Failed to load server version: ${result.error}`);
+            }
+          } else {
+            console.error('Failed to fetch version data:', response.statusText);
+            setDataSource('server');
+            alert(`Failed to fetch server version: ${response.status} ${response.statusText}`);
+          }
+        } catch (serverError) {
+          console.error('Error loading server version:', serverError);
+          setDataSource('server');
+          alert('Failed to load server version. Please check your connection.');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading file version:', error);
+      alert('Failed to load version data.');
+    } finally {
+      if (isVersionSwitch) {
+        setIsLoadingExisting(false);
+      }
+    }
+  }, [availableVersions]);
+
+  // Initialize cache service and check for cached data
+  useEffect(() => {
+    const initCache = async () => {
+      try {
+        await cacheService.init();
+        const cached = await cacheService.hasCachedData();
+        setHasCachedData(cached);
+
+        const info = await cacheService.getStorageInfo();
+        setCacheInfo(info);
+
+        // Load cached data if available and no imported data
+        if (cached && importedData.length === 0) {
+          const cachedData = await cacheService.getCachedData();
+          if (cachedData) {
+            setImportedData(cachedData.data);
+            setColumns(cachedData.columns);
+            if (cachedData.fileName) {
+              setFileName(cachedData.fileName);
+            }
+            // Clear version for cached data since it doesn't track database versions
+            setCurrentFileVersion(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing cache:', error);
+      }
+    };
+
+    initCache();
+  }, []);
+
+  // Fetch versions when fileName is available (even if version is unknown)
+  useEffect(() => {
+    const fetchVersionsForCurrentFile = async () => {
+      if (!fileName) return;
+      try {
+        console.log('Fetching versions for file:', fileName);
+        const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
+        await fetchFileVersions(userEmail, searchFilename);
+      } catch (e) {
+        console.warn('Fetch versions effect suppressed error:', (e as any)?.message || e);
+      }
+    };
+
+    fetchVersionsForCurrentFile();
+  }, [fileName, fetchFileVersions, userEmail]);
+
+  // Debug logging for current version changes
+  useEffect(() => {
+    console.log('Current file version changed to:', currentFileVersion, 'for file:', fileName);
+  }, [currentFileVersion, fileName]);
+
+  // Guard to ensure we auto-reload only once per session restore
+  const hasAutoReloadedRef = React.useRef(false);
+  const hasFetchedVersionsForRestoreRef = React.useRef(false);
+
+  // Auto-reload data when session is restored with file info but no data
+  useEffect(() => {
+    const shouldAutoReload =
+      fileName &&
+      currentFileVersion &&
+      currentFileVersion > 0 &&
+      importedData.length === 0 &&
+      !loadedReportState &&
+      !hasAutoReloadedRef.current && // Only auto-reload once
+      hasRestoredFromSessionRef.current; // Only after session is restored
+
+    if (!shouldAutoReload) return;
+
+    const doReload = async () => {
+      try {
+        hasAutoReloadedRef.current = true;
+        console.log('Auto-reloading data for session restore:', fileName, 'v' + currentFileVersion);
+
+        // Try to get the versions first, but don't wait too long
+        if (!availableVersions || availableVersions.length === 0) {
+          if (!hasFetchedVersionsForRestoreRef.current) {
+            hasFetchedVersionsForRestoreRef.current = true;
+            const searchFilename = fileName.endsWith('.csv') ? fileName : `${fileName}.csv`;
+
+            // Set a reasonable timeout for version fetching
+            const fetchPromise = fetchFileVersions(userEmail, searchFilename);
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Version fetch timeout')), 3000)
+            );
+
+            try {
+              await Promise.race([fetchPromise, timeoutPromise]);
+              // Small delay to let versions populate
+              await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (e) {
+              console.warn('Version fetch timed out or failed, proceeding with direct load:', e.message);
+            }
+          }
+        }
+
+        // Attempt to load the version (mark as auto-reload to suppress success popup)
+        await loadFileVersion(userEmail, fileName, currentFileVersion, true);
+      } catch (e) {
+        console.warn('Auto-reload encountered an error (proceeding without data):', e.message);
+      }
+    };
+
+    // Delay to ensure session restoration is complete
+    const timer = setTimeout(doReload, 500);
+    return () => clearTimeout(timer);
+  }, [fileName, currentFileVersion, importedData.length, loadedReportState, loadFileVersion, userEmail, availableVersions, fetchFileVersions]);
+
+  // Update cache status when data changes
+  useEffect(() => {
+    const updateCacheStatus = async () => {
+      try {
+        const cached = await cacheService.hasCachedData();
+        setHasCachedData(cached);
+        const info = await cacheService.getStorageInfo();
+        setCacheInfo(info);
+      } catch (error) {
+        console.error('Error updating cache status:', error);
+      }
+    };
+
+    if (importedData.length > 0) {
+      updateCacheStatus();
+    }
+  }, [importedData]);
+
+  // Responsive grid dimensions based on available container width (reacts to sidebar collapse)
+  useEffect(() => {
+    const calculateDimensions = () => {
+      const el = containerRef.current;
+      const availableWidth = el ? el.clientWidth : window.innerWidth;
+      const screenHeight = window.innerHeight;
+
+      const cols = Math.max(Math.floor(availableWidth / GRID_SIZE), 20);
+      const rows = Math.max(Math.floor((screenHeight - 200) / GRID_SIZE), 20);
+
+      setGridCols(cols);
+      setGridRows(rows);
+      setContainerWidth(Math.max(cols * GRID_SIZE, availableWidth, 800));
+    };
+
+    calculateDimensions();
+
+    const handleResize = () => calculateDimensions();
+
+    window.addEventListener('resize', handleResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (containerRef.current) {
+      resizeObserver = new ResizeObserver(() => handleResize());
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Close version dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (versionDropdownRef.current && !versionDropdownRef.current.contains(event.target as Node)) {
+        setShowVersionDropdown(false);
+      }
+    };
+
+    if (showVersionDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showVersionDropdown]);
+
   // File upload functionality
   const handleFileImport = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'text/csv') {
-      setFileName(file.name);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const text = e.target?.result as string;
         const lines = text.split('\n');
         const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        const data = lines.slice(1)
-          .filter(line => line.trim())
-          .map(line => {
-            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-            const row: DataRow = {};
-            headers.forEach((header, index) => {
-              const value = values[index] || '';
+
+        // Optimize parsing for large files
+        const dataLines = lines.slice(1).filter(line => line.trim());
+        const data: DataRow[] = new Array(dataLines.length);
+
+        // Pre-allocate and process in more efficient way
+        for (let i = 0; i < dataLines.length; i++) {
+          const values = dataLines[i].split(',');
+          const row: DataRow = {};
+
+          for (let j = 0; j < headers.length; j++) {
+            const value = (values[j] || '').trim().replace(/"/g, '');
+            if (value === '') {
+              row[headers[j]] = '';
+            } else {
               const numValue = parseFloat(value);
-              row[header] = isNaN(numValue) ? value : numValue;
-            });
-            return row;
-          });
-        
-        setColumns(headers);
-        setImportedData(data);
+              row[headers[j]] = isNaN(numValue) ? value : numValue;
+            }
+          }
+
+          data[i] = row;
+        }
+
+        if (data.length === 0) {
+          console.error('No data found in CSV file');
+          setColumns(headers);
+          setImportedData([]);
+
+          // Update filename without version for no data case
+          const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+          setFileName(fileNameWithoutExt);
+          setCurrentFileVersion(null); // No version for empty files
+
+          setUploadedFileName(`${file.name} (No data)`);
+          setShowUploadSuccess(true);
+          return;
+        }
+
+        // Show storage options modal instead of direct upload
+        // Clear any previous state to ensure clean modal state for new file upload
+        setStorageConflictData(null);
+        setSelectedStorageType(null);
+
+        setPendingFileData({
+          file,
+          headers,
+          data,
+          rowCount: data.length
+        });
+        setShowStorageModal(true);
       };
       reader.readAsText(file);
     }
+
+    // Reset file input to allow uploading the same file again
+    if (event.target) {
+      event.target.value = '';
+    }
   }, []);
+
+  // Upload file to database with specific version
+  const uploadFileToDatabase = useCallback(async (file: File, headers: string[], data: DataRow[], version: number, overwrite = false) => {
+    const timestamp = Date.now();
+    // Clear previous in-memory dataset before uploading a new one
+    clearInMemoryData('dataset-upload');
+    startSaving('server', data.length);
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_').replace(/\.csv$/i, '');
+    const tableName = `user_uploads_${timestamp}_${sanitizedFileName}_v${version}`;
+
+    try {
+      const response = await fetch(`/api/database/tables/${tableName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: data,
+          overwrite: overwrite,
+          metadata: {
+            user_name: userEmail,
+            original_filename: file.name,
+            version: version,
+            file_size_bytes: file.size
+          }
+        }),
+      });
+
+      // Read response body once as text first to avoid stream issues
+      let responseText;
+      try {
+        responseText = await response.clone().text();
+      } catch (textError) {
+        console.error('Failed to read response body:', textError);
+        throw new Error(`Failed to read server response. Status: ${response.status}`);
+      }
+
+      // Handle response based on status
+      if (!response.ok) {
+        // For non-ok responses, try to parse JSON for error details
+        let errorDetails = `HTTP ${response.status}`;
+        try {
+          const errorResult = JSON.parse(responseText);
+          if (errorResult.error) {
+            errorDetails = errorResult.error;
+          }
+
+          // Handle specific error types
+          if (response.status === 409 && errorResult.constraint_violation) {
+            console.error('Constraint violation - file version already exists:', errorDetails);
+            // Note: Conflicts are now handled before this function is called
+            console.error('Failed to save to database:', errorDetails);
+          } else {
+            console.error('Failed to save to database:', errorDetails);
+          }
+        } catch (jsonError) {
+          console.error('Server returned non-JSON error response:', responseText);
+          console.error('Error parsing JSON:', jsonError);
+        }
+
+        // Fallback: still load data into state for immediate use
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+        setDataSource('local');
+
+        // Update filename and version in header even for fallback
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+
+        throw new Error(`Database save failed: ${errorDetails}`);
+      }
+
+      // Response is ok, now parse JSON safely
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Failed to parse success response as JSON:', jsonError);
+        console.error('Response text was:', responseText);
+        // Even if JSON parsing fails, we can still load the data
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+
+        throw new Error(`Server response was not valid JSON. Status: ${response.status}`);
+      }
+
+      if (result.success) {
+        setSavingRowsSaved(data.length);
+        // Success: load data into state for immediate visualization
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        // Update filename and version in header
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(version);
+        setDataSource('server');
+
+        // Fetch available versions for this file using the original filename as stored in metadata
+        // Using userEmail prop from component
+        fetchFileVersions(userEmail, file.name); // Use original filename with extension for database query
+
+        // Show success popup with versioned display name
+        const displayName = result.metadata?.display_name || `${file.name} (v${version})`;
+        setUploadedFileName(displayName);
+        setShowUploadSuccess(true);
+
+        console.log(`File uploaded successfully to Snowflake table: ${tableName}`, {
+          rowCount: result.rowCount,
+          columns: result.columns,
+          version: version
+        });
+        stopSaving();
+      } else {
+        // Handle unexpected response format
+        console.error('Unexpected response format:', result);
+        throw new Error('Unexpected response format from server');
+      }
+    } catch (error) {
+      console.error('Error saving to database:', error);
+
+      // Fallback: still load data into state for immediate use
+      setColumns(headers);
+      setImportedData(data);
+      setCacheEnabled(false);
+      setDataSource('local');
+
+      // Update filename and version in header even for fallback
+      const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+      setFileName(fileNameWithoutExt);
+      setCurrentFileVersion(version);
+
+      setUploadedFileName(`${file.name} (v${version}) (DB save failed - using locally)`);
+      setShowUploadSuccess(true);
+      stopSaving();
+    }
+  }, [startSaving, stopSaving]);
+
+  // Handle overwrite choice from version dialog
+  const handleStorageOverwrite = useCallback(async (storageType: 'local' | 'server') => {
+    if (!pendingFileData || !storageConflictData) return;
+
+    const { file, headers, data } = pendingFileData;
+    const existingVersions = storageConflictData.existing_versions || [];
+
+    if (existingVersions.length === 0) {
+      console.error('No existing versions found for overwrite');
+      return;
+    }
+
+    try {
+      const latestVersion = Math.max(...existingVersions.map((v: any) => v.version));
+
+      if (storageType === 'local') {
+        // Handle local storage overwrite
+        clearInMemoryData('dataset-overwrite');
+        startSaving('local', data.length);
+        await duckdbService.overwriteLocalFile(
+          data,
+          file.name,
+          headers,
+          userEmail,
+          latestVersion,
+          (inserted, total) => setSavingRowsSaved(inserted)
+        );
+        setSavingRowsSaved(data.length);
+
+        // Load the data into the app for immediate use
+        setColumns(headers);
+        setImportedData(data);
+        setCacheEnabled(false);
+
+        const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+        setFileName(fileNameWithoutExt);
+        setCurrentFileVersion(latestVersion);
+
+        // Update local datasets list
+        const datasets = await duckdbService.listDatasets();
+        setLocalDatasets(datasets);
+
+        setUploadedFileName(`${file.name} (v${latestVersion}) (Overwritten in Local storage - ${data.length.toLocaleString()} rows)`);
+        setShowUploadSuccess(true);
+
+        console.log(`Local storage file overwritten successfully: ${file.name} v${latestVersion}`);
+      } else {
+        // Handle server storage overwrite
+        await uploadFileToDatabase(file, headers, data, latestVersion, true);
+      }
+
+      // Close modal and clean up
+      setShowStorageModal(false);
+      setPendingFileData(null);
+      setStorageConflictData(null);
+      setSelectedStorageType(null);
+
+      console.log('Storage overwrite completed, modal closed');
+    } catch (error) {
+      console.error('Error during overwrite:', error);
+      setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowUploadSuccess(true);
+    } finally {
+      if (savingTarget === 'local') stopSaving();
+    }
+  }, [pendingFileData, storageConflictData, uploadFileToDatabase, userEmail, savingTarget, stopSaving]);
+
+  // Helper function to save to local storage with versioning
+  const saveToLocalStorage = useCallback(async (
+    file: File,
+    headers: string[],
+    data: any[],
+    userEmail: string,
+    version: number
+  ) => {
+    // Clear previous in-memory dataset before saving a new local version
+    clearInMemoryData('dataset-save-local');
+    startSaving('local', data.length);
+    try {
+      console.log(`Saving dataset to Local storage v${version}...`);
+      console.log('SaveToLocalStorage params:', {
+        fileName: file.name,
+        userEmail,
+        version,
+        dataLength: data.length,
+        columnsLength: headers.length
+      });
+      const dataset = await duckdbService.saveDataset(
+        data,
+        file.name,
+        headers,
+        userEmail,
+        version,
+        (inserted, total) => setSavingRowsSaved(inserted)
+      );
+      setSavingRowsSaved(data.length);
+      console.log('Dataset saved successfully:', dataset);
+
+      // Load the data into the app for immediate use
+      setColumns(headers);
+      setImportedData(data);
+      setCacheEnabled(false); // Disable regular cache when using local storage
+      setDataSource('local');
+
+      const fileNameWithoutExt = file.name.replace(/\.csv$/i, '');
+      setFileName(fileNameWithoutExt);
+      setCurrentFileVersion(version);
+
+      // Update local datasets list
+      const datasets = await duckdbService.listDatasets();
+      setLocalDatasets(datasets);
+
+      setUploadedFileName(`${file.name} (v${version}) (Saved to Local storage - ${data.length.toLocaleString()} rows)`);
+      setShowUploadSuccess(true);
+
+      console.log(`Local dataset saved successfully: ${dataset.name} v${version}`);
+    } catch (error) {
+      console.error('Error saving to local storage:', error);
+      throw error;
+    } finally {
+      stopSaving();
+    }
+  }, [startSaving, stopSaving]);
+
+  // Handle new version choice from version dialog
+  const handleStorageNewVersion = useCallback(async (storageType: 'local' | 'server') => {
+    if (!pendingFileData || !storageConflictData) return;
+
+    const { file, headers, data } = pendingFileData;
+    const nextVersion = storageConflictData.next_version || 1;
+
+    try {
+      if (storageType === 'local') {
+        // Handle local storage new version
+        await saveToLocalStorage(file, headers, data, userEmail, nextVersion);
+      } else {
+        // Handle server storage new version
+        await uploadFileToDatabase(file, headers, data, nextVersion, false);
+      }
+
+      // Close modal and clean up
+      setShowStorageModal(false);
+      setPendingFileData(null);
+      setStorageConflictData(null);
+      setSelectedStorageType(null);
+
+      console.log('Storage new version completed, modal closed');
+    } catch (error) {
+      console.error('Error during new version upload:', error);
+      setUploadedFileName(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowUploadSuccess(true);
+    }
+  }, [pendingFileData, storageConflictData, uploadFileToDatabase, saveToLocalStorage, userEmail]);
+
+  // Handle storage modal close
+  const handleStorageModalClose = useCallback(() => {
+    setShowStorageModal(false);
+    setPendingFileData(null);
+    setStorageConflictData(null);
+    setSelectedStorageType(null);
+  }, []);
+
+  // Snowflake data import functionality
+  const handleSnowflakeImport = useCallback(async () => {
+    if (!snowflakeQuery.trim()) return;
+
+    // Clear previous in-memory dataset before importing from Snowflake
+    clearInMemoryData('snowflake-import');
+
+    try {
+      // Prepare the request payload
+      const requestData = {
+        queryType: queryType,
+        query: snowflakeQuery.trim(),
+        limit: 1000000
+      };
+
+      // Choose endpoint based on test mode
+      let endpoint;
+
+      if (testMode) {
+        // Test mode: Use embedded Express.js server
+        const isBuilderEnv = window.location.hostname.includes('.fly.dev');
+        const apiBaseUrl = isBuilderEnv ? '' : 'http://localhost:3000';
+        endpoint = `${apiBaseUrl}/api/snowflake/test-import`;
+      } else {
+        // Production mode: Use Python API server
+        const pythonApiBaseUrl = 'http://localhost:5000';
+        endpoint = `${pythonApiBaseUrl}/api/snowflake/import`;
+      }
+
+      // Call the API
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      // Check if response is ok before parsing
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Parse JSON response with proper error handling
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        throw new Error('Invalid response format from server');
+      }
+
+      if (result.success) {
+        // Process the data similar to CSV import
+        const data = result.data;
+        const columns = result.columns;
+
+        if (data && data.length > 0) {
+          setColumns(columns);
+          setImportedData(data);
+
+          // Set both display filename and success popup filename
+          const displayName = `Snowflake: ${queryType === 'table' ? snowflakeQuery : 'Custom Sql'}`;
+          setFileName(displayName);
+          setCurrentFileVersion(null); // Clear version for Snowflake imports
+          setUploadedFileName(displayName);
+
+          // Disable cache when new dataset is loaded - user must explicitly choose to cache
+          setCacheEnabled(false);
+
+          setShowUploadSuccess(true);
+
+          // Close modal and reset form
+          setShowSnowflakeModal(false);
+          setSnowflakeQuery('');
+          setQueryType('table');
+          setTestMode(true);
+
+          console.log(`Successfully imported ${data.length} rows from Snowflake`);
+        } else {
+          alert('No data returned from Snowflake query.');
+        }
+      } else {
+        // Handle API errors
+        const errorMessage = result.error || 'Unknown error occurred';
+        alert(`Snowflake import failed:\n${errorMessage}`);
+        console.error('Snowflake import error:', result);
+      }
+
+    } catch (error) {
+      console.error('Snowflake import error:', error);
+
+      // Check for specific error types
+      if (error instanceof TypeError) {
+        if (error.message.includes('fetch')) {
+          alert('Unable to connect to Snowflake API server.\nPlease ensure the server is running and accessible.');
+        } else {
+          alert(`Network error: ${error.message}\nPlease try again or check the console for details.`);
+        }
+      } else if (error instanceof Error) {
+        if (error.message.includes('HTTP error')) {
+          alert(`Server error: ${error.message}\nPlease check your query and try again.`);
+        } else if (error.message.includes('Invalid response format')) {
+          alert('Server returned invalid data format.\nPlease try again or contact support.');
+        } else {
+          alert(`Error: ${error.message}\nSee console for details.`);
+        }
+      } else {
+        alert('Error importing from Snowflake. Please check your query and try again.\nSee console for details.');
+      }
+    }
+  }, [snowflakeQuery, queryType]);
+
+  // Storage option handlers
+  const handleStorageOptionSelect = useCallback(async (option: 'local' | 'server') => {
+    if (!pendingFileData) return;
+
+    const { file, headers, data, rowCount } = pendingFileData;
+
+    console.log('handleStorageOptionSelect called with option:', option);
+    console.log('Pending file data:', {fileName: file.name, userEmail});
+
+    // Clear any previous conflict data before checking new storage option
+    setStorageConflictData(null);
+    setSelectedStorageType(option);
+
+    try {
+      if (option === 'local') {
+        // Check for local file conflicts first
+        console.log('Checking for local file conflicts for:', file.name, 'user:', userEmail);
+        try {
+          const conflictResult = await duckdbService.checkLocalFileConflict(userEmail, file.name);
+          console.log('Conflict check result:', conflictResult);
+
+          if (conflictResult.exists) {
+            // File already exists locally, show conflict options in modal
+            console.log('Local file conflict detected, showing conflict resolution');
+            console.log('Conflict data:', conflictResult);
+            const safeConflictResult = {
+              conflict: true,
+              existing_versions: conflictResult.versions.map(v => ({
+                version: v.version,
+                upload_timestamp: v.createdAt,
+                table_name: v.id
+              })),
+              next_version: conflictResult.nextVersion,
+              user_name: userEmail,
+              original_filename: file.name
+            };
+
+            setStorageConflictData(safeConflictResult);
+            console.log('Storage conflict data set:', safeConflictResult);
+            console.log('Selected storage type:', option);
+            // Modal will stay open and show conflict resolution UI
+          } else {
+            // No conflict, proceed with local save
+            console.log('No conflict, proceeding with local save');
+            await saveToLocalStorage(file, headers, data, userEmail, 1);
+            setShowStorageModal(false);
+            setPendingFileData(null);
+          }
+        } catch (error) {
+          console.error('Error checking local file conflict:', error);
+          // Show error to user instead of silent fallback
+          alert('Error checking for file conflicts. Please try again.');
+          return;
+        }
+
+      } else {
+        // Store on server - check for conflicts first
+        try {
+          const conflictResponse = await fetch('/api/database/uploads/check-conflict', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_name: userEmail,
+              original_filename: file.name
+            }),
+          });
+
+          let conflictResult;
+          try {
+            const conflictText = await conflictResponse.clone().text();
+            conflictResult = JSON.parse(conflictText);
+          } catch (jsonError) {
+            console.error('Failed to parse conflict check response as JSON:', jsonError);
+            // Show error to user instead of silent fallback
+            alert('Error checking for file conflicts. Please try again.');
+            return;
+          }
+
+          if (conflictResponse.ok && conflictResult.success) {
+            if (conflictResult.conflict) {
+              // File already exists on server, show conflict options in modal
+              console.log('Server file conflict detected, showing conflict resolution');
+              console.log('Server conflict data:', conflictResult);
+              const safeConflictResult = {
+                ...conflictResult,
+                existing_versions: conflictResult.existing_versions || [],
+                next_version: conflictResult.next_version || 1
+              };
+
+              setStorageConflictData(safeConflictResult);
+              console.log('Storage conflict data set:', safeConflictResult);
+              console.log('Selected storage type:', option);
+              // Modal will stay open and show conflict resolution UI
+            } else {
+              // No conflict, proceed with upload
+              await uploadFileToDatabase(file, headers, data, 1);
+              setShowStorageModal(false);
+              setPendingFileData(null);
+            }
+          } else {
+            console.error('Failed to check conflict:', conflictResult.error);
+            // Show error to user instead of silent fallback
+            alert(`Error checking for file conflicts: ${conflictResult.error || 'Unknown error'}. Please try again.`);
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking conflict:', error);
+          // Show error to user instead of silent fallback
+          alert('Network error while checking for file conflicts. Please check your connection and try again.');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error with storage option:', error);
+      alert(`Error storing data: ${error}`);
+      // Close modal on error
+      setShowStorageModal(false);
+      setPendingFileData(null);
+      setStorageConflictData(null);
+      setSelectedStorageType(null);
+    }
+  }, [pendingFileData, userEmail, uploadFileToDatabase]);
+
+  // Load existing files only when modal is open
+  useEffect(() => {
+    const loadExistingFiles = async () => {
+      try {
+        if (!showExistingFilesModal) return;
+        setIsFetchingExistingFiles(true);
+        // Local datasets
+        const localDatasetsList = await duckdbService.listDatasets();
+        setLocalDatasets(localDatasetsList);
+        const localVersions: ExistingFileVersion[] = localDatasetsList.map(dataset => ({
+          id: dataset.id,
+          version: dataset.version,
+          originalFileName: dataset.originalFileName,
+          createdAt: dataset.createdAt.toISOString(),
+          rowCount: dataset.rowCount,
+          columnsCount: dataset.columns.length,
+          fileSize: dataset.fileSize,
+          source: 'local',
+          datasetId: dataset.id
+        }));
+
+        // Server uploads (Snowflake) - safe fetch with health check and timeout
+        let serverVersions: ExistingFileVersion[] = [];
+        try {
+          const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+          if (isOnline) {
+            let apiHealthy = false;
+            try {
+              const healthCtrl = new AbortController();
+              setTimeout(() => healthCtrl.abort(), 5000);
+              const healthResp = await fetch('/api/database/health', { signal: healthCtrl.signal });
+              apiHealthy = healthResp.ok;
+            } catch {
+              apiHealthy = false;
+            }
+
+            if (apiHealthy) {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 10000);
+              try {
+                const resp = await fetch(`/api/database/uploads/user/${encodeURIComponent(userEmail)}`, {
+                  signal: controller.signal,
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                if (resp.ok) {
+                  const data = await resp.json();
+                  if (data.success && Array.isArray(data.uploads)) {
+                    serverVersions = data.uploads.map((u: any) => ({
+                      id: u.table_name,
+                      version: u.version,
+                      originalFileName: u.original_filename,
+                      createdAt: u.upload_timestamp,
+                      rowCount: u.row_count || 0,
+                      columnsCount: u.column_count || (u.column_names ? String(u.column_names).split(',').filter(Boolean).length : 0),
+                      fileSize: u.file_size_bytes || 0,
+                      source: 'server',
+                      tableName: u.table_name
+                    }));
+                  }
+                }
+              } finally {
+                clearTimeout(timeout);
+              }
+            } else {
+              console.log('Database API not reachable - skipping server uploads fetch');
+            }
+          } else {
+            console.log('Offline - skipping server uploads fetch');
+          }
+        } catch (e) {
+          console.warn('Failed to fetch server uploads:', (e as any)?.message || e);
+        }
+
+        // Group by filename
+        const grouped: {[filename: string]: ExistingFileVersion[]} = {};
+        [...localVersions, ...serverVersions].forEach(v => {
+          const filename = v.originalFileName;
+          if (!grouped[filename]) grouped[filename] = [];
+          grouped[filename].push(v);
+        });
+
+        // Sort versions per group (latest version first; prefer server when equal)
+        Object.keys(grouped).forEach(filename => {
+          grouped[filename].sort((a, b) => {
+            if (a.version !== b.version) return b.version - a.version;
+            if (a.source !== b.source) return a.source === 'server' ? -1 : 1;
+            return 0;
+          });
+        });
+
+        setGroupedExistingFiles(grouped);
+      } catch (error) {
+        console.error('Error loading existing files:', error);
+      } finally {
+        setIsFetchingExistingFiles(false);
+      }
+    };
+    loadExistingFiles();
+  }, [showExistingFilesModal, userEmail]);
+
+  // Handler for loading a dataset from local storage
+  const handleLoadLocalDataset = useCallback(async (dataset: LocalDataset, data: DataRow[]) => {
+    try {
+      console.log(`Loading local dataset: ${dataset.name} (Flow: Local storage → DuckDB → App)`);
+
+      // Load dataset data into the app
+      setColumns(dataset.columns);
+      setImportedData(data);
+      setCacheEnabled(false); // Using local DuckDB storage
+
+      // Use original filename (without extension) for consistent version lookups
+      const baseName = dataset.originalFileName.replace(/\.csv$/i, '');
+      setFileName(baseName);
+      setCurrentFileVersion(dataset.version);
+      setDataSource('local');
+
+      // Proactively fetch versions (local + server) for header dropdown
+      try {
+        await fetchFileVersions(userEmail, dataset.originalFileName);
+      } catch (e) {
+        console.warn('Version fetch after local load failed (non-blocking):', (e as any)?.message || e);
+      }
+
+      setUploadedFileName(`${dataset.originalFileName} (Loaded from Local storage - ${data.length.toLocaleString()} rows via DuckDB query)`);
+      setShowUploadSuccess(true);
+
+    } catch (error) {
+      console.error('Error loading local dataset into app:', error);
+      alert('Failed to load dataset');
+    }
+  }, [fetchFileVersions, userEmail]);
+
+  // Select an existing local file and load sample data via DuckDB, then inject into app
+  const handleSelectExistingFile = useCallback(async (version: ExistingFileVersion) => {
+    setIsLoadingExisting(true);
+    // Clear previous in-memory dataset before loading an existing file
+    clearInMemoryData('dataset-switch');
+    try {
+      if (version.source === 'local' && version.datasetId) {
+        const datasetMeta = await duckdbService.getDatasetMetadata(version.datasetId);
+        const data = await duckdbService.queryDataset(version.datasetId, 'SELECT * FROM {table} LIMIT 1000000');
+        setColumns(datasetMeta?.columns || []);
+        setImportedData(data || []);
+        setCacheEnabled(false);
+        const baseName = version.originalFileName.replace(/\.csv$/i, '');
+        setFileName(baseName);
+        setCurrentFileVersion(version.version);
+        setDataSource('local');
+        try { await fetchFileVersions(userEmail, version.originalFileName); } catch {}
+        setUploadedFileName(`${version.originalFileName} (v${version.version}) - Local`);
+        setShowUploadSuccess(true);
+      } else if (version.source === 'server' && version.tableName) {
+        const response = await fetch(`/api/database/tables/${version.tableName}/data?limit=1000000`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || 'Failed to load server data');
+        setColumns(result.columns || []);
+        setImportedData(result.data || []);
+        setCacheEnabled(false);
+        const baseName = version.originalFileName.replace(/\.csv$/i, '');
+        setFileName(baseName);
+        setCurrentFileVersion(version.version);
+        setDataSource('server');
+        setUploadedFileName(`${version.originalFileName} (v${version.version}) - Snowflake`);
+        setShowUploadSuccess(true);
+      }
+
+      // Close modal and reset state
+      setShowExistingFilesModal(false);
+      setSelectedFileName('');
+      setSelectedFileVersion(null);
+      setExpandedFiles(new Set());
+    } catch (error) {
+      console.error('Error loading existing file:', error);
+      alert('Failed to load file');
+    } finally {
+      setIsLoadingExisting(false);
+    }
+  }, [userEmail, fetchFileVersions]);
+
+  // Toggle expansion of a file's versions in existing files modal
+  const toggleFileExpansion = useCallback((filename: string) => {
+    setExpandedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(filename)) {
+        newSet.delete(filename);
+      } else {
+        newSet.add(filename);
+        setExpandLimits(limits => ({ ...limits, [filename]: limits[filename] ?? 25 }));
+      }
+      return newSet;
+    });
+  }, []);
+
+  // Existing files selection handlers
+  const handleExistingFileNameChange = useCallback((name: string) => {
+    setSelectedFileName(name);
+    const versions = groupedExistingFiles[name] || [];
+    setSelectedFileVersion(versions.length > 0 ? versions[0] : null);
+  }, [groupedExistingFiles]);
+
+  const handleExistingFileVersionChange = useCallback((version: number) => {
+    if (!selectedFileName) return;
+    const ds = (groupedExistingFiles[selectedFileName] || []).find(v => v.version === version) || null;
+    setSelectedFileVersion(ds);
+  }, [groupedExistingFiles, selectedFileName]);
+
+  useEffect(() => {
+    if (showExistingFilesModal) {
+      const names = Object.keys(groupedExistingFiles);
+      if (names.length > 0) {
+        if (!selectedFileName || !groupedExistingFiles[selectedFileName]) {
+          const defaultName = names[0];
+          setSelectedFileName(defaultName);
+          const versions = groupedExistingFiles[defaultName] || [];
+          setSelectedFileVersion(versions.length > 0 ? versions[0] : null);
+        } else if (!selectedFileVersion && groupedExistingFiles[selectedFileName]?.length > 0) {
+          setSelectedFileVersion(groupedExistingFiles[selectedFileName][0]);
+        }
+      } else {
+        setSelectedFileName('');
+        setSelectedFileVersion(null);
+      }
+    } else {
+      setExpandLimits({});
+      setExpandedFiles(new Set());
+    }
+  }, [showExistingFilesModal, groupedExistingFiles, selectedFileName, selectedFileVersion]);
+
+  // Lock body scroll when Existing Files modal is open
+  useEffect(() => {
+    if (!showExistingFilesModal) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [showExistingFilesModal]);
+
+  // Cache management functions
+  const toggleCache = useCallback(async () => {
+    const newCacheEnabled = !cacheEnabled;
+    setCacheEnabled(newCacheEnabled);
+
+    // If enabling cache and there's current data, cache it
+    if (newCacheEnabled && importedData.length > 0 && columns.length > 0) {
+      try {
+        // Show caching dialog
+        setShowCachingDialog(true);
+        setCachingStatus('Initializing cache...');
+
+        // Simulate progress steps for better UX
+        setCachingStatus('Preparing data for caching...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        setCachingStatus('Storing data in Local storage...');
+        const source = fileName.startsWith('Snowflake:') ? 'snowflake' : 'file';
+        await cacheService.cacheData(
+          importedData,
+          columns,
+          source,
+          fileName,
+          fileName.startsWith('Snowflake:') ? fileName.replace('Snowflake: ', '') : undefined,
+          fileName.includes('Custom Sql') ? 'sql' : 'table'
+        );
+
+        setCachingStatus('Updating cache status...');
+        setHasCachedData(true);
+        const info = await cacheService.getStorageInfo();
+        setCacheInfo(info);
+
+        setCachingStatus('Caching completed successfully!');
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // Auto-close dialog
+        setShowCachingDialog(false);
+      } catch (error) {
+        console.error('Error caching current data:', error);
+        setCachingStatus('Error occurred while caching data');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setShowCachingDialog(false);
+      }
+    }
+  }, [cacheEnabled, importedData, columns, fileName]);
+
+  const clearCache = useCallback(async () => {
+    try {
+      // Show clearing dialog
+      setShowClearingDialog(true);
+      setClearingStatus('Initializing cache clearing...');
+
+      // Simulate progress steps for better UX
+      setClearingStatus('Removing cached data...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      setClearingStatus('Clearing Local storage...');
+      await cacheService.clearCache();
+
+      setClearingStatus('Updating application state...');
+      setHasCachedData(false);
+      setCacheInfo({ count: 0, size: 0 });
+      // Disable caching when cache is cleared
+      setCacheEnabled(false);
+
+      // If current data is from cache, clear it
+      if (hasCachedData && importedData.length > 0) {
+        setClearingStatus('Clearing current data...');
+        setImportedData([]);
+        setColumns([]);
+        setFileName('');
+      }
+
+      setClearingStatus('Cache cleared successfully!');
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Auto-close dialog
+      setShowClearingDialog(false);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      setClearingStatus('Error occurred while clearing cache');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setShowClearingDialog(false);
+    }
+  }, [hasCachedData, importedData.length]);
 
   // Check for overlaps
   const checkOverlap = useCallback((newCard: DashboardCard, excludeId?: string) => {
+    const gapSize = 0.25; // Quarter grid gap between cards
+
     return cards.some(card => {
       if (card.id === excludeId) return false;
-      
+
       const cardRight = card.gridPosition.x + card.gridPosition.width;
       const cardBottom = card.gridPosition.y + card.gridPosition.height;
       const newRight = newCard.gridPosition.x + newCard.gridPosition.width;
       const newBottom = newCard.gridPosition.y + newCard.gridPosition.height;
-      
+
+      // Check if cards are too close (within gap distance)
       return !(
-        newCard.gridPosition.x >= cardRight ||
-        newRight <= card.gridPosition.x ||
-        newCard.gridPosition.y >= cardBottom ||
-        newBottom <= card.gridPosition.y
+        newCard.gridPosition.x >= cardRight + gapSize ||
+        newRight + gapSize <= card.gridPosition.x ||
+        newCard.gridPosition.y >= cardBottom + gapSize ||
+        newBottom + gapSize <= card.gridPosition.y
       );
     });
   }, [cards]);
 
-  const findAvailablePosition = useCallback((width: number, height: number) => {
-    // Try different positions to avoid overlaps
-    for (let y = 0; y <= GRID_ROWS - height; y++) {
-      for (let x = 0; x <= GRID_COLS - width; x++) {
-        const testCard: DashboardCard = {
-          id: 'test',
-          chartType: 'pie',
-          title: '',
-          gridPosition: { x, y, width, height },
-          isConfiguring: false,
-          dimension: '',
-          measure: '',
-          yAxisScale: 'linear',
-        };
-        
-        if (!checkOverlap(testCard)) {
-          return { x, y };
+  // Helper function to get visible grid bounds based on current scroll position
+  const getVisibleGridBounds = useCallback(() => {
+    if (!containerRef.current) {
+      return {
+        minX: 0,
+        maxX: gridCols,
+        minY: 0,
+        maxY: gridRows
+      };
+    }
+
+    const container = containerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const scrollTop = container.scrollTop;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // Convert pixel coordinates to grid coordinates
+    const minX = Math.max(0, Math.floor(scrollLeft / GRID_SIZE) - 1); // Add buffer
+    const maxX = Math.min(gridCols, Math.ceil((scrollLeft + containerWidth) / GRID_SIZE) + 1);
+    const minY = Math.max(0, Math.floor(scrollTop / GRID_SIZE) - 1);
+    const maxY = Math.min(gridRows, Math.ceil((scrollTop + containerHeight) / GRID_SIZE) + 1);
+
+    return { minX, maxX, minY, maxY };
+  }, [gridCols, gridRows]);
+
+  const findAvailablePositionWithAdaptiveSize = useCallback((
+    preferredWidth: number,
+    preferredHeight: number,
+    sourceCard?: DashboardCard
+  ): { x: number; y: number; width: number; height: number } => {
+    // Reserve edge space and define minimum card sizes
+    const edgeGap = 0.5;
+    const cardGap = 0.5;
+    const minWidth = 4; // Minimum card width (4 grid units)
+    const minHeight = 3; // Minimum card height (3 grid units)
+
+    // Get the currently visible area
+    const visibleBounds = getVisibleGridBounds();
+
+    console.log('Finding adaptive position for card:', {
+      preferredWidth,
+      preferredHeight,
+      visibleBounds,
+      sourceCard: sourceCard?.id
+    });
+
+    // Helper function to test if a position with specific dimensions is available
+    const isPositionAvailable = (x: number, y: number, w: number, h: number) => {
+      const testCard: DashboardCard = {
+        id: 'test',
+        chartType: 'pie',
+        title: '',
+        gridPosition: { x, y, width: w, height: h },
+        isConfiguring: false,
+        dimension: '',
+        measure: '',
+        yAxisScale: 'linear',
+        sortBy: 'dimension',
+        sortOrder: 'asc',
+        mergedBars: {},
+        customNames: {},
+        textBoxes: [],
+        arrows: [],
+      };
+
+      return !checkOverlap(testCard);
+    };
+
+    // Helper function to calculate maximum available space at a position
+    const getMaxAvailableSpace = (x: number, y: number) => {
+      let maxWidth = Math.min(gridCols - edgeGap - x, visibleBounds.maxX - x);
+      let maxHeight = Math.min(gridRows - edgeGap - y, visibleBounds.maxY - y);
+
+      // Check constraints from existing cards
+      for (const card of cards) {
+        const cardRight = card.gridPosition.x + card.gridPosition.width;
+        const cardBottom = card.gridPosition.y + card.gridPosition.height;
+
+        // If card is to the right and on same or overlapping Y
+        if (card.gridPosition.x > x &&
+            card.gridPosition.y < y + maxHeight &&
+            cardBottom > y) {
+          maxWidth = Math.min(maxWidth, card.gridPosition.x - x - cardGap);
+        }
+
+        // If card is below and on same or overlapping X
+        if (card.gridPosition.y > y &&
+            card.gridPosition.x < x + maxWidth &&
+            cardRight > x) {
+          maxHeight = Math.min(maxHeight, card.gridPosition.y - y - cardGap);
+        }
+      }
+
+      return {
+        width: Math.max(minWidth, maxWidth),
+        height: Math.max(minHeight, maxHeight)
+      };
+    };
+
+    // Helper function to try placing a card with adaptive sizing
+    const tryPlaceWithAdaptiveSize = (x: number, y: number, maxW?: number, maxH?: number) => {
+      // Determine available space constraints
+      const space = maxW && maxH ?
+        { width: maxW, height: maxH } :
+        getMaxAvailableSpace(x, y);
+
+      // Try preferred size first
+      if (preferredWidth <= space.width && preferredHeight <= space.height &&
+          isPositionAvailable(x, y, preferredWidth, preferredHeight)) {
+        return { x, y, width: preferredWidth, height: preferredHeight };
+      }
+
+      // Try different size combinations that fit the available space
+      const sizesToTry = [
+        // Preserve aspect ratio first
+        {
+          width: Math.min(preferredWidth, space.width),
+          height: Math.min(preferredHeight, space.height)
+        },
+        // Try square proportions
+        {
+          width: Math.min(space.width, 6),
+          height: Math.min(space.height, 6)
+        },
+        // Try compact sizes
+        {
+          width: Math.min(space.width, 5),
+          height: Math.min(space.height, 4)
+        },
+        {
+          width: Math.min(space.width, 4),
+          height: Math.min(space.height, 3)
+        },
+      ];
+
+      for (const size of sizesToTry) {
+        if (size.width >= minWidth && size.height >= minHeight &&
+            isPositionAvailable(x, y, size.width, size.height)) {
+          console.log('Found adaptive size:', { x, y, ...size });
+          return { x, y, width: size.width, height: size.height };
+        }
+      }
+
+      return null;
+    };
+
+    // Strategy 1: If we have a source card (duplication), try to place nearby
+    if (sourceCard) {
+      const sourceX = sourceCard.gridPosition.x;
+      const sourceY = sourceCard.gridPosition.y;
+      const sourceWidth = sourceCard.gridPosition.width;
+      const sourceHeight = sourceCard.gridPosition.height;
+
+      console.log('Trying adaptive positions near source card:', { sourceX, sourceY, sourceWidth, sourceHeight });
+
+      // Try to the right of the source card first
+      const rightX = sourceX + sourceWidth + cardGap;
+      const rightMaxWidth = Math.min(gridCols - edgeGap - rightX, visibleBounds.maxX - rightX);
+      if (rightX + minWidth <= gridCols - edgeGap && rightMaxWidth >= minWidth) {
+        const result = tryPlaceWithAdaptiveSize(rightX, sourceY, rightMaxWidth, sourceHeight);
+        if (result) {
+          console.log('Found adaptive position to the right:', result);
+          return result;
+        }
+      }
+
+      // Try below the source card
+      const belowY = sourceY + sourceHeight + cardGap;
+      const belowMaxHeight = Math.min(gridRows - edgeGap - belowY, visibleBounds.maxY - belowY);
+      if (belowY + minHeight <= gridRows - edgeGap && belowMaxHeight >= minHeight) {
+        const result = tryPlaceWithAdaptiveSize(sourceX, belowY, sourceWidth, belowMaxHeight);
+        if (result) {
+          console.log('Found adaptive position below:', result);
+          return result;
+        }
+      }
+
+      // Try to the left of the source card
+      const leftX = sourceX - minWidth - cardGap;
+      if (leftX >= edgeGap) {
+        const leftMaxWidth = sourceX - edgeGap - cardGap;
+        const result = tryPlaceWithAdaptiveSize(leftX, sourceY, leftMaxWidth, sourceHeight);
+        if (result) {
+          console.log('Found adaptive position to the left:', result);
+          return result;
+        }
+      }
+
+      // Try above the source card
+      const aboveY = sourceY - minHeight - cardGap;
+      if (aboveY >= edgeGap) {
+        const aboveMaxHeight = sourceY - edgeGap - cardGap;
+        const result = tryPlaceWithAdaptiveSize(sourceX, aboveY, sourceWidth, aboveMaxHeight);
+        if (result) {
+          console.log('Found adaptive position above:', result);
+          return result;
         }
       }
     }
-    
-    // Fallback to default position if no space found
-    return { x: 0, y: 0 };
-  }, [checkOverlap]);
+
+    // Strategy 2: Search systematically in the visible area with adaptive sizing
+    console.log('Searching systematically with adaptive sizing');
+
+    for (let currentY = Math.max(edgeGap, visibleBounds.minY);
+         currentY + minHeight <= Math.min(gridRows - edgeGap, visibleBounds.maxY);
+         currentY += cardGap) {
+
+      for (let currentX = Math.max(edgeGap, visibleBounds.minX);
+           currentX + minWidth <= Math.min(gridCols - edgeGap, visibleBounds.maxX);
+           currentX += cardGap) {
+
+        const result = tryPlaceWithAdaptiveSize(currentX, currentY);
+        if (result) {
+          console.log('Found systematic adaptive position:', result);
+          return result;
+        }
+      }
+    }
+
+    // Strategy 3: Search the entire grid with adaptive sizing
+    console.log('Searching entire grid with adaptive sizing');
+    for (let currentY = edgeGap; currentY + minHeight <= gridRows - edgeGap; currentY += cardGap) {
+      for (let currentX = edgeGap; currentX + minWidth <= gridCols - edgeGap; currentX += cardGap) {
+        const result = tryPlaceWithAdaptiveSize(currentX, currentY);
+        if (result) {
+          console.log('Found global adaptive position:', result);
+          return result;
+        }
+      }
+    }
+
+    // Fallback to minimum size at default position
+    console.warn('No available adaptive position found, using minimum size fallback');
+    return { x: edgeGap, y: edgeGap, width: minWidth, height: minHeight };
+  }, [checkOverlap, getVisibleGridBounds, gridCols, gridRows, cards]);
+
+  // Keep the old function for backward compatibility
+  const findAvailablePosition = useCallback((width: number, height: number, sourceCard?: DashboardCard) => {
+    const result = findAvailablePositionWithAdaptiveSize(width, height, sourceCard);
+    return { x: result.x, y: result.y };
+  }, [findAvailablePositionWithAdaptiveSize]);
+
+  // Helper function to get default dimension and measure for new charts
+  const getDefaultValues = useCallback(() => {
+    if (columns.length === 0 || importedData.length === 0) {
+      return { dimension: '', measure: '' };
+    }
+
+    // Find first string column for dimension (prefer non-numeric columns)
+    const stringColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'string' && isNaN(parseFloat(String(sampleValue)));
+    });
+    const defaultDimension = stringColumns.length > 0 ? stringColumns[0] : columns[0];
+
+    // Find first numeric column for measure
+    const numericColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+    });
+    const defaultMeasure = numericColumns.length > 0 ? numericColumns[0] : '';
+
+    return { dimension: defaultDimension, measure: defaultMeasure };
+  }, [columns, importedData]);
 
   const addCard = useCallback(() => {
     if (cards.length >= 6) return;
@@ -1183,10 +3244,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     const defaultWidth = 8;
     const defaultHeight = 6;
     const position = findAvailablePosition(defaultWidth, defaultHeight);
+    const { dimension, measure } = getDefaultValues();
 
     const newCard: DashboardCard = {
       id: `card-${Date.now()}`,
-      chartType: 'pie',
+      chartType: 'none',
       title: `Chart ${cards.length + 1}`,
       gridPosition: {
         x: position.x,
@@ -1195,8 +3257,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         height: defaultHeight,
       },
       isConfiguring: false,
-      dimension: '',
-      measure: '',
+      dimension: dimension,
+      measure: measure,
       measure2: '',
       seriesColumn: '',
       yAxisScale: 'linear',
@@ -1215,7 +3277,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       setTimeout(() => saveToHistory(newCards), 0);
       return newCards;
     });
-  }, [cards.length, findAvailablePosition, importedData]);
+  }, [cards.length, findAvailablePosition, importedData, getDefaultValues]);
 
   const updateCard = useCallback((cardId: string, updates: Partial<DashboardCard>) => {
     setCards(prev => {
@@ -1228,6 +3290,157 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     });
   }, [historyIndex]);
 
+  // Sanitize chart titles to remove any automatically appended markers like "(Resized)"
+  const sanitizeTitle = useCallback((title: string) => title.replace(/\s*\(Resized\)/g, ''), []);
+
+  // One-time cleanup for existing cards that may contain "(Resized)" in the title
+  useEffect(() => {
+    if (cards.length === 0) return;
+    const hasResized = cards.some(c => c.title && c.title.includes('(Resized)'));
+    if (!hasResized) return;
+    setCards(prev => {
+      const cleaned = prev.map(c => c.title && c.title.includes('(Resized)') ? { ...c, title: sanitizeTitle(c.title) } : c);
+      setTimeout(() => saveToHistory(cleaned), 0);
+      return cleaned;
+    });
+  }, [cards, sanitizeTitle]);
+
+  // Auto-resize all charts to fill screen optimally
+  const autoResizeCharts = useCallback(() => {
+    if (cards.length === 0) return;
+
+    // Calculate optimal grid layout based on number of cards
+    const numCards = cards.length;
+    let cols = Math.ceil(Math.sqrt(numCards));
+    let rows = Math.ceil(numCards / cols);
+
+    // Adjust layout for better screen utilization
+    if (numCards <= 2) {
+      cols = numCards;
+      rows = 1;
+    } else if (numCards <= 4) {
+      cols = 2;
+      rows = 2;
+    } else {
+      // For more than 4 cards, keep 2 columns and add additional rows
+      cols = 2;
+      rows = Math.ceil(numCards / 2);
+    }
+
+    // Define gap between cards (in grid units) - consistent with addCard gap
+    const cardGap = 0.25;
+
+    // Calculate available space for content
+    const minEdgeGap = 0.25;
+    const totalInterCardGapCols = (cols - 1) * cardGap;
+    const totalInterCardGapRows = (rows - 1) * cardGap;
+
+    // Calculate optimal card size first
+    const availableForCards = gridCols - totalInterCardGapCols - (2 * minEdgeGap);
+    const availableForCardsRows = gridRows - totalInterCardGapRows - (2 * minEdgeGap);
+    const cardWidth = Math.floor(availableForCards / cols);
+    const cardHeight = Math.floor(availableForCardsRows / rows);
+
+    // Ensure minimum size constraints
+    const minCardWidth = Math.max(3, cardWidth);
+    const minCardHeight = Math.max(3, cardHeight);
+
+    // Calculate total content width and height (including gaps between cards)
+    const totalContentWidth = (cols * minCardWidth) + totalInterCardGapCols;
+    const totalContentHeight = (rows * minCardHeight) + totalInterCardGapRows;
+
+    // Center the content by calculating balanced edge gaps
+    const horizontalEdgeGap = Math.max(minEdgeGap, (gridCols - totalContentWidth) / 2);
+    const verticalEdgeGap = Math.max(minEdgeGap, (gridRows - totalContentHeight) / 2);
+
+    // Update all cards with new positions and sizes
+    const updatedCards = cards.map((card, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+
+      // Calculate position with centered layout
+      const x = horizontalEdgeGap + (col * (minCardWidth + cardGap));
+      const y = verticalEdgeGap + (row * (minCardHeight + cardGap));
+
+      return {
+        ...card,
+        gridPosition: {
+          x,
+          y,
+          width: minCardWidth,
+          height: minCardHeight,
+        },
+      };
+    });
+
+    setCards(updatedCards);
+    setTimeout(() => saveToHistory(updatedCards), 0);
+  }, [cards]);
+
+  // Helper function to get default values for specific chart types
+  const getChartTypeDefaults = useCallback((chartType: DashboardCard['chartType']) => {
+    if (columns.length === 0 || importedData.length === 0) {
+      return { dimension: '', measure: '', dimension2: '', seriesColumn: '' };
+    }
+
+    // Find string columns for dimensions (prefer non-numeric columns)
+    const stringColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'string' && isNaN(parseFloat(String(sampleValue)));
+    });
+
+    // Find numeric columns for measures
+    const numericColumns = columns.filter(col => {
+      const sampleValue = importedData[0]?.[col];
+      return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+    });
+
+    // Set defaults based on chart type
+    const dimension = stringColumns.length > 0 ? stringColumns[0] : columns[0];
+    const measure = numericColumns.length > 0 ? numericColumns[0] : '';
+
+    switch (chartType) {
+      case 'scorecard':
+        // Scorecard only needs measure
+        return { dimension: '', measure, dimension2: '', seriesColumn: '' };
+
+      case 'mixbar':
+        // Stacked bar needs dimension, measure, and dimension2
+        const dimension2 = stringColumns.length > 1 ? stringColumns[1] :
+                          (columns.length > 1 && columns[1] !== dimension ? columns[1] : '');
+        return { dimension, measure, dimension2, seriesColumn: '' };
+
+      case 'line':
+        // Line chart can use seriesColumn for multiple lines
+        const seriesColumn = stringColumns.length > 1 ? stringColumns[1] : '';
+        return { dimension, measure, dimension2: '', seriesColumn };
+
+      case 'table':
+        // Table can show all data, but set first dimension for grouping if needed
+        return { dimension, measure: '', dimension2: '', seriesColumn: '' };
+
+      case 'none':
+        // Empty chart type - clear all selections
+        return { dimension: '', measure: '', dimension2: '', seriesColumn: '' };
+
+      default:
+        // Pie, bar charts need dimension and measure
+        return { dimension, measure, dimension2: '', seriesColumn: '' };
+    }
+  }, [columns, importedData]);
+
+  // Helper function to set chart type with auto-selected values
+  const setChartTypeWithDefaults = useCallback((cardId: string, chartType: DashboardCard['chartType']) => {
+    const defaults = getChartTypeDefaults(chartType);
+    updateCard(cardId, {
+      chartType,
+      dimension: defaults.dimension,
+      measure: defaults.measure,
+      dimension2: defaults.dimension2,
+      seriesColumn: defaults.seriesColumn
+    });
+  }, [getChartTypeDefaults, updateCard]);
+
   const deleteCard = useCallback((cardId: string) => {
     setCards(prev => {
       const newCards = prev.filter(card => card.id !== cardId);
@@ -1238,6 +3451,53 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       setConfiguringCard(null);
     }
   }, [configuringCard, historyIndex]);
+
+  const duplicateCard = useCallback((cardId: string) => {
+    if (cards.length >= 6) return; // Respect card limit
+
+    const cardToDuplicate = cards.find(card => card.id === cardId);
+    if (!cardToDuplicate) return;
+
+    console.log('Duplicating card:', cardId, cardToDuplicate.gridPosition);
+
+    // Find available position with adaptive sizing for the duplicate
+    const adaptivePosition = findAvailablePositionWithAdaptiveSize(
+      cardToDuplicate.gridPosition.width,
+      cardToDuplicate.gridPosition.height,
+      cardToDuplicate
+    );
+
+    console.log('New duplicate position with adaptive sizing:', adaptivePosition);
+
+    // Check if the card was resized
+    const wasResized = adaptivePosition.width !== cardToDuplicate.gridPosition.width ||
+                      adaptivePosition.height !== cardToDuplicate.gridPosition.height;
+
+    if (wasResized) {
+      console.log(`Card resized from ${cardToDuplicate.gridPosition.width}x${cardToDuplicate.gridPosition.height} to ${adaptivePosition.width}x${adaptivePosition.height} to fit available space`);
+    }
+
+    // Create a new card with copied configuration and adaptive positioning/sizing
+    const newCard: DashboardCard = {
+      ...cardToDuplicate, // Copy all properties
+      id: `card-${Date.now()}`, // New unique ID
+      title: `${cardToDuplicate.title} (Copy)`,
+      gridPosition: {
+        x: adaptivePosition.x,
+        y: adaptivePosition.y,
+        width: adaptivePosition.width,
+        height: adaptivePosition.height,
+      },
+      textBoxes: [], // Reset text boxes (they're card-specific)
+      arrows: [], // Reset arrows (they're card-specific)
+    };
+
+    setCards(prev => {
+      const newCards = [...prev, newCard];
+      setTimeout(() => saveToHistory(newCards), 0);
+      return newCards;
+    });
+  }, [cards, findAvailablePositionWithAdaptiveSize]);
 
   // Save view functionality
   const saveCurrentView = useCallback(async () => {
@@ -1269,6 +3529,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         cards: optimizedCards,
         hideControls: hideControls,
         importedData: optimizedImportedData,
+        columns: columns,
+        fileName: fileName,
+        currentFileVersion: currentFileVersion,
+        cacheInfo: hasCachedData ? {
+          sessionId: cacheService.getSessionId(),
+          fileName,
+          hasCachedData
+        } : undefined,
       },
       chartCount: cards.length,
       chartTypes: chartTypes,
@@ -1282,9 +3550,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       setSaveReportDescription('');
       setShowSaveDialog(false);
 
-      // Show success feedback
+      // Show success feedback (custom dialog)
       console.log('View saved successfully:', savedReport.name);
-      alert('View saved successfully!');
+      setShowSuccessDialog({ title: 'Report Saved Successfully' });
 
     } catch (error) {
       console.error('Error saving view:', error);
@@ -1474,6 +3742,15 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [filteredData]);
 
+  // Validate chart compatibility when columns or cards change
+  useEffect(() => {
+    if (columns.length > 0 && cards.length > 0) {
+      validateChartCompatibility();
+    } else {
+      setChartCompatibilityIssues({});
+    }
+  }, [columns, cards, validateChartCompatibility]);
+
   const openSaveDialog = useCallback(async () => {
     if (cards.length === 0) {
       console.log('No charts to save');
@@ -1635,8 +3912,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       const gridY = Math.round(newY / GRID_SIZE);
 
       // Apply minimal constraints - allow movement beyond grid but prevent negative positions
-      const constrainedX = Math.max(0, gridX); // Don't restrict right boundary
-      const constrainedY = Math.max(0, gridY); // Don't restrict bottom boundary
+      let constrainedX = Math.max(0, gridX); // Don't restrict right boundary
+      let constrainedY = Math.max(0, gridY); // Don't restrict bottom boundary
+
+      // Clamp and ensure finite
+      if (!Number.isFinite(constrainedX)) constrainedX = 0;
+      if (!Number.isFinite(constrainedY)) constrainedY = 0;
+      constrainedX = Math.min(constrainedX, gridCols - 1);
+      constrainedY = Math.min(constrainedY, gridRows - 1);
 
       // Create temporary card for overlap checking
       const tempCard = {
@@ -1703,6 +3986,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         newWidth = Math.max(3, Math.round((mouseX - cardLeft) / GRID_SIZE));
         newHeight = Math.max(3, Math.round((mouseY - cardTop) / GRID_SIZE));
       }
+
+      // Clamp and ensure finite values before applying
+      if (!Number.isFinite(newX)) newX = 0;
+      if (!Number.isFinite(newY)) newY = 0;
+      if (!Number.isFinite(newWidth)) newWidth = 3;
+      if (!Number.isFinite(newHeight)) newHeight = 3;
+      newWidth = Math.max(3, Math.min(newWidth, gridCols));
+      newHeight = Math.max(3, Math.min(newHeight, gridRows));
+      newX = Math.max(0, Math.min(newX, gridCols - 1));
+      newY = Math.max(0, Math.min(newY, gridRows - 1));
 
       // Create temporary card for overlap checking
       const tempCard = {
@@ -1839,6 +4132,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     }
   }, [draggedCard, resizingCard, draggedTextBox, resizingTextBox, draggedArrow, handleMouseMove, handleMouseUp]);
 
+  // Utility: create lightweight history snapshot (omit heavy data arrays)
+  const snapshotCardsForHistory = useCallback((cardsToSnap: DashboardCard[]) => {
+    return cardsToSnap.map((c) => ({
+      ...c,
+      data: [],
+      textBoxes: c.textBoxes.map(tb => ({ ...tb })),
+      arrows: c.arrows.map(ar => ({ ...ar })),
+    }));
+  }, []);
+
   // History state calculations
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < cardsHistory.length - 1;
@@ -1846,14 +4149,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   // Initialize history when first card is added
   useEffect(() => {
     if (cards.length > 0 && cardsHistory.length === 0) {
-      setCardsHistory([JSON.parse(JSON.stringify(cards))]);
+      setCardsHistory([snapshotCardsForHistory(cards)]);
       setHistoryIndex(0);
     }
-  }, [cards.length, cardsHistory.length]);
+  }, [cards.length, cardsHistory.length, snapshotCardsForHistory]);
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts for undo/redo and escape to preview chart
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Escape key to preview chart during configuration
+      if (event.key === 'Escape' && configuringCard) {
+        event.preventDefault();
+        showChart(configuringCard);
+        return;
+      }
+
+      // Undo/Redo shortcuts
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
         event.preventDefault();
         undo();
@@ -1866,7 +4177,40 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [canUndo, canRedo]);
+  }, [canUndo, canRedo, configuringCard]);
+
+  // Global Escape key closes open overlays/dialogs
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      let closed = false;
+      if (showSaveDialog) { setShowSaveDialog(false); closed = true; }
+      if (showSnowflakeModal) { setShowSnowflakeModal(false); setSnowflakeQuery(''); closed = true; }
+      if (showExistingFilesModal) { setShowExistingFilesModal(false); closed = true; }
+      if (showUploadSuccess) { setShowUploadSuccess(false); closed = true; }
+      if (showSuccessDialog) { setShowSuccessDialog(null); closed = true; }
+      if (showClearAllDialog) { setShowClearAllDialog(false); closed = true; }
+      if (showCachingDialog) { setShowCachingDialog(false); closed = true; }
+      if (showClearingDialog) { setShowClearingDialog(false); closed = true; }
+      if (showFileHistoryModal) { setShowFileHistoryModal(false); closed = true; }
+      if (showStorageModal) { handleStorageModalClose(); closed = true; }
+      if (closed) e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [
+    showSaveDialog,
+    showSnowflakeModal,
+    showExistingFilesModal,
+    showUploadSuccess,
+    showSuccessDialog,
+    showClearAllDialog,
+    showCachingDialog,
+    showClearingDialog,
+    showFileHistoryModal,
+    showStorageModal,
+    handleStorageModalClose,
+  ]);
 
   // Mix bar chart container dimensions tracking
   const updateDimensions = useCallback((cardId: string) => {
@@ -2024,23 +4368,24 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
   // Beautiful custom tooltip component for line charts
   const CustomLineTooltip = ({ active, payload, label, card }: any) => {
+    const { theme } = useTheme();
     if (active && payload && payload.length) {
       return (
-        <div className="bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 shadow-xl">
-          <div className="text-white font-medium mb-2" style={{ fontSize: '10px' }}>
+        <div className={`${theme === 'light' ? 'bg-white border-gray-200' : 'bg-black/80 border-white/20'} backdrop-blur-sm border rounded-lg px-3 py-2 shadow-xl`}>
+          <div className={`${theme === 'light' ? 'text-gray-900' : 'text-white'} font-medium mb-2`} style={{ fontSize: '10px' }}>
             {label}
           </div>
           <div className="space-y-1">
             {payload.map((entry: any, index: number) => (
-              <div key={index} className="flex items-center gap-2">
+              <div key={`${entry?.name ?? 'item'}-${index}`} className="flex items-center gap-2">
                 <div
                   className="w-2 h-[2px] rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-white/90" style={{ fontSize: '10px' }}>
+                <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/90'}`} style={{ fontSize: '10px' }}>
                   {entry.name}:
                 </span>
-                <span className="text-white font-medium" style={{ fontSize: '10px' }}>
+                <span className={`${theme === 'light' ? 'text-gray-900' : 'text-white'}`} style={{ fontSize: '10px' }}>
                   {typeof entry.value === 'number' ? formatYAxisValue(entry.value, card?.yAxisFormat) : entry.value}
                 </span>
               </div>
@@ -2088,6 +4433,38 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           </div>
         );
       }
+    }
+
+    // Check for column compatibility issues
+    const cardIssues = chartCompatibilityIssues[card.id];
+    if (cardIssues && cardIssues.length > 0) {
+      return (
+        <div className="text-white/60 text-center p-4">
+          <div className="mb-3">
+            <div className="text-red-400 font-medium mb-2">⚠️ Chart Configuration Error</div>
+            <div className="text-sm mb-2">This chart cannot be rendered with the current dataset version:</div>
+            <ul className="text-xs text-left space-y-1 mb-3">
+              {cardIssues.map((issue, index) => (
+                <li key={`${issue}-${index}`} className="text-red-300">• {issue}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="space-y-2">
+            <button
+              onClick={() => setConfiguringCard(card.id)}
+              className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-1.5 rounded text-sm border border-blue-400/30 mr-2"
+            >
+              Reconfigure Chart
+            </button>
+            <button
+              onClick={() => setShowVersionDropdown(true)}
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded text-sm border border-amber-400/30"
+            >
+              Switch Version
+            </button>
+          </div>
+        </div>
+      );
     }
 
     // Special validation for mixbar
@@ -2313,7 +4690,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         const isLargeCard = cardArea >= 150000; // >= 387x387
 
         // Determine if we should show legend at all - more intelligent based on area
-        const shouldShowLegend = !isVerySmallCard && dataCount <= 500;
+        const shouldShowLegend = !isVerySmallCard;
 
         // Elastic font size calculation based on card diagonal
         const baseFontSize = Math.max(8, Math.min(16, cardDiagonal * 0.02));
@@ -2364,11 +4741,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                         outerRadius={pieRadius}
                         innerRadius={pieRadius * 0.3}
                         dataKey="value"
+                              isAnimationActive={false}
                         animationDuration={600}
                         animationBegin={0}
                         stroke="none"
-                        labelLine={false}
-                        label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize)}
+                              activeIndex={activePieSlice[card.id] ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, idx) => setActivePieSlice((s) => ({ ...s, [card.id]: idx }))}
+                              onMouseLeave={() => setActivePieSlice((s) => ({ ...s, [card.id]: null }))}
+                      labelLine={false}
+                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                       >
                         {(processedData || []).map((entry, index) => {
                           const isDragging = draggedBar === `${card.id}-${entry?.name}`;
@@ -2532,7 +4914,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                           );
                         })}
                       </Pie>
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip />} wrapperStyle={{ transition: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -2549,7 +4931,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
                     return (
                       <div
-                        key={entry?.name || `item-${index}`}
+                        key={`${entry?.name ?? 'item'}-${index}`}
                         className={`flex items-center cursor-grab transition-all duration-200 rounded ${
                           isDragging ? 'opacity-50 scale-105' : ''
                         } ${
@@ -2702,11 +5084,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                               outerRadius={pieRadius}
                               innerRadius={pieRadius * 0.4}
                               dataKey="value"
+                              isAnimationActive={false}
                               animationDuration={600}
                               animationBegin={0}
                               stroke="none"
-                              labelLine={false}
-                              label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize)}
+                              activeIndex={activePieSlice[card.id] ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, idx) => setActivePieSlice((s) => ({ ...s, [card.id]: idx }))}
+                              onMouseLeave={() => setActivePieSlice((s) => ({ ...s, [card.id]: null }))}
+                      labelLine={false}
+                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                             >
                               {(processedData || []).map((entry, index) => {
                                 const isDragging = draggedBar === `${card.id}-${entry?.name}`;
@@ -2866,7 +5253,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                                 );
                               })}
                             </Pie>
-                            <Tooltip content={<CustomTooltip />} />
+                            <Tooltip content={<CustomTooltip />} wrapperStyle={{ transition: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                           </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -2895,7 +5282,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                             className="text-white/60 hover:text-white/90 transition-colors p-1"
                             style={{ fontSize: `${legendFontSize * 1.2}px` }}
                           >
-                            ���
+                            ×
                           </button>
                         </div>
                       )}
@@ -2908,7 +5295,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                         style={{
                           gap: `${legendItemSpacing}px`,
                           maxHeight: isExpanded ? 'none' : 'auto',
-                          paddingTop: isExpanded ? '0px' : `${Math.max(0, (availableHeight - (visibleItemCount * itemHeight)) / 2)}px`
+                          paddingTop: '0px'
                         }}
                       >
                         {sortedData.slice(0, visibleItemCount).map((entry, index) => {
@@ -2917,7 +5304,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
                           return (
                             <div
-                              key={entry?.name || `item-${index}`}
+                              key={`${entry?.name ?? 'item'}-${index}`}
                               className={`flex items-center min-w-0 cursor-grab transition-all duration-200 rounded ${
                                 isDragging ? 'opacity-50 scale-105' : ''
                               } ${
@@ -3108,11 +5495,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                       outerRadius={pieRadius}
                       innerRadius={pieRadius * 0.3}
                       dataKey="value"
+                              isAnimationActive={false}
                       animationDuration={600}
                       animationBegin={0}
                       stroke="none"
+                              activeIndex={activePieSlice[card.id] ?? -1}
+                              activeShape={renderActivePieShape}
+                              onMouseEnter={(_, idx) => setActivePieSlice((s) => ({ ...s, [card.id]: idx }))}
+                              onMouseLeave={() => setActivePieSlice((s) => ({ ...s, [card.id]: null }))}
                       labelLine={false}
-                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize)}
+                      label={(props) => renderCustomLabel(props, pieRadius, shouldShowLabels, labelFontSize, 'inside')}
                     >
                       {(processedData || []).map((_, index) => (
                         <Cell
@@ -3121,7 +5513,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                         />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip />} wrapperStyle={{ transition: 'none' }} allowEscapeViewBox={{ x: true, y: true }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -3129,15 +5521,17 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           </div>
         );
       case 'bar':
-        // Column Chart with optional second measure support
+        // Bar Chart with optional second measure support
         const hasSecondMeasure = card.measure2 && card.measure2.trim() !== '';
-        const maxValue = hasSecondMeasure
+        const computedMax = hasSecondMeasure
           ? Math.max(...processedData.flatMap(d => [d.value, d.value2 || 0]))
           : Math.max(...processedData.map(d => d.value));
+        const maxValue = Number.isFinite(computedMax) && computedMax > 0 ? computedMax : 1;
         const chartWidth = card.gridPosition.width * GRID_SIZE - 32; // Account for padding
         const chartHeight = card.gridPosition.height * GRID_SIZE - 100; // Extra space for tilted labels
-        const barWidth = Math.max(20, (chartWidth - 40) / processedData.length - 10);
-        const barSpacing = (chartWidth - 40 - (barWidth * processedData.length)) / (processedData.length - 1);
+        const count = processedData.length;
+        const barWidth = Math.max(20, count > 0 ? (chartWidth - 40) / count - 10 : 20);
+        const barSpacing = count > 1 ? (chartWidth - 40 - (barWidth * count)) / (count - 1) : 0;
 
         // Responsive legend sizing (similar to mixbar chart)
         const isColumnVeryCompact = card.gridPosition.width <= 2 || card.gridPosition.height <= 2;
@@ -3158,7 +5552,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             {/* Custom Bar Chart with Drag & Drop */}
             <div className="flex flex-col h-full">
               <div className="flex-1 relative" style={{ height: '80%' }}>
-                <div className="flex items-end justify-center h-full px-4 pt-4 relative">
+                <div className="flex items-end justify-start h-full pt-4 relative" style={{ paddingLeft: Y_AXIS_GUTTER_LEFT, paddingRight: 16 }}>
                   {/* X-axis line positioned at true baseline (Y=0) */}
                   <div
                     className="absolute bottom-10 left-4 right-4 border-b border-white/30"
@@ -3172,10 +5566,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
                     return (
                       <div
-                        key={item.name}
+                          key={`${item.name}-${index}`}
                         className="flex flex-col items-center relative"
                         style={{
-                          width: barWidth + barSpacing,
+                          width: Math.max(0, barWidth + barSpacing),
                           marginRight: index < processedData.length - 1 ? 0 : 0,
                           marginBottom: '40px' // Space for labels below X-axis
                         }}
@@ -3185,7 +5579,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                           className="absolute bottom-0 border-l border-white/30"
                           style={{
                             height: '6px',
-                            left: `${(barWidth + barSpacing) / 2}px`,
+                            left: `${Math.max(0, (barWidth + barSpacing) / 2)}px`,
                             transform: 'translateX(-50%)'
                           }}
                         />
@@ -3487,7 +5881,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 </div>
               </div>
 
-              {/* Comprehensive Legend positioned below X-axis labels (matching Stacked Column Chart) */}
+              {/* Comprehensive Legend positioned below X-axis labels (matching Stacked Bar Chart) */}
               <div
                 className="absolute flex items-center justify-center flex-wrap"
                 style={{
@@ -3665,7 +6059,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         // Dynamic margins that shrink intelligently
         const marginTop = isVeryCompact ? 15 : (isCompact ? 18 : 20);
         const marginBottom = isVeryCompact ? 75 : (isCompact ? 85 : 95); // Space for X-axis labels + legend
-        const marginLeft = Math.max(10, svgWidth * 0.02);
+        const marginLeft = isVeryCompact ? Math.min(32, Y_AXIS_GUTTER_LEFT) : Y_AXIS_GUTTER_LEFT;
         const marginRight = Math.max(10, svgWidth * 0.02);
 
         // Dynamic font sizes based on available space - increased for better readability
@@ -3717,7 +6111,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 const isDropTarget = draggedOverBar === `${card.id}-${item.name}` && draggedBar && draggedBar !== `${card.id}-${item.name}`;
 
                 return (
-                  <g key={item.name} style={{ opacity: isDragging ? 0.5 : 1 }}>
+                  <g key={`${item.name}-${barIndex}`} style={{ opacity: isDragging ? 0.5 : 1 }}>
                     {/* Stacked segments */}
                     {allSegments.map((segment, segmentIndex) => {
                       const segmentValue = card.yAxisScale === 'percentage'
@@ -4129,13 +6523,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <div
                 style={{
                   position: 'absolute',
-                  backgroundColor: 'rgba(0,0,0,0.95)',
+                  backgroundColor: theme === 'light' ? 'rgba(255,255,255,0.98)' : 'rgba(0,0,0,0.95)',
                   backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  border: theme === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.3)',
                   borderRadius: '12px',
                   padding: isVeryCompact ? '8px 10px' : '12px 16px',
                   fontSize: isVeryCompact ? '9px' : '10px',
-                  color: 'white',
+                  color: theme === 'light' ? '#111827' : 'white',
                   pointerEvents: 'none',
                   zIndex: 1000,
                   left: `${marginLeft + hoveredSegment.barIndex * (svgBarWidth + barGap) + svgBarWidth / 2}px`,
@@ -4180,7 +6574,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               </thead>
               <tbody>
                 {processedData.map((row, idx) => (
-                  <tr key={idx} className="border-b border-white/10">
+                  <tr key={`${row?.name ?? 'row'}-${idx}`} className="border-b border-white/10">
                     <td className="p-2">{row.name}</td>
                     <td className="p-2">{row.value.toLocaleString()}</td>
                   </tr>
@@ -4208,6 +6602,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         const lengthAdjustedFontSize = Math.max(20, scorecardBaseFontSize - (textLength > 8 ? (textLength - 8) * 3 : 0)); // Reduce for longer numbers
         const finalFontSize = Math.round(lengthAdjustedFontSize);
 
+        // Measure text to size the scorecard box
+        const measureCanvas = document.createElement('canvas');
+        const measureCtx = measureCanvas.getContext('2d');
+        let measuredWidth = 0;
+        if (measureCtx) {
+          measureCtx.font = `${finalFontSize}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+          measuredWidth = Math.ceil(measureCtx.measureText(formattedScoreValue).width);
+        }
+        const horizontalPadding = 24;
+        const verticalPadding = 16;
+        const maxBoxWidth = Math.max(0, scorecardWidth - 24);
+        const boxWidth = Math.min(maxBoxWidth, Math.max(200, measuredWidth + horizontalPadding));
+        const boxHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+        const headerOffset = hideControls ? 0 : 32; // Space for toolbar when visible
+        const totalBoxHeight = boxHeight + headerOffset;
+
         // Get or create scorecard text box
         const scorecardTextBoxId = `scorecard-${card.id}`;
         let scorecardTextBox = card.textBoxes?.find(tb => tb.id === scorecardTextBoxId);
@@ -4222,12 +6632,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             cardId: card.id,
             content: formattedScoreValue,
             position: {
-              x: cardPixelWidth / 2 - 100, // Center horizontally (approximate)
-              y: cardPixelHeight / 2 - 25  // Center vertically (approximate)
+              x: Math.max(0, (cardPixelWidth - boxWidth) / 2),
+              y: Math.max(0, (cardPixelHeight - totalBoxHeight) / 2)
             },
             size: {
-              width: 200,
-              height: 50
+              width: boxWidth,
+              height: totalBoxHeight
             },
             fontSize: finalFontSize,
             color: '#ffffff',
@@ -4239,11 +6649,27 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             textBoxes: [...(card.textBoxes || []), scorecardTextBox]
           });
         } else {
-          // Update existing scorecard text box with current value and font size
-          if (scorecardTextBox.content !== formattedScoreValue || scorecardTextBox.fontSize !== finalFontSize) {
+          // Update existing scorecard text box with current value, size, and keep it centered on resize
+          const newWidth = Math.min(card.gridPosition.width * GRID_SIZE - 24, Math.max(200, measuredWidth + horizontalPadding));
+          const contentHeight = Math.max(50, Math.ceil(finalFontSize * 1.3) + verticalPadding);
+          const headerOffset2 = hideControls ? 0 : 32;
+          const newHeight = contentHeight + headerOffset2;
+          const cardPixelWidth2 = card.gridPosition.width * GRID_SIZE;
+          const cardPixelHeight2 = card.gridPosition.height * GRID_SIZE;
+          const shouldUpdate = (
+            scorecardTextBox.content !== formattedScoreValue ||
+            scorecardTextBox.fontSize !== finalFontSize ||
+            scorecardTextBox.size.width !== newWidth ||
+            scorecardTextBox.size.height !== newHeight
+          );
+          if (shouldUpdate) {
+            const newX = Math.max(0, Math.round((cardPixelWidth2 - newWidth) / 2));
+            const newY = Math.max(0, Math.round((cardPixelHeight2 - newHeight) / 2));
             updateTextBox(card.id, scorecardTextBoxId, {
               content: formattedScoreValue,
-              fontSize: finalFontSize
+              fontSize: finalFontSize,
+              size: { width: newWidth, height: newHeight },
+              position: { x: newX, y: newY }
             });
           }
         }
@@ -4285,7 +6711,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         return (
           <div className="h-full w-full p-4">
             <ResponsiveContainer width="100%" height="100%">
-              <RechartsLineChart data={lineChartData}>
+              <RechartsLineChart data={lineChartData} margin={{ left: Y_AXIS_GUTTER_LEFT, right: 16, top: 8, bottom: 24 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                 <XAxis
                   dataKey="name"
@@ -4303,6 +6729,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   tick={{ fill: 'rgba(255,255,255,0.7)' }}
                   axisLine={true}
                   tickLine={true}
+                  width={Math.max(32, Y_AXIS_GUTTER_LEFT - 8)}
                   orientation="left"
                   type="number"
                   tickFormatter={(value) => {
@@ -4326,7 +6753,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               </RechartsLineChart>
             </ResponsiveContainer>
 
-            {/* Custom Legend - styled similar to Stacked Column Chart */}
+            {/* Custom Legend - styled similar to Stacked Bar Chart */}
             {allSeries.length > 1 && (() => {
               // Responsive sizing logic (similar to mixbar chart)
               const cardWidth = card.gridPosition.width * GRID_SIZE;
@@ -4377,6 +6804,16 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             })()}
           </div>
         );
+      case 'none':
+        return (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-white/60 text-center">
+              <div className="mb-3">📊</div>
+              <div className="text-sm mb-2">No Chart Selected</div>
+              <div className="text-xs opacity-70">Click the settings icon to configure this chart</div>
+            </div>
+          </div>
+        );
       default:
         return <div className="text-white/60 text-center">Select a chart type</div>;
     }
@@ -4393,10 +6830,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
       // Remove any future history if we're not at the end
       const trimmedHistory = prev.slice(0, historyIndex + 1);
 
-      // Add new state
+      // Add new state (lightweight snapshot)
       const newHistory = [
         ...trimmedHistory,
-        JSON.parse(JSON.stringify(newCards)),
+        snapshotCardsForHistory(newCards),
       ];
 
       // Limit history size
@@ -4418,7 +6855,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     if (historyIndex > 0) {
       const prevIndex = historyIndex - 1;
       setHistoryIndex(prevIndex);
-      setCards(JSON.parse(JSON.stringify(cardsHistory[prevIndex])));
+      const snapshot = cardsHistory[prevIndex];
+      setCards(snapshot.map(c => ({
+        ...c,
+        data: filteredData.length > 0 ? filteredData : SAMPLE_DATA,
+      })));
     }
   };
 
@@ -4426,9 +6867,41 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
     if (historyIndex < cardsHistory.length - 1) {
       const nextIndex = historyIndex + 1;
       setHistoryIndex(nextIndex);
-      setCards(JSON.parse(JSON.stringify(cardsHistory[nextIndex])));
+      const snapshot = cardsHistory[nextIndex];
+      setCards(snapshot.map(c => ({
+        ...c,
+        data: filteredData.length > 0 ? filteredData : SAMPLE_DATA,
+      })));
     }
   };
+
+  // Clear all cards and components from viewport
+  const clearAll = useCallback(() => {
+    console.log('Clearing all cards and components from viewport');
+
+    // Clear all cards (which also clears their associated text boxes and arrows)
+    setCards([]);
+
+    // Clear any selected elements
+    setSelectedElement(null);
+    setConfiguringCard(null);
+
+    // Reset any dragging states
+    setDraggedCard(null);
+    setResizingCard(null);
+    setDraggedTextBox(null);
+    setResizingTextBox(null);
+    setDraggedArrow(null);
+    setDraggedHandle(null);
+
+    // Save to history
+    setTimeout(() => saveToHistory([]), 0);
+
+    // Close the confirmation dialog
+    setShowClearAllDialog(false);
+
+    console.log('Viewport cleared successfully');
+  }, [saveToHistory]);
 
   // PDF-like tool functions
   const createTextBox = useCallback((cardId: string, x: number, y: number) => {
@@ -4496,9 +6969,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
   return (
     <div className="flex flex-col h-full w-full min-w-0 max-w-full overflow-hidden">
       {/* Header */}
-      <header className="px-4 py-2 border-b border-white/10 flex-shrink-0">
+      <header className="px-2 sm:px-4 lg:px-6 py-2 border-b border-white/10 flex-shrink-0">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3 ml-8">
+          <div className="flex items-center gap-2 sm:gap-3 ml-2 sm:ml-4 lg:ml-8">
             <svg
               className="w-6 h-6 text-white"
               viewBox="0 0 24 24"
@@ -4506,23 +6979,228 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             >
               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
             </svg>
-            <h1 className="text-xl font-normal tracking-wider">MarFi - Generate Report</h1>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-normal tracking-wider">
+              Generate Report
+              {fileName && (
+                <span className={`text-xs sm:text-sm font-light ml-1 sm:ml-2 flex items-center gap-1 ${theme === 'light' ? 'text-gray-700' : 'text-blue-300'}`}>
+                  | {fileName}
+                  {/* Version Dropdown - show for any versioned file */}
+                  {currentFileVersion && currentFileVersion > 0 && (
+                    <div className="relative" ref={versionDropdownRef}>
+                      <button
+                        onClick={() => setShowVersionDropdown(!showVersionDropdown)}
+                        className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors px-1 py-0.5 rounded hover:bg-blue-500/10"
+                        title={availableVersions.length > 1 ? `Switch version (currently v${currentFileVersion})` : `Version ${currentFileVersion} (click to check for other versions)`}
+                        disabled={loadingVersions}
+                      >
+                        <span className="text-blue-400">
+                          (v{currentFileVersion}
+                          {(() => {
+                            const currentVersion = availableVersions.find(v => v.version === currentFileVersion);
+                            return currentVersion ? ` • ${currentVersion.sourceLabel}` : '';
+                          })()})
+                        </span>
+                        {loadingVersions ? (
+                          <div className="w-3 h-3 border border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
+                        ) : (
+                          <ChevronDown className={`w-3 h-3 transition-transform ${showVersionDropdown ? 'rotate-180' : ''}`} />
+                        )}
+                      </button>
+
+                      {/* Version Dropdown Menu */}
+                      {showVersionDropdown && (
+                        <div className="absolute top-full left-0 mt-1 dropdown-panel border rounded-md shadow-lg z-50 min-w-64">
+                          <div className="py-1 max-h-40 overflow-y-auto">
+                            <div className="px-2 py-1 text-xs text-white/50 border-b border-white/10">
+                              Available Versions:
+                            </div>
+                            {availableVersions.length === 0 ? (
+                              <div className="px-3 py-2 text-xs">
+                                {loadingVersions ? (
+                                  <span className="text-white/50">Loading versions...</span>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <div className="text-white/50">
+                                      {currentFileVersion ?
+                                        'No other versions found in database or local storage' :
+                                        'File loaded locally only'
+                                      }
+                                    </div>
+                                    {!currentFileVersion && (
+                                      <div className="text-white/40 text-xs">
+                                        Tip: Re-upload this file to save versions to storage
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              availableVersions.map((version) => (
+                                <button
+                                  key={`${version.version}-${version.source}`}
+                                  onClick={() => {
+                                    // Using userEmail prop from component (user-initiated action, version switch)
+                                    loadFileVersion(userEmail, fileName, version.version, false, true);
+                                  }}
+                                  className={`w-full px-3 py-2 text-left hover:bg-white/10 transition-colors ${
+                                    version.version === currentFileVersion
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : 'text-white/80'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-medium">
+                                        Version {version.version}
+                                      </span>
+                                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                        version.source === 'local'
+                                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                          : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                      }`}>
+                                        {version.sourceLabel}
+                                      </span>
+                                    </div>
+                                    <span className="text-xs text-white/50">
+                                      {new Date(version.upload_timestamp).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  {version.file_size_bytes && (
+                                    <div className="text-xs text-white/40 mt-0.5">
+                                      {(() => {
+                                        const bytes = version.file_size_bytes;
+                                        if (bytes >= 1024 * 1024 * 1024) {
+                                          return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+                                        } else if (bytes >= 1024 * 1024) {
+                                          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+                                        } else if (bytes >= 1024) {
+                                          return `${(bytes / 1024).toFixed(1)} KB`;
+                                        } else {
+                                          return `${bytes} bytes`;
+                                        }
+                                      })()}
+                                    </div>
+                                  )}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Data info */}
+                  {importedData.length > 0 && columns.length > 0 && (
+                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/50'}`}>
+                      • {importedData.length} rows • {columns.length} cols
+                    </span>
+                  )}
+                </span>
+              )}
+              {hasCachedData && (
+                <span className="text-xs text-green-400 font-light ml-2 flex items-center gap-1" title={`Cached data available (${cacheInfo.count} items)`}>
+                  <HardDrive className="w-3 h-3" />
+                  Cached
+                </span>
+              )}
+            </h1>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleFileImport}
-              className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30"
-              title="Upload Data"
-            >
-              <Upload className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setShowExistingFilesModal(true)}
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300'
+                    : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'
+                }`}
+                title="Select from Existing Files"
+              >
+                <Files className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => { setShowUploadTooltip(false); handleFileImport(); e.currentTarget.blur(); }}
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300'
+                    : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
+                }`}
+                title={showUploadTooltip ? 'Upload Data' : undefined}
+              >
+                <Upload className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setShowSnowflakeModal(true)}
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-400/30'
+                }`}
+                title="Connect to Snowflake Dataset"
+              >
+                <Database className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setShowFileHistoryModal(true)}
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-purple-100 hover:bg-purple-200 text-purple-700 border-purple-300'
+                    : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-400/30'
+                }`}
+                title={`View File History`}
+              >
+                <HardDrive className="w-3 h-3" />
+              </button>
+
+              {/* Cache Toggle Button */}
+              <button
+                onClick={toggleCache}
+                disabled={showCachingDialog}
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  showCachingDialog
+                    ? (theme === 'light' ? 'bg-yellow-100 text-yellow-700 border-yellow-300 cursor-not-allowed' : 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30 cursor-not-allowed')
+                    : cacheEnabled
+                    ? (theme === 'light' ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300' : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30')
+                    : (theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300' : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30')
+                }`}
+                title={
+                  showCachingDialog
+                    ? 'Caching in progress...'
+                    : `${cacheEnabled ? 'Disable' : 'Enable'} data caching (Local storage)${
+                        !cacheEnabled && importedData.length > 0 ? ' - Click to cache current dataset' : ''
+                      }`
+                }
+              >
+                <HardDrive className="w-3 h-3" />
+              </button>
+
+              {/* Clear Cache Button */}
+              {hasCachedData && (
+                <button
+                  onClick={clearCache}
+                  disabled={showClearingDialog}
+                  className={`p-1.5 rounded-lg transition-colors border ${
+                    showClearingDialog
+                      ? (theme === 'light' ? 'bg-orange-100 text-orange-700 border-orange-300 cursor-not-allowed' : 'bg-orange-500/20 text-orange-300 border-orange-400/30 cursor-not-allowed')
+                      : (theme === 'light' ? 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300' : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-400/30')
+                  }`}
+                  title={
+                    showClearingDialog
+                      ? 'Clearing cache in progress...'
+                      : `Clear cache (${cacheInfo.count} items, ${(cacheInfo.size / 1024).toFixed(1)}KB)`
+                  }
+                >
+                  <Trash className="w-3 h-3" />
+                </button>
+              )}
+            </div>
 
             {/* Undo/Redo Buttons */}
             <div className="flex items-center gap-1">
               <button
                 onClick={undo}
                 disabled={!canUndo}
-                className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 border border-gray-400/30 hover:border-gray-400/50 disabled:opacity-30 disabled:cursor-not-allowed"
+                className={`${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-800 border border-gray-200 hover:border-gray-300' : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 border border-gray-400/30 hover:border-gray-400/50'} font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed`}
                 title="Undo last change (Ctrl+Z)"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4532,7 +7210,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <button
                 onClick={redo}
                 disabled={!canRedo}
-                className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 border border-gray-400/30 hover:border-gray-400/50 disabled:opacity-30 disabled:cursor-not-allowed"
+                className={`${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-800 border border-gray-200 hover:border-gray-300' : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 hover:text-gray-200 border border-gray-400/30 hover:border-gray-400/50'} font-medium text-sm rounded-lg p-1.5 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed`}
                 title="Redo last change (Ctrl+Y)"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4547,7 +7225,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <button
                   onClick={() => setCurrentTool('select')}
                   className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                    currentTool === 'select' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'bg-white/10 text-white/70 border border-white/20'
+                    currentTool === 'select'
+                      ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-blue-500/20 text-blue-300 border border-blue-400/30')
+                      : (theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20')
                   }`}
                   title="Select tool"
                 >
@@ -4556,7 +7236,9 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <button
                   onClick={() => setCurrentTool('textbox')}
                   className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                    currentTool === 'textbox' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'bg-white/10 text-white/70 border border-white/20'
+                    currentTool === 'textbox'
+                      ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-blue-500/20 text-blue-300 border border-blue-400/30')
+                      : (theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20')
                   }`}
                   title="Annotate"
                 >
@@ -4565,22 +7247,35 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <button
                   onClick={() => setCurrentTool('arrow')}
                   className={`p-1.5 rounded-lg transition-colors duration-200 ${
-                    currentTool === 'arrow' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' : 'bg-white/10 text-white/70 border border-white/20'
+                    currentTool === 'arrow'
+                      ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-blue-500/20 text-blue-300 border border-blue-400/30')
+                      : (theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20')
                   }`}
                   title="Arrow"
                 >
                   <ArrowUpRight className="w-3 h-3" />
                 </button>
+                <button
+                  onClick={autoResizeCharts}
+                  disabled={cards.length === 0}
+                  className={`${theme === 'light' ? 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200' : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20'} p-1.5 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  title="Auto-resize charts to fill screen"
+                >
+                  <Maximize2 className="w-3 h-3" />
+                </button>
               </div>
             </div>
 
             {/* Hide Controls Toggle Switch */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-white/80 text-xs">Hide Controls</span>
+            <div className="flex items-center">
               <button
+                aria-label="Toggle hide controls"
+                title="Hide controls"
                 onClick={() => setHideControls(!hideControls)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                  hideControls ? 'bg-purple-600' : 'bg-white/20'
+                  hideControls
+                    ? 'bg-purple-600'
+                    : (theme === 'light' ? 'bg-gray-200' : 'bg-white/20')
                 }`}
               >
                 <span
@@ -4594,7 +7289,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             <button
               onClick={openSaveDialog}
               disabled={cards.length === 0}
-              className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition-colors border border-green-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`p-1.5 rounded-lg transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                theme === 'light'
+                  ? 'bg-green-100 hover:bg-green-200 text-green-700 border-green-300'
+                  : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-400/30'
+              }`}
               title="Save Report"
             >
               <Save className="w-3 h-3" />
@@ -4604,20 +7303,45 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               <button
                 onClick={addCard}
                 disabled={cards.length >= 6}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-medium text-xs rounded-lg transition-colors border border-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex items-center gap-2 px-3 py-1.5 font-medium text-xs rounded-lg transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === 'light'
+                    ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300'
+                    : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-400/30'
+                }`}
               >
                 <Plus className="w-3 h-3" />
                 Add Card ({cards.length}/6)
               </button>
 
               <button
+                onClick={() => setShowClearAllDialog(true)}
+                disabled={cards.length === 0}
+                className={`p-1.5 rounded-lg transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === 'light'
+                    ? 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300'
+                    : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-400/30'
+                }`}
+                title="Clear all cards"
+              >
+                <Trash className="w-3 h-3" />
+              </button>
+
+              <button
                 onClick={() => setFiltersOpen(!filtersOpen)}
-                className="p-2 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 rounded-lg transition-colors border border-gray-400/30"
+                className={`p-2 rounded-lg transition-colors border ${
+                  theme === 'light'
+                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300'
+                    : 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 border-gray-400/30'
+                }`}
                 title={filtersOpen ? "Collapse Filters" : "Expand Filters"}
               >
                 {filtersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             </div>
+
+            <MemoryIndicator />
+            {/* User Profile */}
+            <UserProfile />
           </div>
         </div>
       </header>
@@ -4627,7 +7351,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         <div className="px-4 pb-4 transition-all duration-300 ease-out">
           <section
             className="p-4 rounded-2xl border border-white/10"
-            style={{ background: "rgba(255, 255, 255, 0.05)" }}
+            style={{ background: theme === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.05)" }}
           >
             <div className="grid gap-6" style={{ gridTemplateColumns: leftSectionVisible ? '1fr 4fr' : '1fr', alignItems: 'stretch' }}>
               {/* Left Column: Dimension & Values Selection */}
@@ -4639,18 +7363,33 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     Select Dimension & Values
                   </label>
                   <div className="glass-select rounded-lg border border-white/20 bg-white/5">
-                    <select
-                      value={selectedDimension}
-                      onChange={(e) => handleDimensionSelect(e.target.value)}
-                      className="w-full p-2 bg-transparent text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded-lg text-xs"
-                    >
-                      <option value="" className="bg-slate-800 text-xs">Select a column...</option>
-                      {columns.map((column) => (
-                        <option key={`filter-${column}`} value={column} className="bg-slate-800 text-xs">
-                          {column}
-                        </option>
-                      ))}
-                    </select>
+                    {theme === 'light' ? (
+                      <select
+                        value={selectedDimension}
+                        onChange={(e) => handleDimensionSelect(e.target.value)}
+                        className="w-full p-2 bg-transparent text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded-lg text-xs"
+                      >
+                        <option value="" className="bg-slate-800 text-xs">Select a column...</option>
+                        {columns.map((column) => (
+                          <option key={`filter-${column}`} value={column} className="bg-slate-800 text-xs">
+                            {column}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Select value={selectedDimension} onValueChange={(v) => handleDimensionSelect(v)}>
+                        <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                          <SelectValue placeholder="Select a column..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black/80 text-white border-white/20">
+                          {columns.map((column) => (
+                            <SelectItem key={`filter-${column}`} value={column}>
+                              {column}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
 
@@ -4812,7 +7551,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
         <div
           className="relative"
           style={{
-            width: Math.max(GRID_COLS * GRID_SIZE, 1200), // Ensure minimum width
+            width: containerWidth,
             height: containerHeight, // Dynamic height based on card positions
             minWidth: '100%',
             minHeight: '100vh' // Use viewport height as minimum
@@ -4824,12 +7563,12 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               className="absolute inset-0 pointer-events-none z-0"
               style={{
                 backgroundImage: `
-                  linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
-                  linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)
+                  linear-gradient(to right, ${theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'} 1px, transparent 1px),
+                  linear-gradient(to bottom, ${theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'} 1px, transparent 1px)
                 `,
                 backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-                width: GRID_COLS * GRID_SIZE,
-                height: GRID_ROWS * GRID_SIZE
+                width: gridCols * GRID_SIZE,
+                height: gridRows * GRID_SIZE
               }}
             />
           )}
@@ -4846,11 +7585,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   : 'z-10 border-white/20 transition-all duration-200'
               }`}
               style={{
-                left: card.gridPosition.x * GRID_SIZE,
-                top: card.gridPosition.y * GRID_SIZE,
-                width: card.gridPosition.width * GRID_SIZE,
-                height: card.gridPosition.height * GRID_SIZE,
-                transform: draggedCard === card.id ? 'rotate(1deg)' : 'none',
+                left: (Number.isFinite(card.gridPosition.x) ? card.gridPosition.x : 0) * GRID_SIZE,
+                top: (Number.isFinite(card.gridPosition.y) ? card.gridPosition.y : 0) * GRID_SIZE,
+                width: (Number.isFinite(card.gridPosition.width) ? card.gridPosition.width : 3) * GRID_SIZE,
+                height: (Number.isFinite(card.gridPosition.height) ? card.gridPosition.height : 3) * GRID_SIZE,
+                transform: 'none',
                 userSelect: 'none',
               }}
             >
@@ -4865,13 +7604,13 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                       <Move className="w-4 h-4 text-white/70" />
                     </div>
                     <EditableLabel
-                      value={card.title}
+                      value={sanitizeTitle(card.title)}
                       isEditing={editingLabel === `title-${card.id}`}
                       onEdit={(editing: boolean) => {
                         setEditingLabel(editing ? `title-${card.id}` : null);
                       }}
                       onChange={(newValue: string) => {
-                        updateCard(card.id, { title: newValue });
+                        updateCard(card.id, { title: sanitizeTitle(newValue) });
                       }}
                       maxWidth={200}
                       fontSize={14}
@@ -4882,12 +7621,22 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     <button
                       onClick={() => setConfiguringCard(card.id)}
                       className="p-1 hover:bg-white/20 rounded transition-colors"
+                      title="Configure chart"
                     >
                       <Settings className="w-4 h-4 text-white/70" />
                     </button>
                     <button
+                      onClick={() => duplicateCard(card.id)}
+                      disabled={cards.length >= 6}
+                      className="p-1 hover:bg-blue-500/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={cards.length >= 6 ? "Maximum cards reached (6/6)" : "Duplicate card"}
+                    >
+                      <Copy className="w-4 h-4 text-blue-400" />
+                    </button>
+                    <button
                       onClick={() => deleteCard(card.id)}
                       className="p-1 hover:bg-red-500/20 rounded transition-colors"
+                      title="Delete card"
                     >
                       <X className="w-4 h-4 text-red-400" />
                     </button>
@@ -4908,18 +7657,18 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   <div className="mb-2 px-1">
                     <div className="text-center">
                       <EditableLabel
-                        value={card.title}
-                        isEditing={editingLabel === `title-${card.id}`}
-                        onEdit={(editing: boolean) => {
-                          setEditingLabel(editing ? `title-${card.id}` : null);
-                        }}
-                        onChange={(newValue: string) => {
-                          updateCard(card.id, { title: newValue });
-                        }}
-                        maxWidth={200}
-                        fontSize={14}
-                        useTiltedText={false}
-                      />
+                      value={sanitizeTitle(card.title)}
+                      isEditing={editingLabel === `title-${card.id}`}
+                      onEdit={(editing: boolean) => {
+                        setEditingLabel(editing ? `title-${card.id}` : null);
+                      }}
+                      onChange={(newValue: string) => {
+                        updateCard(card.id, { title: sanitizeTitle(newValue) });
+                      }}
+                      maxWidth={200}
+                      fontSize={14}
+                      useTiltedText={false}
+                    />
                     </div>
                   </div>
                 )}
@@ -4937,44 +7686,44 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <>
                   {/* Corner Handles */}
                   <div
-                    className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-br-md z-50"
+                    className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-nw')}
                     title="Resize from top-left corner"
                   />
                   <div
-                    className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-bl-md z-50"
+                    className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-ne')}
                     title="Resize from top-right corner"
                   />
                   <div
-                    className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-tr-md z-50"
+                    className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-sw')}
                     title="Resize from bottom-left corner"
                   />
                   <div
-                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-tl-md z-50"
+                    className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-se')}
                     title="Resize from bottom-right corner"
                   />
 
                   {/* Edge Handles */}
                   <div
-                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-n-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-b-md z-50"
+                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-n-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-n')}
                     title="Resize from top edge"
                   />
                   <div
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-s-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-t-md z-50"
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-2 cursor-s-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-s')}
                     title="Resize from bottom edge"
                   />
                   <div
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-w-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-r-md z-50"
+                    className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-w-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-w')}
                     title="Resize from left edge"
                   />
                   <div
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-e-resize bg-blue-500/30 hover:bg-blue-500/50 transition-all duration-200 rounded-l-md z-50"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-6 cursor-e-resize opacity-0 hover:opacity-100 bg-white/20 border border-white/30 backdrop-blur-sm transition-all duration-200 rounded-sm z-50"
                     onMouseDown={(e) => handleMouseDown(e, card.id, 'resize-e')}
                     title="Resize from right edge"
                   />
@@ -4986,7 +7735,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           {/* Render All TextBoxes at Dashboard Level (excluding scorecard text boxes) */}
           {cards.flatMap(card => card.textBoxes || []).filter(tb => !tb.id.startsWith('scorecard-')).map(textBox => (
             <TextBoxComponent
-              key={textBox.id}
+              key={`${textBox.cardId}-${textBox.id}`}
               textBox={textBox}
               onUpdate={(updates) => updateTextBox(textBox.cardId, textBox.id, updates)}
               onDelete={() => deleteTextBox(textBox.cardId, textBox.id)}
@@ -5002,7 +7751,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
           {/* Render All Arrows at Dashboard Level */}
           {cards.flatMap(card => card.arrows || []).map(arrow => (
             <ArrowComponent
-              key={arrow.id}
+              key={`${arrow.cardId}-${arrow.id}`}
               arrow={arrow}
               onDelete={() => deleteArrow(arrow.cardId, arrow.id)}
               onUpdate={(updates) => updateArrow(arrow.cardId, arrow.id, updates)}
@@ -5046,7 +7795,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             left: '0',
             width: '100vw',
             height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.5)',
             backdropFilter: 'blur(4px)',
             zIndex: 9999,
             display: 'flex',
@@ -5054,6 +7803,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
             justifyContent: 'center',
             padding: '1rem'
           }}
+          onClick={() => setConfiguringCard(null)}
         >
           <div
             className="glass-card rounded-lg p-3 border border-white/20"
@@ -5064,6 +7814,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
               overflowY: 'auto',
               margin: '0 auto'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-sm font-semibold text-white">Configure Chart</h3>
@@ -5092,11 +7843,11 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                         return (
                           <button
                             key={type.id}
-                            onClick={() => updateCard(card.id, { chartType: type.id as DashboardCard['chartType'] })}
+                            onClick={() => setChartTypeWithDefaults(card.id, type.id as DashboardCard['chartType'])}
                             className={`p-1 rounded border transition-colors ${
                               card.chartType === type.id
-                                ? 'border-blue-400 bg-blue-500/20 text-blue-300'
-                                : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                ? (theme === 'light' ? 'border-blue-600 bg-blue-600 text-white' : 'border-blue-400 bg-blue-500/20 text-blue-300')
+                                : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                             }`}
                           >
                             <Icon className="w-3 h-3 mx-auto mb-0.5" />
@@ -5114,8 +7865,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     </label>
                     <input
                       type="text"
-                      value={card.title}
-                      onChange={(e) => updateCard(card.id, { title: e.target.value })}
+                      value={sanitizeTitle(card.title)}
+                      onChange={(e) => updateCard(card.id, { title: sanitizeTitle(e.target.value) })}
                       className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
                       placeholder="Enter chart title..."
                     />
@@ -5127,16 +7878,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Dimension (Categories)
                       </label>
-                      <select
-                        value={card.dimension}
-                        onChange={(e) => updateCard(card.id, { dimension: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select dimension...</option>
-                        {columns.map((col) => (
-                          <option key={`dimension-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.dimension}
+                          onChange={(e) => updateCard(card.id, { dimension: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select dimension...</option>
+                          {columns.map((col) => (
+                            <option key={`dimension-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.dimension || ''} onValueChange={(v) => updateCard(card.id, { dimension: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select dimension..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/80 text-white border-white/20">
+                            {columns.map((col) => (
+                              <SelectItem key={`dimension-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   )}
 
@@ -5145,45 +7909,76 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     <label className="block text-xs font-medium text-white/80 mb-1">
                       First Measure (Values)
                     </label>
-                    <select
-                      value={card.measure}
-                      onChange={(e) => updateCard(card.id, { measure: e.target.value })}
-                      className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                    >
-                      <option value="">Select measure...</option>
-                      {columns.filter(col => {
-                        // Filter to show likely numeric columns
-                        const sampleValue = importedData[0]?.[col];
-                        return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
-                      }).map((col) => (
-                        <option key={`measure1-${col}`} value={col} className="bg-slate-800">{col}</option>
-                      ))}
-                    </select>
+                    {theme === 'light' ? (
+                      <select
+                        value={card.measure}
+                        onChange={(e) => updateCard(card.id, { measure: e.target.value })}
+                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      >
+                        <option value="">Select measure...</option>
+                        {columns.filter(col => {
+                          const sampleValue = importedData[0]?.[col];
+                          return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+                        }).map((col) => (
+                          <option key={`measure1-${col}`} value={col} className="bg-slate-800">{col}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Select value={card.measure || ''} onValueChange={(v) => updateCard(card.id, { measure: v })}>
+                        <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                          <SelectValue placeholder="Select measure..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black/80 text-white border-white/20">
+                          {columns.filter(col => {
+                            const sampleValue = importedData[0]?.[col];
+                            return typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+                          }).map((col) => (
+                            <SelectItem key={`measure1-${col}`} value={col}>{col}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
 
-                  {/* Second Measure Selection (only for Column Chart) */}
+                  {/* Second Measure Selection (only for Bar Chart) */}
                   {card.chartType === 'bar' && (
                     <div>
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Second Measure (Optional)
                       </label>
-                      <select
-                        value={card.measure2 || ''}
-                        onChange={(e) => updateCard(card.id, { measure2: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select second measure (optional)...</option>
-                        {columns.filter(col => {
-                          // Filter to show likely numeric columns, exclude first measure
-                          const sampleValue = importedData[0]?.[col];
-                          const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
-                          return isNumeric && col !== card.measure;
-                        }).map((col) => (
-                          <option key={`measure2-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.measure2 || ''}
+                          onChange={(e) => updateCard(card.id, { measure2: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select second measure (optional)...</option>
+                          {columns.filter(col => {
+                            const sampleValue = importedData[0]?.[col];
+                            const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+                            return isNumeric && col !== card.measure;
+                          }).map((col) => (
+                            <option key={`measure2-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.measure2 || ''} onValueChange={(v) => updateCard(card.id, { measure2: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select second measure (optional)..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/80 text-white border-white/20">
+                            {columns.filter(col => {
+                              const sampleValue = importedData[0]?.[col];
+                              const isNumeric = typeof sampleValue === 'number' || !isNaN(parseFloat(String(sampleValue)));
+                              return isNumeric && col !== card.measure;
+                            }).map((col) => (
+                              <SelectItem key={`measure2-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="text-[10px] text-white/50 mt-0.5">
-                        Creates a 2-D column chart comparing two measures
+                        Creates a 2-D bar chart comparing two measures
                       </div>
                     </div>
                   )}
@@ -5194,19 +7989,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Series Column (Optional)
                       </label>
-                      <select
-                        value={card.seriesColumn || ''}
-                        onChange={(e) => updateCard(card.id, { seriesColumn: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select series column (optional)...</option>
-                        {columns.filter(col => {
-                          // Exclude dimension and measure columns
-                          return col !== card.dimension && col !== card.measure;
-                        }).map((col) => (
-                          <option key={`series-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.seriesColumn || ''}
+                          onChange={(e) => updateCard(card.id, { seriesColumn: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select series column (optional)...</option>
+                          {columns.filter(col => col !== card.dimension && col !== card.measure).map((col) => (
+                            <option key={`series-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.seriesColumn || ''} onValueChange={(v) => updateCard(card.id, { seriesColumn: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select series column (optional)..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/80 text-white border-white/20">
+                            {columns.filter(col => col !== card.dimension && col !== card.measure).map((col) => (
+                              <SelectItem key={`series-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="text-[10px] text-white/50 mt-0.5">
                         Creates multiple lines for each distinct value in the series column
                       </div>
@@ -5280,16 +8085,29 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                       <label className="block text-xs font-medium text-white/80 mb-1">
                         Second Dimension (Segments)
                       </label>
-                      <select
-                        value={card.dimension2 || ''}
-                        onChange={(e) => updateCard(card.id, { dimension2: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select second dimension...</option>
-                        {columns.filter(col => col !== card.dimension).map((col) => (
-                          <option key={`dimension2-${col}`} value={col} className="bg-slate-800">{col}</option>
-                        ))}
-                      </select>
+                      {theme === 'light' ? (
+                        <select
+                          value={card.dimension2 || ''}
+                          onChange={(e) => updateCard(card.id, { dimension2: e.target.value })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Select second dimension...</option>
+                          {columns.filter(col => col !== card.dimension).map((col) => (
+                            <option key={`dimension2-${col}`} value={col} className="bg-slate-800">{col}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Select value={card.dimension2 || ''} onValueChange={(v) => updateCard(card.id, { dimension2: v })}>
+                          <SelectTrigger className="w-full border bg-black/40 border-white/20 text-white px-2 py-1 h-8 text-xs">
+                            <SelectValue placeholder="Select second dimension..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-black/80 text-white border-white/20">
+                            {columns.filter(col => col !== card.dimension).map((col) => (
+                              <SelectItem key={`dimension2-${col}`} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="text-[10px] text-white/50 mt-0.5">
                         This will create segments within each bar
                       </div>
@@ -5394,7 +8212,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     </div>
                   )}
 
-                  {/* Y-Axis Formatting Selection (only for Stacked Column Charts) */}
+                  {/* Y-Axis Formatting Selection (only for Stacked Bar Charts) */}
                   {card.chartType === 'mixbar' && (
                     <div>
                       <label className="block text-xs font-medium text-white/80 mb-1">
@@ -5455,7 +8273,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                     </div>
                   )}
 
-                  {/* Y-Axis Formatting Selection (only for Column Charts) */}
+                  {/* Y-Axis Formatting Selection (only for Bar Charts) */}
                   {card.chartType === 'bar' && (
                     <div>
                       <label className="block text-xs font-medium text-white/80 mb-1">
@@ -5530,8 +8348,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                               onClick={() => updateCard(card.id, { sortBy: 'dimension' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortBy === 'dimension'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               X-Axis
@@ -5540,8 +8358,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                               onClick={() => updateCard(card.id, { sortBy: 'measure' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortBy === 'measure'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               Values
@@ -5559,8 +8377,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                               onClick={() => updateCard(card.id, { sortOrder: 'asc' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortOrder === 'asc'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               Ascending ↑
@@ -5569,8 +8387,8 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                               onClick={() => updateCard(card.id, { sortOrder: 'desc' })}
                               className={`p-1 rounded border transition-colors text-[9px] ${
                                 card.sortOrder === 'desc'
-                                  ? 'border-green-400 bg-green-500/20 text-green-300'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10'
+                                  ? (theme === 'light' ? 'border-green-600 bg-green-600 text-white' : 'border-green-400 bg-green-500/20 text-green-300')
+                                  : (theme === 'light' ? 'border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200' : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10')
                               }`}
                             >
                               Descending ↓
@@ -5590,10 +8408,10 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                   {/* Merge Instructions (only for bar, mixbar, and pie charts) */}
                   {(card.chartType === 'bar' || card.chartType === 'mixbar' || card.chartType === 'pie') && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
-                      <div className="text-[10px] text-blue-300 font-medium mb-0.5">
-                        ���� Tip: Merge Columns
+                      <div className={`text-[10px] font-medium mb-0.5 ${theme === 'light' ? 'text-gray-800' : 'text-blue-300'}`}>
+                        💡 Tip: Merge Columns
                       </div>
-                      <div className="text-[10px] text-white/70">
+                      <div className={`text-[10px] ${theme === 'light' ? 'text-gray-700' : 'text-white/70'}`}>
                         {card.chartType === 'bar'
                           ? 'Drag and drop bars onto each other to merge columns and combine their values.'
                           : card.chartType === 'mixbar'
@@ -5658,8 +8476,14 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
 
       {/* Save Report Dialog */}
       {showSaveDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl p-6 w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowSaveDialog(false)}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 mb-4">
               <Save className="w-5 h-5 text-green-400" />
               <h2 className="text-lg font-semibold text-white">Save Dashboard Report</h2>
@@ -5697,7 +8521,7 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 <p className="text-xs text-blue-300 mb-1">Report Summary:</p>
                 <p className="text-xs text-white/70">
                   • {cards.length} chart{cards.length !== 1 ? 's' : ''} configured
-                  {importedData.length > 0 && ` ��� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
+                  {importedData.length > 0 && ` �� Using imported data (${importedData.length > 1000 ? '1000' : importedData.length} rows${importedData.length > 1000 ? ' - truncated' : ''})`}
                   {hideControls && ' • Controls hidden'}
                 </p>
               </div>
@@ -5731,6 +8555,773 @@ const BuildReport: React.FC<BuildReportProps> = ({ loadedReportState }) => {
                 className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 disabled:bg-green-500/10 text-green-300 disabled:text-green-300/50 font-medium text-sm rounded-lg transition-colors disabled:cursor-not-allowed"
               >
                 Save View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Snowflake Import Modal */}
+      {showSnowflakeModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setShowSnowflakeModal(false);
+            setSnowflakeQuery('');
+            setQueryType('table');
+            setTestMode(true);
+          }}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Database className="w-5 h-5 text-blue-400" />
+              <h2 className="text-lg font-semibold text-white">Connect to Snowflake Dataset</h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Test Mode Toggle */}
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-yellow-300">Test Mode</p>
+                    <p className="text-xs text-white/70">Use sample data instead of real Snowflake connection</p>
+                  </div>
+                  <button
+                    onClick={() => setTestMode(!testMode)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                      testMode ? 'bg-yellow-600' : 'bg-white/20'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                        testMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Query Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Import Type
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setQueryType('table')}
+                    className={`p-2 rounded-lg border transition-colors ${
+                      queryType === 'table'
+                        ? 'border-blue-400 bg-blue-500/20 text-blue-300'
+                        : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    Table Name
+                  </button>
+                  <button
+                    onClick={() => setQueryType('sql')}
+                    className={`p-2 rounded-lg border transition-colors ${
+                      queryType === 'sql'
+                        ? 'border-blue-400 bg-blue-500/20 text-blue-300'
+                        : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    SQL Query
+                  </button>
+                </div>
+              </div>
+
+              {/* Query Input */}
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  {queryType === 'table' ? 'Table Name' : 'SQL Query'}
+                </label>
+                {queryType === 'table' ? (
+                  <input
+                    type="text"
+                    value={snowflakeQuery}
+                    onChange={(e) => setSnowflakeQuery(e.target.value)}
+                    placeholder={testMode
+                      ? "Try: sales_data, customer_data, or any_table_name"
+                      : "e.g., DATABASE.SCHEMA.TABLE_NAME"
+                    }
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    autoFocus
+                  />
+                ) : (
+                  <textarea
+                    value={snowflakeQuery}
+                    onChange={(e) => setSnowflakeQuery(e.target.value)}
+                    placeholder={testMode
+                      ? "Try: SELECT * FROM products WHERE category = 'Electronics'"
+                      : "SELECT * FROM DATABASE.SCHEMA.TABLE_NAME WHERE condition LIMIT 1000000"
+                    }
+                    rows={4}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                  />
+                )}
+                <p className="text-xs text-white/50 mt-1">
+                  {testMode ? (
+                    queryType === 'table'
+                      ? 'Test mode: Enter any table name to get sample data (try "sales_data" or "customer_data")'
+                      : 'Test mode: Enter any SQL query to get sample aggregated data'
+                  ) : (
+                    queryType === 'table'
+                      ? 'Enter the fully qualified table name (Database.Schema.Table)'
+                      : 'Enter your SQL query. Results will be limited to 1000 rows for performance.'
+                  )}
+                </p>
+              </div>
+
+              <div className={`border rounded-lg p-3 ${
+                testMode
+                  ? 'bg-green-500/10 border-green-500/20'
+                  : 'bg-blue-500/10 border-blue-500/20'
+              }`}>
+                <p className={`text-xs mb-1 ${
+                  testMode ? 'text-green-300' : 'text-blue-300'
+                }`}>
+                  {testMode ? 'Test Mode Active:' : 'Production Mode:'}
+                </p>
+                <p className="text-xs text-white/70">
+                  {testMode
+                    ? 'Using sample data for testing. No Snowflake connection required.'
+                    : 'This feature requires Snowflake connection configuration. Please ensure your credentials are properly set up.'
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSnowflakeModal(false);
+                  setSnowflakeQuery('');
+                  setQueryType('table');
+                  setTestMode(true);
+                }}
+                className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSnowflakeImport}
+                disabled={!snowflakeQuery.trim()}
+                className="flex-1 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 disabled:bg-blue-500/10 text-blue-300 disabled:text-blue-300/50 font-medium text-sm rounded-lg transition-colors disabled:cursor-not-allowed"
+              >
+                Import Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Storage Option Modal */}
+      <StorageOptionModal
+        isOpen={showStorageModal}
+        onClose={handleStorageModalClose}
+        onSelect={handleStorageOptionSelect}
+        onOverwrite={handleStorageOverwrite}
+        onNewVersion={handleStorageNewVersion}
+        fileName={pendingFileData?.file.name || ''}
+        fileSize={pendingFileData?.file.size || 0}
+        rowCount={pendingFileData?.rowCount || 0}
+        conflictData={storageConflictData}
+        selectedStorage={selectedStorageType}
+      />
+
+      {/* File History Modal */}
+      <Dialog open={showFileHistoryModal} onOpenChange={setShowFileHistoryModal}>
+        <DialogContent
+          className="max-w-5xl w-full p-0 max-h-[85vh] overflow-hidden border border-white/20 bg-transparent"
+          style={{ background: theme === 'light' ? '#ffffff' : 'rgba(255,255,255,0.08)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
+        >
+          <DialogHeader className="px-4 py-3 border-b border-white/10">
+            <DialogTitle className="text-white">File History</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[75vh]">
+            <FileHistory />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Saving Overlay */}
+      {isSaving && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-5 w-full max-w-md border border-white/20 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <div>
+                <div className="font-semibold">
+                  {savingTarget === 'local' ? 'Saving locally…' : 'Saving to Snowflake…'}
+                </div>
+                <div className="text-sm text-white/70">
+                  {savingElapsed}s elapsed • {savingRowsSaved.toLocaleString()} / {savingRowsTotal.toLocaleString()} rows saved
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isLoadingExisting && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-5 w-full max-w-md border border-white/20 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              <div>
+                <div className="font-semibold">Loading data…</div>
+                <div className="text-sm text-white/70">Please wait while the dataset is loaded</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Files Modal */}
+      {showExistingFilesModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overscroll-none"
+          onClick={() => setShowExistingFilesModal(false)}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full w-[95vw] max-w-7xl max-h-[90vh] overflow-hidden overscroll-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Files className="w-5 h-5 text-orange-400" />
+              <h2 className={`text-lg font-semibold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>Select from Existing Files</h2>
+              <button
+                onClick={() => setShowExistingFilesModal(false)}
+                className={`ml-auto p-1 rounded-lg transition-colors ${theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
+              >
+                <X className={`w-4 h-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>
+                Select a file and version to load data for chart building.
+              </p>
+
+              {/* Quick selectors */}
+              {!isFetchingExistingFiles && Object.keys(groupedExistingFiles).length > 0 && (
+                <div className={`flex flex-col md:flex-row md:items-end gap-3 rounded-lg p-4 border ${theme === 'light' ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+                  <div className="flex-1">
+                    <label className={`block text-xs mb-1 ${theme === 'light' ? 'text-gray-600' : 'text-white/60'}`}>File</label>
+                    <Select value={selectedFileName} onValueChange={(v) => handleExistingFileNameChange(v)}>
+                      <SelectTrigger className={`w-full border ${theme === 'light' ? 'bg-white border-gray-300 text-gray-800' : 'bg-black/40 border-white/20 text-white'}`}>
+                        <SelectValue placeholder="Select file" />
+                      </SelectTrigger>
+                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/80 text-white border-white/20'}`}>
+                        {Object.keys(groupedExistingFiles).map(name => (
+                          <SelectItem key={name} value={name}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1">
+                    <label className={`block text-xs mb-1 ${theme === 'light' ? 'text-gray-600' : 'text-white/60'}`}>Version</label>
+                    <Select
+                      value={selectedFileVersion ? String(selectedFileVersion.version) : ''}
+                      onValueChange={(v) => handleExistingFileVersionChange(Number(v))}
+                      disabled={!selectedFileName || !(groupedExistingFiles[selectedFileName]?.length)}
+                    >
+                      <SelectTrigger className={`w-full border disabled:opacity-50 ${theme === 'light' ? 'bg-white border-gray-300 text-gray-800' : 'bg-black/40 border-white/20 text-white'}`}>
+                        <SelectValue placeholder="Select version" />
+                      </SelectTrigger>
+                      <SelectContent className={`border ${theme === 'light' ? 'bg-white text-gray-800 border-gray-200' : 'bg-black/80 text-white border-white/20'}`}>
+                        {(groupedExistingFiles[selectedFileName] || []).map(v => (
+                          <SelectItem key={v.id} value={String(v.version)}>v{v.version}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:ml-auto">
+                    <button
+                      onClick={() => selectedFileVersion && handleSelectExistingFile(selectedFileVersion)}
+                      disabled={!selectedFileVersion || isLoadingExisting}
+                      className={`px-4 py-2 disabled:opacity-50 font-medium text-sm rounded-lg transition-colors border ${theme === 'light' ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300' : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'}`}
+                    >
+                      {isLoadingExisting ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-3 h-3 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></span>
+                          Loading...
+                        </span>
+                      ) : (
+                        'Load Selected'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* File table */}
+              <div className={`rounded-lg p-4 max-h-[70vh] overflow-y-auto overscroll-contain ${theme === 'light' ? 'bg-gray-50' : 'bg-white/5'}`}>
+                {isFetchingExistingFiles ? (
+                  <div className="flex items-center justify-center py-8 text-center">
+                    <span className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
+                    <span className={`${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Loading files…</span>
+                  </div>
+                ) : Object.keys(groupedExistingFiles).length > 0 ? (
+                  <div className="glass-card rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className={`${theme === 'light' ? 'bg-gray-100' : 'bg-white/5'}`}>
+                          <tr>
+                            <th className={`px-4 py-3 text-left text-sm font-medium w-8 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}></th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Status</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>File Name</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Version</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Upload Date</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Rows</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Columns</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Size</th>
+                            <th className={`px-4 py-3 text-left text-sm font-medium ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className={`${theme === 'light' ? 'divide-y divide-gray-200' : 'divide-y divide-white/10'}`}>
+                          {Object.entries(groupedExistingFiles).map(([filename, versions]) => {
+                            const latestVersion = versions[0];
+                            const isExpanded = expandedFiles.has(filename);
+
+                            return (
+                              <Fragment key={filename}>
+                                {/* Main row - Shows latest version */}
+                                <tr className={`transition-colors ${theme === 'light' ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}>
+                                  <td className="px-4 py-3">
+                                    <button
+                                      onClick={() => toggleFileExpansion(filename)}
+                                      className={`p-1 rounded transition-colors ${theme === 'light' ? 'hover:bg-gray-100' : 'hover:bg-white/10'}`}
+                                      title={isExpanded ? 'Collapse versions' : `Show all ${versions.length} versions`}
+                                    >
+                                      {versions.length > 1 ? (
+                                        isExpanded ? (
+                                          <ChevronUp className={`w-4 h-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`} />
+                                        ) : (
+                                          <ChevronDown className={`w-4 h-4 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`} />
+                                        )
+                                      ) : (
+                                        <div className="w-4 h-4"></div>
+                                      )}
+                                    </button>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <CheckCircle className="w-4 h-4 text-green-500" />
+                                      <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>success</span>
+                                      <div className="flex items-center gap-1">
+                                        {latestVersion.source === 'server' ? (
+                                        <>
+                                          <Database className="w-3 h-3 text-blue-400" title="Stored in Snowflake" />
+                                          <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Snowflake</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <HardDrive className="w-3 h-3 text-purple-400" title="Stored locally" />
+                                          <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Local</span>
+                                        </>
+                                      )}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="w-4 h-4 text-blue-500" />
+                                      <div className="flex flex-col">
+                                        <span className={`font-medium ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{filename}</span>
+                                        {versions.length > 1 && (
+                                          <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>{versions.length} versions</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-1">
+                                      <span className="px-2 py-1 bg-blue-600/30 text-blue-300 text-xs rounded-full">
+                                        v{latestVersion.version}
+                                      </span>
+                                      {versions.length > 1 && (
+                                        <span className="text-xs text-green-400 font-medium">LATEST</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="w-4 h-4 text-green-500" />
+                                      <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{new Date(latestVersion.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{latestVersion.rowCount.toLocaleString()}</span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{latestVersion.columnsCount ?? 0}</span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span className={`${theme === 'light' ? 'text-gray-700' : 'text-white/80'}`}>{(latestVersion.fileSize / 1024).toFixed(1)} KB</span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <button
+                                      onClick={() => handleSelectExistingFile(latestVersion)}
+                                      disabled={isLoadingExisting}
+                                      className={`px-3 py-1 text-xs rounded-lg transition-colors border disabled:opacity-50 ${theme === 'light' ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300' : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'}`}
+                                    >
+                                      {isLoadingExisting ? (
+                                        <span className="flex items-center gap-1">
+                                          <span className="w-3 h-3 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></span>
+                                          Loading
+                                        </span>
+                                      ) : (
+                                        'Load'
+                                      )}
+                                    </button>
+                                  </td>
+                                </tr>
+
+                                {/* Expanded rows - All versions */}
+                                {isExpanded && (
+                                  <tr>
+                                    <td colSpan={9} className="px-0 py-0">
+                                      <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-4 border-blue-400/50 mx-4 my-1 rounded-r-lg">
+                                        <div className={`px-0 py-1 rounded-r-lg border border-l-0 ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-black/20 border-white/10'}`}>
+                                          <div className="space-y-1">
+                                            {(versions.slice(0, (expandLimits[filename] ?? 25))).map((version, index) => (
+                                              <div key={version.id} className={`flex items-center py-3 transition-colors border ${theme === 'light' ? 'bg-gray-50 border-gray-100 hover:bg-gray-100' : 'bg-black/30 border-white/5 hover:bg-black/40'}`}>
+                                                <div style={{ width: '32px' }} className="flex-shrink-0"></div>
+                                                <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
+                                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                                  <span className={`text-sm capitalize ${theme === 'light' ? 'text-gray-600' : 'text-white'}`}>success</span>
+                                                  <div className="flex items-center gap-1">
+                                                    {version.source === 'server' ? (
+                                                    <>
+                                                      <Database className="w-3 h-3 text-blue-400" />
+                                                      <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Snowflake</span>
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <HardDrive className="w-3 h-3 text-purple-400" />
+                                                      <span className={`text-xs ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>Local</span>
+                                                    </>
+                                                  )}
+                                                  </div>
+                                                </div>
+                                                <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '200px', maxWidth: '250px' }}>
+                                                  <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                                  <span className={`text-sm truncate ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>{version.originalFileName}</span>
+                                                </div>
+                                                <div className="px-4 py-0 flex items-center gap-1" style={{ minWidth: '100px' }}>
+                                                  <span className={`px-2 py-1 text-xs rounded-full ${
+                                                    index === 0
+                                                      ? (theme === 'light' ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-green-600/40 text-green-200 border border-green-400/50')
+                                                      : (theme === 'light' ? 'bg-gray-100 text-gray-700' : 'bg-slate-600/40 text-slate-200')
+                                                  }`}>
+                                                    v{version.version}
+                                                  </span>
+                                                </div>
+                                                <div className="px-4 py-0 flex items-center gap-2" style={{ minWidth: '120px' }}>
+                                                  <Calendar className="w-4 h-4 text-green-500" />
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{new Date(version.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <div className="px-4 py-0" style={{ minWidth: '80px' }}>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.rowCount.toLocaleString()}</span>
+                                                </div>
+                                                <div className="px-4 py-0" style={{ minWidth: '80px' }}>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{version.columnsCount ?? 0}</span>
+                                                </div>
+                                                <div className="px-4 py-0" style={{ minWidth: '80px' }}>
+                                                  <span className={`text-sm ${theme === 'light' ? 'text-gray-700' : 'text-white'}`}>{(version.fileSize / 1024).toFixed(1)} KB</span>
+                                                </div>
+                                                <div className="px-4 py-0" style={{ minWidth: '100px' }}>
+                                                  <button
+                                                    onClick={() => handleSelectExistingFile(version)}
+                                                    disabled={isLoadingExisting}
+                                                    className={`px-3 py-1 text-xs rounded-lg transition-colors border disabled:opacity-50 ${theme === 'light' ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300' : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border-orange-400/30'}`}
+                                                  >
+                                                    {isLoadingExisting ? (
+                                                      <span className="flex items-center gap-1">
+                                                        <span className="w-3 h-3 border border-orange-400/30 border-t-orange-400 rounded-full animate-spin"></span>
+                                                        Loading...
+                                                      </span>
+                                                    ) : (
+                                                      <>Load v{version.version}</>
+                                                    )}
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                            {versions.length > (expandLimits[filename] ?? 25) && (
+                                              <div className="px-4 py-2">
+                                                <button
+                                                  onClick={() => setExpandLimits(l => ({ ...l, [filename]: (l[filename] ?? 25) + 25 }))}
+                                                  className={`px-3 py-1 text-xs rounded-lg border ${theme === 'light' ? 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200' : 'bg-white/10 hover:bg-white/20 text-white/80 border-white/20'}`}
+                                                >
+                                                  Show more ({versions.length - (expandLimits[filename] ?? 25)} more)
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Files className={`w-12 h-12 mb-4 ${theme === 'light' ? 'text-gray-400' : 'text-white/30'}`} />
+                    <h3 className={`font-medium mb-2 ${theme === 'light' ? 'text-gray-600' : 'text-white/70'}`}>No Files Found</h3>
+                    <p className={`text-sm mb-4 ${theme === 'light' ? 'text-gray-500' : 'text-white/50'}`}>
+                      Upload some files first to see them here.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowExistingFilesModal(false);
+                        handleFileImport();
+                      }}
+                      className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+                    >
+                      Upload File
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* Caching Progress Dialog */}
+      {showCachingDialog && (
+        <div className="fixed top-0 right-0 left-0 z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md mx-auto mt-16">
+            <div className="text-center">
+              {/* Caching Icon with Animation */}
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <HardDrive className="w-8 h-8 text-blue-400 animate-pulse" />
+              </div>
+
+              {/* Status Message */}
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Caching Data
+              </h3>
+              <p className="text-white/70 text-sm mb-4">
+                {cachingStatus}
+              </p>
+
+              {/* Progress Indicator */}
+              <div className="w-full bg-white/10 rounded-full h-2 mb-4">
+                <div className="bg-blue-400 h-2 rounded-full animate-pulse" style={{
+                  width: cachingStatus.includes('Initializing') ? '20%' :
+                         cachingStatus.includes('Preparing') ? '40%' :
+                         cachingStatus.includes('Storing') ? '60%' :
+                         cachingStatus.includes('Updating') ? '80%' :
+                         cachingStatus.includes('completed') ? '100%' : '0%',
+                  transition: 'width 0.3s ease-in-out'
+                }}></div>
+              </div>
+
+              {/* Info Text */}
+              <p className="text-xs text-white/50">
+                Please wait while your data is being cached...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Cache Progress Dialog */}
+      {showClearingDialog && (
+        <div className="fixed top-0 right-0 left-0 z-50 p-4">
+          <div className="glass-card rounded-2xl p-6 max-w-md mx-auto mt-16">
+            <div className="text-center">
+              {/* Clearing Icon with Animation */}
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash className="w-8 h-8 text-red-400 animate-pulse" />
+              </div>
+
+              {/* Status Message */}
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Clearing Cache
+              </h3>
+              <p className="text-white/70 text-sm mb-4">
+                {clearingStatus}
+              </p>
+
+              {/* Progress Indicator */}
+              <div className="w-full bg-white/10 rounded-full h-2 mb-4">
+                <div className="bg-red-400 h-2 rounded-full animate-pulse" style={{
+                  width: clearingStatus.includes('Initializing') ? '20%' :
+                         clearingStatus.includes('Removing') ? '40%' :
+                         clearingStatus.includes('Clearing Local storage') ? '60%' :
+                         clearingStatus.includes('Updating application') ? '80%' :
+                         clearingStatus.includes('Clearing current') ? '90%' :
+                         clearingStatus.includes('successfully') ? '100%' : '0%',
+                  transition: 'width 0.3s ease-in-out'
+                }}></div>
+              </div>
+
+              {/* Info Text */}
+              <p className="text-xs text-white/50">
+                Please wait while your cached data is being removed...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Dialog */}
+      {showClearAllDialog && (
+        <div
+          className="fixed top-0 right-0 left-0 z-50 p-4"
+          onClick={() => setShowClearAllDialog(false)}
+        >
+          <div
+            className="glass-card rounded-2xl p-6 max-w-md mx-auto mt-16"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                <Trash className="w-5 h-5 text-red-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Clear All Objects</h2>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-white/80 text-sm">
+                Are you sure you want to clear all cards and components from the current view? This action will remove:
+              </p>
+
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <ul className="text-xs text-yellow-300 space-y-1">
+                  <li>• All {cards.length} dashboard card{cards.length !== 1 ? 's' : ''}</li>
+                  <li>• All associated text boxes and annotations</li>
+                  <li>• All arrows and visual elements</li>
+                  <li>• Current chart configurations</li>
+                </ul>
+              </div>
+
+              <p className="text-white/60 text-xs">
+                ⚠️ This action cannot be undone, but you can use the Undo button to restore your work.
+              </p>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowClearAllDialog(false)}
+                  className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium text-sm rounded-lg transition-colors border border-white/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={clearAll}
+                  className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium text-sm rounded-lg transition-colors border border-red-400/30"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Session Debug Component (temporary for testing) */}
+      <SessionDebug />
+
+      {/* File Upload Result Popup */}
+      {showUploadSuccess && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4"
+          onClick={() => setShowUploadSuccess(false)}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              {(() => {
+                const isError = /db save failed|^error:/i.test(uploadedFileName);
+                return (
+                  <>
+                    <div className={`w-16 h-16 ${isError ? 'bg-red-500/20' : 'bg-green-500/20'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                      {isError ? (
+                        <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {isError
+                        ? 'Data Save Failed'
+                        : uploadedFileName.startsWith('Snowflake:')
+                          ? 'Data Imported Successfully!'
+                          : 'Data Loaded Successfully!'}
+                    </h3>
+                    <p className="text-white/70 text-sm mb-6">
+                      {isError
+                        ? 'Database save failed. The data has been loaded locally and is ready to use.'
+                        : `"${uploadedFileName}" is ready to use.`}
+                      {importedData.length > 0 && columns.length > 0 && (
+                        <span className="block text-white/50 text-xs mt-1">
+                          • {importedData.length} rows • {columns.length} columns
+                        </span>
+                      )}
+                    </p>
+
+                    <button
+                      onClick={() => setShowUploadSuccess(false)}
+                      className={`w-full px-4 py-2 ${isError ? 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30' : 'bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-400/30'} font-medium text-sm rounded-lg transition-colors`}
+                    >
+                      OK
+                    </button>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generic Success Dialog (e.g., Report Saved) */}
+      {showSuccessDialog && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-16 p-4"
+          onClick={() => setShowSuccessDialog(null)}
+        >
+          <div
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+
+              <h3 className="text-lg font-semibold text-white mb-2">{showSuccessDialog.title}</h3>
+              {showSuccessDialog.message && (
+                <p className="text-white/70 text-sm mb-6">{showSuccessDialog.message}</p>
+              )}
+
+              <button
+                onClick={() => setShowSuccessDialog(null)}
+                className="w-full px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-medium text-sm rounded-lg transition-colors border border-green-400/30"
+              >
+                OK
               </button>
             </div>
           </div>

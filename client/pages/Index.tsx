@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { useUser } from '../contexts/UserContext';
 import Navigation, { NavigationPage } from '../components/Navigation';
-import AllocationPage from '../components/AllocationPage';
-import Inbox from '../components/Inbox';
-import SourceDataManagement from '../components/SourceDataManagement';
-import ViewPublishedData from '../components/ViewPublishedData';
 import BuildReport from '../components/BuildReport';
 import ViewSavedReports, { SavedReport } from '../components/ViewSavedReports';
+import FileHistoryWithSession from '../components/FileHistoryWithSession';
 
 const Index: React.FC = () => {
-  const [navigationCollapsed, setNavigationCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState<NavigationPage>('allocation');
+  const { userEmail } = useUser();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [navigationCollapsed, setNavigationCollapsed] = useState(window.innerWidth < 1024); // Auto-collapse on tablets and mobile
+  const [currentPage, setCurrentPage] = useState<NavigationPage>('build-report');
   const [loadedReportState, setLoadedReportState] = useState<SavedReport['dashboardState'] | undefined>(undefined);
 
   const handleLoadReport = (reportState: SavedReport['dashboardState']) => {
@@ -19,59 +19,88 @@ const Index: React.FC = () => {
   };
 
   const handlePageChange = (page: NavigationPage) => {
-    // Clear loaded report state when navigating away from build-report
-    if (page !== 'build-report') {
-      setLoadedReportState(undefined);
-    }
     setCurrentPage(page);
+    // Auto-close navigation on mobile after selection
+    if (isMobile) {
+      setNavigationCollapsed(true);
+    }
   };
+
+  // Handle window resize for responsive navigation
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setNavigationCollapsed(true);
+      } else {
+        setNavigationCollapsed(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderCurrentPage = () => {
     switch (currentPage) {
-      case 'allocation':
-        return <AllocationPage />;
-      case 'inbox':
-        return <Inbox />;
-      case 'source-data':
-        return <SourceDataManagement />;
-      case 'published-data':
-        return <ViewPublishedData />;
       case 'build-report':
-        return <BuildReport loadedReportState={loadedReportState} />;
+        return <BuildReport loadedReportState={loadedReportState} userEmail={userEmail} />;
       case 'saved-reports':
         return <ViewSavedReports onLoadReport={handleLoadReport} />;
+      case 'file-history':
+        return <FileHistoryWithSession />;
       default:
-        return <AllocationPage />;
+        return <BuildReport loadedReportState={loadedReportState} userEmail={userEmail} />;
     }
   };
 
   return (
-    <div className={`min-h-screen w-full p-1 sm:p-2 flex ${
+    <div className={`min-h-screen w-full p-1 sm:p-2 lg:p-4 flex ${
       currentPage === 'build-report' ? 'items-start overflow-auto' : 'items-center overflow-hidden'
     }`}>
-      <div className={`w-full flex gap-2 min-w-0 ${
+      <div className={`w-full flex gap-1 sm:gap-2 lg:gap-4 min-w-0 ${
         currentPage === 'build-report' ? 'min-h-[98vh]' : 'h-[98vh]'
       }`}>
         {/* Navigation Panel */}
-        {!navigationCollapsed && (
-          <Navigation
-            isCollapsed={navigationCollapsed}
-            currentPage={currentPage}
-            onToggleCollapse={() => setNavigationCollapsed(!navigationCollapsed)}
-            onPageChange={handlePageChange}
-          />
-        )}
+        <>
+          {/* Mobile backdrop */}
+          {!navigationCollapsed && isMobile && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+              onClick={() => setNavigationCollapsed(true)}
+            />
+          )}
+
+          {/* Navigation */}
+          <div
+            onMouseLeave={() => setNavigationCollapsed(true)}
+            className={`${
+              isMobile
+                ? (navigationCollapsed
+                    ? 'fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300'
+                    : 'fixed inset-y-0 left-0 z-50 transition-transform duration-300')
+                : 'relative z-auto'
+            }`}
+          >
+            <Navigation
+              isCollapsed={navigationCollapsed}
+              currentPage={currentPage}
+              onToggleCollapse={() => setNavigationCollapsed(!navigationCollapsed)}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        </>
 
         {/* Main Content Area */}
-        <main className={`glass-card rounded-3xl flex-1 flex flex-col min-w-0 ${
+        <main className={`glass-card rounded-xl sm:rounded-2xl lg:rounded-3xl flex-1 flex flex-col min-w-0 relative ${
           currentPage === 'build-report' ? 'overflow-visible' : 'overflow-hidden'
-        } ${
-          navigationCollapsed ? 'relative' : ''
         }`}>
           {/* Collapse button when navigation is hidden */}
-          {navigationCollapsed && (
+          {navigationCollapsed && isMobile && (
             <button
               onClick={() => setNavigationCollapsed(false)}
+              onMouseEnter={() => setNavigationCollapsed(false)}
               className="absolute top-2 left-4 z-10 p-2 rounded-lg bg-transparent border-transparent hover:bg-white/10 transition-colors"
               title="Expand navigation"
             >
